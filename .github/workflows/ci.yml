@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workflow-lint:
+    name: validate workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Check workflow YAML syntax
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          import yaml
+
+          root = pathlib.Path(".github/workflows")
+          for path in sorted(root.glob("*.yml")):
+              with path.open() as f:
+                  yaml.safe_load(f)
+              print(f"OK: {path}")
+          PY
+
+  repo-health:
+    name: repo health
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify shared Cursor rules exist
+        run: test -f .cursor/rules/git-workflow-pr.mdc
