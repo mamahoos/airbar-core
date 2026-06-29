@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install PyYAML
         run: pip install pyyaml
       - name: Check workflow YAML syntax
@@ -37,6 +37,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Verify shared Cursor rules exist
         run: test -f .cursor/rules/git-workflow-pr.mdc
