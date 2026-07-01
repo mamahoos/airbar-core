@@ -41,8 +41,8 @@ export class ValidationError extends DomainError {
 }
 
 export class ForbiddenError extends DomainError {
-  constructor(message = 'Forbidden') {
-    super(ErrorCode.FORBIDDEN, message);
+  constructor(message = 'Forbidden', details?: unknown) {
+    super(ErrorCode.FORBIDDEN, message, details);
   }
 }
 
