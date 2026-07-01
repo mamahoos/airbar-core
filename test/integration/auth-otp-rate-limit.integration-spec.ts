@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import { Test } from '@nestjs/testing';
 
-import { RedisService } from '../../src/adapters/cache/redis.service.js';
-import { OtpRateLimiter } from '../../src/application/auth/otp-rate-limiter.js';
 import { AppModule } from '../../src/bootstrap/app.module.js';
+import { OtpRateLimiter } from '../../src/application/auth/otp-rate-limiter.js';
+import { RedisService } from '../../src/adapters/cache/redis.service.js';
 import { ValidationError } from '../../src/shared/errors/index.js';
 
 describe('OTP rate limiting integration', () => {
