@@ -44,9 +44,9 @@ describe('VerifyIdentityUseCase', () => {
   });
 
   it('rejects invalid national id', async () => {
-    await expect(
-      useCase.execute('u1', '09120000000', '123', '1370/01/01'),
-    ).rejects.toThrow(ValidationError);
+    await expect(useCase.execute('u1', '09120000000', '123', '1370/01/01')).rejects.toThrow(
+      ValidationError,
+    );
   });
 
   it('verifies identity when shahkar and person info succeed', async () => {

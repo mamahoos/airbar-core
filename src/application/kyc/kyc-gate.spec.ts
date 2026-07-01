@@ -13,9 +13,9 @@ describe('assertKycMinLevel', () => {
   });
 
   it('rejects when level is too low', () => {
-    expect(() =>
-      assertKycMinLevel(KycLevel.MOBILE_VERIFIED, KycLevel.IDENTITY_VERIFIED),
-    ).toThrow(ForbiddenError);
+    expect(() => assertKycMinLevel(KycLevel.MOBILE_VERIFIED, KycLevel.IDENTITY_VERIFIED)).toThrow(
+      ForbiddenError,
+    );
   });
 
   it('requires national id when configured', () => {

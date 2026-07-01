@@ -117,8 +117,7 @@ export class ApiIrClient implements ApiIrPort {
     return {
       iban: data.iban != null ? toStr(data.iban) : undefined,
       bankName: data.bankName != null ? toStr(data.bankName) : undefined,
-      accountHolderName:
-        data.accountHolderName != null ? toStr(data.accountHolderName) : undefined,
+      accountHolderName: data.accountHolderName != null ? toStr(data.accountHolderName) : undefined,
       raw: data,
     };
   }
