@@ -38,12 +38,12 @@ Verify: open a PR to `main` — merge button stays disabled until **quality gate
 
 ## What the ruleset enforces
 
-| Rule | Why |
-|------|-----|
-| Pull request required | Matches `.cursor/rules/git-workflow-pr.mdc` — no direct push to `main` |
+| Rule                    | Why                                                                                                                        |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Pull request required   | Matches `.cursor/rules/git-workflow-pr.mdc` — no direct push to `main`                                                     |
 | `quality gate` required | Aggregates lint, typecheck, unit, build, integration, audit from [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) |
-| No force-push | Keeps `main` deployable |
-| No branch deletion | Prevents accidental removal of default branch |
+| No force-push           | Keeps `main` deployable                                                                                                    |
+| No branch deletion      | Prevents accidental removal of default branch                                                                              |
 
 ## Troubleshooting
 
