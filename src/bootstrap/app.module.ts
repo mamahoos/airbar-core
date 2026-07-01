@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { CacheModule } from '../adapters/cache/cache.module.js';
@@ -13,6 +14,7 @@ import { HealthModule } from '../adapters/web/health/health.module.js';
 import { KycModule } from '../adapters/web/kyc/kyc.module.js';
 import { MarketplaceModule } from '../adapters/web/marketplace/marketplace.module.js';
 import { NotificationsModule } from '../adapters/web/notifications/notifications.module.js';
+import { PaymentsModule } from '../adapters/web/payments/payments.module.js';
 import { StatsModule } from '../adapters/web/stats/stats.module.js';
 import { UsersModule } from '../adapters/web/users/users.module.js';
 
@@ -23,6 +25,7 @@ import type { AppConfig } from './config/index.js';
 @Module({
   imports: [
     ConfigModule,
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
       inject: [APP_CONFIG],
       useFactory: (config: AppConfig) => [
@@ -45,6 +48,7 @@ import type { AppConfig } from './config/index.js';
     ChatModule,
     StatsModule,
     AdminModule,
+    PaymentsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

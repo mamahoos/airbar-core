@@ -19,11 +19,12 @@ import {
 } from '../../../application/admin/admin.use-cases.js';
 import { AdminPersistenceModule } from '../../persistence/admin/admin-persistence.module.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { PaymentsModule } from '../payments/payments.module.js';
 
 import { AdminController } from './admin.controller.js';
 
 @Module({
-  imports: [AdminPersistenceModule, AuthModule],
+  imports: [AdminPersistenceModule, AuthModule, PaymentsModule],
   controllers: [AdminController],
   providers: [
     GetAdminDashboardUseCase,

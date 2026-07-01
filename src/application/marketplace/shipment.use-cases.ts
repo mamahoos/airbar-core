@@ -23,6 +23,10 @@ import {
   CreateChatForShipmentUseCase,
   DeactivateChatForShipmentUseCase,
 } from '../chat/chat.use-cases.js';
+import {
+  FINANCE_ORCHESTRATOR,
+  type FinanceOrchestratorPort,
+} from '../finance/finance-orchestrator.port.js';
 import { KycAccessService } from '../kyc/kyc-access.service.js';
 import { NotificationService } from '../notifications/notification.use-cases.js';
 
@@ -155,6 +159,7 @@ export class AcceptShipmentOfferUseCase {
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     private readonly kyc: KycAccessService,
     private readonly notifications: NotificationService,
+    @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
   ) {}
 
   async execute(senderId: string, shipmentId: string, agreedPrice?: number) {
@@ -175,6 +180,12 @@ export class AcceptShipmentOfferUseCase {
     );
     if (updated.carrierId) {
       await this.notifications.notifyShipmentAccepted(updated.carrierId, shipmentId);
+      await this.finance.tryCreateEscrow({
+        shipmentId,
+        carrierUserId: updated.carrierId,
+        payerUserId: senderId,
+        amountRials: updated.agreedPrice ?? updated.systemPrice,
+      });
     }
     return updated;
   }
@@ -215,7 +226,10 @@ const CARRIER_TRANSITIONS: Partial<Record<ShipmentStatus, ShipmentStatus>> = {
 
 @Injectable()
 export class UpdateShipmentStatusUseCase {
-  constructor(@Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort) {}
+  constructor(
+    @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
+    @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
+  ) {}
 
   async execute(
     userId: string,
@@ -251,7 +265,7 @@ export class UpdateShipmentStatusUseCase {
       assertStatusTransition(shipment.status, status, actor);
     }
 
-    return this.shipments.updateStatus(shipmentId, {
+    const updated = await this.shipments.updateStatus(shipmentId, {
       status,
       note,
       location,
@@ -259,6 +273,15 @@ export class UpdateShipmentStatusUseCase {
       ...(status === ShipmentStatus.DELIVERED ? { deliveredAt: new Date() } : {}),
       ...(status === ShipmentStatus.CONFIRMED ? { confirmedAt: new Date() } : {}),
     });
+
+    if (status === ShipmentStatus.DELIVERED) {
+      await this.finance.tryMarkDelivered({ shipmentId });
+    }
+    if (status === ShipmentStatus.CONFIRMED) {
+      await this.finance.tryReleaseEscrow({ shipmentId });
+    }
+
+    return updated;
   }
 }
 
@@ -271,7 +294,10 @@ const DISPUTABLE: readonly ShipmentStatus[] = [
 
 @Injectable()
 export class DisputeShipmentUseCase {
-  constructor(@Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort) {}
+  constructor(
+    @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
+    @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
+  ) {}
 
   async execute(userId: string, shipmentId: string, reason: string) {
     const shipment = await this.shipments.findById(shipmentId);
@@ -285,7 +311,9 @@ export class DisputeShipmentUseCase {
       throw new ValidationError(`Cannot open a dispute while status is ${shipment.status}`);
     }
 
-    return this.shipments.openDispute(shipmentId, userId, reason);
+    const disputed = await this.shipments.openDispute(shipmentId, userId, reason);
+    await this.finance.tryFreezeEscrow({ shipmentId });
+    return disputed;
   }
 }
 

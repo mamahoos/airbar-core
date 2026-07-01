@@ -30,6 +30,12 @@ import {
   UpdateAdminSystemConfigUseCase,
   UpdateAdminUserRoleUseCase,
 } from '../../../application/admin/admin.use-cases.js';
+import {
+  ProcessAdminWithdrawalUseCase,
+  RejectAdminWithdrawalUseCase,
+  ReplayOutboxUseCase,
+  ResolveDisputeUseCase,
+} from '../../../application/finance/payment.use-cases.js';
 import { UserRole as DomainUserRole } from '../../../domain/auth/user-role.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -153,6 +159,21 @@ class PricingRuleDto {
   priority?: number;
 }
 
+class ResolveDisputeDto {
+  @IsEnum(['RELEASE', 'REFUND'] as const)
+  resolution!: 'RELEASE' | 'REFUND';
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
+class RejectWithdrawalDto {
+  @IsString()
+  @IsNotEmpty()
+  reason!: string;
+}
+
 @ApiTags('admin')
 @Controller('admin')
 @UseGuards(RolesGuard)
@@ -175,6 +196,10 @@ export class AdminController {
     private readonly listPricingRules: ListAdminPricingRulesUseCase,
     private readonly createPricingRule: CreateAdminPricingRuleUseCase,
     private readonly updatePricingRule: UpdateAdminPricingRuleUseCase,
+    private readonly resolveDispute: ResolveDisputeUseCase,
+    private readonly replayOutbox: ReplayOutboxUseCase,
+    private readonly processWithdrawal: ProcessAdminWithdrawalUseCase,
+    private readonly rejectWithdrawal: RejectAdminWithdrawalUseCase,
   ) {}
 
   @Get('dashboard')
@@ -271,5 +296,30 @@ export class AdminController {
   @ApiOperation({ summary: 'Update pricing rule' })
   updateRule(@Param('id') id: string, @Body() dto: PricingRuleDto) {
     return this.updatePricingRule.execute(id, dto);
+  }
+
+  @Post('disputes/:shipmentId/resolve')
+  @ApiOperation({ summary: 'Resolve disputed shipment via finance gRPC' })
+  resolveDisputeRoute(@Param('shipmentId') shipmentId: string, @Body() dto: ResolveDisputeDto) {
+    return this.resolveDispute.execute(shipmentId, dto.resolution, dto.note);
+  }
+
+  @Post('integration-outbox/:id/replay')
+  @Roles(DomainUserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Replay failed outbox row (super admin)' })
+  replayOutboxRoute(@Param('id') id: string) {
+    return this.replayOutbox.execute(id);
+  }
+
+  @Post('withdrawals/:id/process')
+  @ApiOperation({ summary: 'Process withdrawal via finance gRPC' })
+  processWithdrawalRoute(@Param('id') id: string) {
+    return this.processWithdrawal.execute(id);
+  }
+
+  @Post('withdrawals/:id/reject')
+  @ApiOperation({ summary: 'Reject withdrawal via finance gRPC' })
+  rejectWithdrawalRoute(@Param('id') id: string, @Body() dto: RejectWithdrawalDto) {
+    return this.rejectWithdrawal.execute(id, dto.reason);
   }
 }
