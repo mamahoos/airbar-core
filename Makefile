@@ -1,7 +1,13 @@
 # airbar-core Makefile — mirrors airbar-finance ergonomics where possible.
-.PHONY: help install up down migrate-up migrate-status migrate-down verify lint format typecheck test test-integration test-cov proto build clean
+.PHONY: help install up up-dev up-staging up-prod down migrate-up migrate-status migrate-down verify lint format typecheck test test-integration test-cov proto build clean
 
 DB_URL ?= postgresql://airbar:airbar_secret@localhost:5435/airbar_api?schema=public
+
+COMPOSE := docker compose -f docker-compose.yml
+COMPOSE_DEV := $(COMPOSE) -f docker-compose.dev.yml
+COMPOSE_RESOURCES := $(COMPOSE) -f docker-compose.resources.yml
+COMPOSE_STAGING := $(COMPOSE) -f docker-compose.staging.yml
+COMPOSE_PROD := $(COMPOSE) -f docker-compose.prod.yml
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
@@ -10,10 +16,23 @@ install: ## Install dependencies
 	npm ci
 
 up: ## Start postgres + redis (resources only)
-	docker compose -f docker-compose.resources.yml up -d
+	$(COMPOSE_RESOURCES) up -d
+
+up-dev: ## Start full dev stack (build app image)
+	$(COMPOSE_DEV) up -d --build
+
+up-staging: ## Deploy staging stack (requires IMAGE_TAG)
+	@test -n "$(IMAGE_TAG)" || (echo "IMAGE_TAG is required" && exit 1)
+	docker network create airbar-staging 2>/dev/null || true
+	COMPOSE_PROJECT_NAME=airbar-core-staging IMAGE_TAG=$(IMAGE_TAG) $(COMPOSE_STAGING) up -d --remove-orphans
+
+up-prod: ## Deploy production stack (requires IMAGE_TAG)
+	@test -n "$(IMAGE_TAG)" || (echo "IMAGE_TAG is required" && exit 1)
+	docker network create airbar-prod 2>/dev/null || true
+	COMPOSE_PROJECT_NAME=airbar-core-prod IMAGE_TAG=$(IMAGE_TAG) $(COMPOSE_PROD) up -d --remove-orphans
 
 down: ## Stop postgres + redis
-	docker compose -f docker-compose.resources.yml down
+	$(COMPOSE_RESOURCES) down
 
 migrate-up: ## Apply migrations (DATABASE_URL must be set)
 	npx prisma migrate deploy

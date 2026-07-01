@@ -1,0 +1,45 @@
+# Production deploy — pre-built image from GHCR, no host port exposure.
+# Requires on the server:
+#   - .env.production (copy from .env.production.example; never commit secrets)
+#   - IMAGE_TAG set by CI (e.g. ghcr.io/mamahoos/airbar-core:v0.2.0)
+#   - Reverse proxy on the shared Docker network for public HTTP
+#
+# Prisma migrations run automatically on container start.
+
+services:
+  postgres:
+    container_name: airbar-core-postgres-prod
+    env_file: .env.production
+    restart: always
+
+  redis:
+    container_name: airbar-core-redis-prod
+    env_file: .env.production
+    restart: always
+
+  app:
+    image: ${IMAGE_TAG:?IMAGE_TAG is required for production deploy}
+    container_name: airbar-core-app-prod
+    env_file: .env.production
+    environment:
+      NODE_ENV: production
+      FINANCE_GRPC_URL: ${FINANCE_GRPC_URL:-airbar-finance-app-prod:50051}
+    command: >
+      sh -c "npx prisma migrate deploy &&
+             node dist/bootstrap/main.js"
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: '50m'
+        max-file: '5'
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+
+networks:
+  internal:
+    name: airbar-prod
+    external: true

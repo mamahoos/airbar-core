@@ -1,0 +1,26 @@
+# Local development — build from source, expose host ports.
+# Host ports 5435/6382 avoid clashes with airbar-finance (5434/6381).
+
+services:
+  postgres:
+    container_name: airbar-core-postgres-dev
+    ports:
+      - '${DB_PORT:-5435}:5432'
+
+  redis:
+    container_name: airbar-core-redis-dev
+    ports:
+      - '${REDIS_PORT:-6382}:6379'
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: airbar-core-app-dev
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+    ports:
+      - '${APP_PORT:-4000}:4000'
+    restart: unless-stopped

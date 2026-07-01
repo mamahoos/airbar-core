@@ -1,0 +1,43 @@
+# Staging deploy — pre-built image from GHCR.
+# Requires on the server:
+#   - .env.staging (copy from .env.staging.example; never commit secrets)
+#   - IMAGE_TAG set by CI (e.g. ghcr.io/mamahoos/airbar-core:sha-abc1234)
+#
+# Prisma migrations run automatically on container start.
+
+services:
+  postgres:
+    container_name: airbar-core-postgres-staging
+    env_file: .env.staging
+    ports:
+      - '${DB_PORT:-5437}:5432'
+
+  redis:
+    container_name: airbar-core-redis-staging
+    ports:
+      - '${REDIS_PORT:-6384}:6379'
+
+  app:
+    image: ${IMAGE_TAG:?IMAGE_TAG is required for staging deploy}
+    container_name: airbar-core-app-staging
+    env_file: .env.staging
+    environment:
+      NODE_ENV: production
+    ports:
+      - '${APP_PORT:-4002}:4000'
+    environment:
+      FINANCE_GRPC_URL: ${FINANCE_GRPC_URL:-airbar-finance-app-staging:50051}
+    command: >
+      sh -c "npx prisma migrate deploy &&
+             node dist/bootstrap/main.js"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+networks:
+  internal:
+    name: airbar-staging
+    external: true
