@@ -8,6 +8,7 @@ import { PersistenceModule } from '../adapters/persistence/persistence.module.js
 import { QueueModule } from '../adapters/queue/queue.module.js';
 import { AuthModule } from '../adapters/web/auth/auth.module.js';
 import { HealthModule } from '../adapters/web/health/health.module.js';
+import { UsersModule } from '../adapters/web/users/users.module.js';
 
 import { ConfigModule, APP_CONFIG } from './config/index.js';
 
@@ -31,6 +32,7 @@ import type { AppConfig } from './config/index.js';
     FinanceGrpcModule,
     HealthModule,
     AuthModule,
+    UsersModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
