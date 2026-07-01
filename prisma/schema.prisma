@@ -50,6 +50,7 @@ model User {
   totalTrips                Int       @default(0) @map("total_trips")
   totalShipments            Int       @default(0) @map("total_shipments")
   identityPendingPersonInfo Boolean   @default(false) @map("identity_pending_person_info")
+  financialVerifiedAt       DateTime? @map("financial_verified_at")
   lastLoginAt               DateTime? @map("last_login_at")
   lastLoginIp               String?   @map("last_login_ip")
   createdAt                 DateTime  @default(now()) @map("created_at")
