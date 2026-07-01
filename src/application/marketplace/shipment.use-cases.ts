@@ -19,7 +19,16 @@ import {
 } from '../../domain/marketplace/trip.repository.port.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../shared/errors/index.js';
 import { buildPaginationMeta, normalizePagination } from '../../shared/pagination/pagination.js';
+import {
+  CreateChatForShipmentUseCase,
+  DeactivateChatForShipmentUseCase,
+} from '../chat/chat.use-cases.js';
+import {
+  FINANCE_ORCHESTRATOR,
+  type FinanceOrchestratorPort,
+} from '../finance/finance-orchestrator.port.js';
 import { KycAccessService } from '../kyc/kyc-access.service.js';
+import { NotificationService } from '../notifications/notification.use-cases.js';
 
 import { marketplaceKycRequirement } from './marketplace-kyc-gates.js';
 import { PricingQuoteService } from './pricing-quote.service.js';
@@ -115,6 +124,7 @@ export class CancelShipmentUseCase {
   constructor(
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     @Inject(TRIP_REPOSITORY) private readonly trips: TripRepositoryPort,
+    private readonly deactivateChat: DeactivateChatForShipmentUseCase,
   ) {}
 
   async execute(senderId: string, shipmentId: string) {
@@ -138,6 +148,7 @@ export class CancelShipmentUseCase {
       await this.trips.adjustAvailableWeight(shipment.tripId, shipment.weight);
     }
 
+    await this.deactivateChat.execute(shipmentId);
     return this.shipments.cancel(shipmentId);
   }
 }
@@ -147,6 +158,8 @@ export class AcceptShipmentOfferUseCase {
   constructor(
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     private readonly kyc: KycAccessService,
+    private readonly notifications: NotificationService,
+    @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
   ) {}
 
   async execute(senderId: string, shipmentId: string, agreedPrice?: number) {
@@ -161,7 +174,20 @@ export class AcceptShipmentOfferUseCase {
       throw new ValidationError('Shipment is not in MATCHED status');
     }
 
-    return this.shipments.acceptOffer(shipmentId, agreedPrice ?? shipment.systemPrice);
+    const updated = await this.shipments.acceptOffer(
+      shipmentId,
+      agreedPrice ?? shipment.systemPrice,
+    );
+    if (updated.carrierId) {
+      await this.notifications.notifyShipmentAccepted(updated.carrierId, shipmentId);
+      await this.finance.tryCreateEscrow({
+        shipmentId,
+        carrierUserId: updated.carrierId,
+        payerUserId: senderId,
+        amountRials: updated.agreedPrice ?? updated.systemPrice,
+      });
+    }
+    return updated;
   }
 }
 
@@ -170,6 +196,7 @@ export class RejectShipmentOfferUseCase {
   constructor(
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     @Inject(TRIP_REPOSITORY) private readonly trips: TripRepositoryPort,
+    private readonly deactivateChat: DeactivateChatForShipmentUseCase,
   ) {}
 
   async execute(senderId: string, shipmentId: string) {
@@ -186,6 +213,7 @@ export class RejectShipmentOfferUseCase {
       await this.trips.adjustAvailableWeight(shipment.tripId, shipment.weight);
     }
 
+    await this.deactivateChat.execute(shipmentId);
     return this.shipments.rejectOffer(shipmentId);
   }
 }
@@ -198,7 +226,10 @@ const CARRIER_TRANSITIONS: Partial<Record<ShipmentStatus, ShipmentStatus>> = {
 
 @Injectable()
 export class UpdateShipmentStatusUseCase {
-  constructor(@Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort) {}
+  constructor(
+    @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
+    @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
+  ) {}
 
   async execute(
     userId: string,
@@ -234,7 +265,7 @@ export class UpdateShipmentStatusUseCase {
       assertStatusTransition(shipment.status, status, actor);
     }
 
-    return this.shipments.updateStatus(shipmentId, {
+    const updated = await this.shipments.updateStatus(shipmentId, {
       status,
       note,
       location,
@@ -242,6 +273,15 @@ export class UpdateShipmentStatusUseCase {
       ...(status === ShipmentStatus.DELIVERED ? { deliveredAt: new Date() } : {}),
       ...(status === ShipmentStatus.CONFIRMED ? { confirmedAt: new Date() } : {}),
     });
+
+    if (status === ShipmentStatus.DELIVERED) {
+      await this.finance.tryMarkDelivered({ shipmentId });
+    }
+    if (status === ShipmentStatus.CONFIRMED) {
+      await this.finance.tryReleaseEscrow({ shipmentId });
+    }
+
+    return updated;
   }
 }
 
@@ -254,7 +294,10 @@ const DISPUTABLE: readonly ShipmentStatus[] = [
 
 @Injectable()
 export class DisputeShipmentUseCase {
-  constructor(@Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort) {}
+  constructor(
+    @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
+    @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
+  ) {}
 
   async execute(userId: string, shipmentId: string, reason: string) {
     const shipment = await this.shipments.findById(shipmentId);
@@ -268,7 +311,9 @@ export class DisputeShipmentUseCase {
       throw new ValidationError(`Cannot open a dispute while status is ${shipment.status}`);
     }
 
-    return this.shipments.openDispute(shipmentId, userId, reason);
+    const disputed = await this.shipments.openDispute(shipmentId, userId, reason);
+    await this.finance.tryFreezeEscrow({ shipmentId });
+    return disputed;
   }
 }
 
@@ -295,6 +340,8 @@ export class AssignShipmentToTripUseCase {
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     @Inject(TRIP_REPOSITORY) private readonly trips: TripRepositoryPort,
     private readonly kyc: KycAccessService,
+    private readonly createChat: CreateChatForShipmentUseCase,
+    private readonly notifications: NotificationService,
   ) {}
 
   async execute(shipmentId: string, tripId: string, carrierId: string) {
@@ -322,6 +369,8 @@ export class AssignShipmentToTripUseCase {
 
     const updated = await this.shipments.assignToTrip(shipmentId, tripId, carrierId);
     await this.trips.adjustAvailableWeight(tripId, -shipment.weight);
+    await this.createChat.execute(shipmentId);
+    await this.notifications.notifyNewMatch(shipment.senderId, shipmentId, tripId);
     return updated;
   }
 }
