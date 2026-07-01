@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import { HttpExceptionFilter } from '../adapters/web/common/http-exception.filter.js';
 import { LoggingInterceptor } from '../adapters/web/common/logging.interceptor.js';
 import { TransformInterceptor } from '../adapters/web/common/transform.interceptor.js';
+
 import { AppModule } from './app.module.js';
 import { loadConfig } from './config/index.js';
 

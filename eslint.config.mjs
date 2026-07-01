@@ -15,6 +15,7 @@ export default tseslint.config(
       'src/adapters/grpc-client/generated/**',
       'prisma/generated/**',
       'eslint.config.mjs',
+      'scripts/**',
     ],
   },
   js.configs.recommended,

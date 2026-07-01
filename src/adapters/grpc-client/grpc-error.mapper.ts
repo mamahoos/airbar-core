@@ -11,8 +11,8 @@ import {
 } from '../../shared/errors/index.js';
 
 export interface GrpcServiceError extends Error {
-  readonly code: number;
-  readonly details?: string;
+  readonly code: GrpcStatus;
+  readonly details: string;
 }
 
 export function isGrpcServiceError(error: unknown): error is GrpcServiceError {
@@ -27,25 +27,28 @@ export function isGrpcServiceError(error: unknown): error is GrpcServiceError {
 /** Map gRPC status codes to domain errors for consistent HTTP responses. */
 export function grpcStatusToDomainError(error: GrpcServiceError): DomainError {
   const detail = error.details ?? error.message;
+  const code = error.code;
 
-  switch (error.code) {
-    case GrpcStatus.NOT_FOUND:
-      return new NotFoundError('Finance resource', detail);
-    case GrpcStatus.ALREADY_EXISTS:
-      return new ConflictError(detail);
-    case GrpcStatus.INVALID_ARGUMENT:
-    case GrpcStatus.FAILED_PRECONDITION:
-      return new ValidationError(detail);
-    case GrpcStatus.UNAVAILABLE:
-      return new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Finance service unavailable', detail);
-    case GrpcStatus.DEADLINE_EXCEEDED:
-      return new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Finance service timeout', detail);
-    default:
-      return new DomainError(ErrorCode.INTERNAL, 'Finance service error', {
-        code: error.code,
-        detail,
-      });
+  if (code === GrpcStatus.NOT_FOUND) {
+    return new NotFoundError('Finance resource', detail);
   }
+  if (code === GrpcStatus.ALREADY_EXISTS) {
+    return new ConflictError(detail);
+  }
+  if (code === GrpcStatus.INVALID_ARGUMENT || code === GrpcStatus.FAILED_PRECONDITION) {
+    return new ValidationError(detail);
+  }
+  if (code === GrpcStatus.UNAVAILABLE) {
+    return new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Finance service unavailable', detail);
+  }
+  if (code === GrpcStatus.DEADLINE_EXCEEDED) {
+    return new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Finance service timeout', detail);
+  }
+
+  return new DomainError(ErrorCode.INTERNAL, 'Finance service error', {
+    code: error.code,
+    detail,
+  });
 }
 
 export function mapGrpcErrorToHttpException(error: unknown) {

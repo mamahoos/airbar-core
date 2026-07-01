@@ -15,10 +15,10 @@ describe('branded IDs', () => {
   });
 
   it('prevents accidental assignment between different brands at compile time', () => {
-    const uid = userId('user-1');
+    const _uid = userId('user-1');
     const sid = shipmentId('ship-1');
     // @ts-expect-error ShipmentId is not assignable to UserId
-    const _wrong: typeof uid = sid;
+    const _wrong: typeof _uid = sid;
     expect(_wrong).toBeDefined();
     expect(brandValue<string, 'UserId'>('x')).toBe('x');
   });

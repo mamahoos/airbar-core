@@ -1,5 +1,6 @@
-import { Metadata } from '@grpc/grpc-js';
 import { randomUUID } from 'node:crypto';
+
+import { Metadata } from '@grpc/grpc-js';
 
 /** gRPC metadata keys — must match airbar-finance server expectations. */
 export const GRPC_METADATA = {

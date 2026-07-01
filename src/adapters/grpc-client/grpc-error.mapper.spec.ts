@@ -1,5 +1,5 @@
-import { describe, it, expect } from '@jest/globals';
 import { status as GrpcStatus } from '@grpc/grpc-js';
+import { describe, it, expect } from '@jest/globals';
 import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 
 import { ErrorCode } from '../../shared/errors/index.js';

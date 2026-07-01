@@ -2,7 +2,6 @@ import { credentials, type ServiceError } from '@grpc/grpc-js';
 import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 
 import { APP_CONFIG } from '../../bootstrap/config/index.js';
-import type { AppConfig } from '../../bootstrap/config/index.js';
 import { DomainError, ErrorCode } from '../../shared/errors/index.js';
 
 import {
@@ -13,6 +12,8 @@ import {
 } from './generated/airbar_finance_v1.js';
 import { grpcStatusToDomainError, isGrpcServiceError } from './grpc-error.mapper.js';
 import { buildGrpcMetadata, type GrpcCallMetadata } from './metadata.js';
+
+import type { AppConfig } from '../../bootstrap/config/index.js';
 
 export const FINANCE_GRPC_DEADLINE_MS = 5_000;
 

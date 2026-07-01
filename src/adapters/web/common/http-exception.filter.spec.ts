@@ -1,10 +1,12 @@
 import { describe, it, expect, jest } from '@jest/globals';
 import { NotFoundException } from '@nestjs/common';
-import type { ArgumentsHost } from '@nestjs/common';
+
 
 import { NotFoundError } from '../../../shared/errors/index.js';
 
 import { HttpExceptionFilter } from './http-exception.filter.js';
+
+import type { ArgumentsHost } from '@nestjs/common';
 
 function mockHost(): { response: { status: jest.Mock; json: jest.Mock }; request: { method: string; url: string } } {
   const json = jest.fn();

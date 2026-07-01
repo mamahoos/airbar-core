@@ -19,7 +19,8 @@ export function isErr<T, E>(result: Result<T, E>): result is { ok: false; error:
 
 export function unwrap<T, E>(result: Result<T, E>): T {
   if (result.ok) return result.value;
-  throw result.error;
+  if (result.error instanceof Error) throw result.error;
+  throw new Error(String(result.error));
 }
 
 export function mapResult<T, U, E>(result: Result<T, E>, fn: (value: T) => U): Result<U, E> {
