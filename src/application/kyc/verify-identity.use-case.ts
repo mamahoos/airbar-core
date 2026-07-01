@@ -11,12 +11,7 @@ export class VerifyIdentityUseCase {
     @Inject(API_IR) private readonly apiIr: ApiIrPort,
   ) {}
 
-  async execute(
-    userId: string,
-    phone: string | undefined,
-    nationalId: string,
-    birthDate: string,
-  ) {
+  async execute(userId: string, phone: string | undefined, nationalId: string, birthDate: string) {
     const normalizedNationalId = nationalId.trim().replace(/\D/g, '');
     if (!/^\d{10}$/.test(normalizedNationalId)) {
       throw new ValidationError('کد ملی نامعتبر است');

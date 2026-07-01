@@ -2,7 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { API_IR, type ApiIrPort } from '../../domain/kyc/api-ir.port.js';
 import { KYC_REPOSITORY, type KycRepositoryPort } from '../../domain/kyc/kyc.repository.port.js';
-import { OBJECT_STORAGE, type ObjectStoragePort } from '../../domain/storage/object-storage.port.js';
+import {
+  OBJECT_STORAGE,
+  type ObjectStoragePort,
+} from '../../domain/storage/object-storage.port.js';
 import { NotFoundError, ValidationError } from '../../shared/errors/index.js';
 
 const VALID_DOCUMENT_TYPES = [
@@ -46,9 +49,7 @@ export class VerifyBankCardUseCase {
           ? (cardMatch.raw as Record<string, unknown>).message
           : undefined;
       const apiMessage = typeof rawMessage === 'string' ? rawMessage : '';
-      throw new ValidationError(
-        apiMessage || 'کارت بانکی با کد ملی و تاریخ تولد مطابقت ندارد',
-      );
+      throw new ValidationError(apiMessage || 'کارت بانکی با کد ملی و تاریخ تولد مطابقت ندارد');
     }
 
     const cardToIban = await this.apiIr.cardToIban(digits);
@@ -142,12 +143,7 @@ export class UploadKycDocumentUseCase {
 export class ReviewKycDocumentUseCase {
   constructor(@Inject(KYC_REPOSITORY) private readonly kyc: KycRepositoryPort) {}
 
-  async execute(
-    adminId: string,
-    documentId: string,
-    status: string,
-    rejectionReason?: string,
-  ) {
+  async execute(adminId: string, documentId: string, status: string, rejectionReason?: string) {
     const result = await this.kyc.reviewDocument(adminId, documentId, status, rejectionReason);
     if (!result) throw new NotFoundError('KYC document', documentId);
     if (status === 'APPROVED') {

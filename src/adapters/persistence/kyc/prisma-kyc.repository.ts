@@ -2,12 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { KycLevel, KycStatus } from '@prisma/client';
 
 import { APP_CONFIG } from '../../../bootstrap/config/index.js';
-import {
-  decryptPii,
-  encryptPii,
-  hashPii,
-  parsePiiKeyHex,
-} from '../../../shared/crypto/index.js';
+import { decryptPii, encryptPii, hashPii, parsePiiKeyHex } from '../../../shared/crypto/index.js';
 import { ValidationError } from '../../../shared/errors/index.js';
 import { PrismaService } from '../prisma.service.js';
 
@@ -192,8 +187,7 @@ export class PrismaKycRepository implements KycRepositoryPort {
     };
 
     const profile = user.identityProfile;
-    const identityLocked =
-      !!profile?.shahkarVerifiedAt && !profile.identityPendingPersonInfo;
+    const identityLocked = !!profile?.shahkarVerifiedAt && !profile.identityPendingPersonInfo;
 
     return {
       currentLevel: user.kycLevel,

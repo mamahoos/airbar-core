@@ -1,6 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { OBJECT_STORAGE, type ObjectStoragePort } from '../../domain/storage/object-storage.port.js';
+import {
+  OBJECT_STORAGE,
+  type ObjectStoragePort,
+} from '../../domain/storage/object-storage.port.js';
 import {
   USER_PROFILE_REPOSITORY,
   type UserProfileRepositoryPort,

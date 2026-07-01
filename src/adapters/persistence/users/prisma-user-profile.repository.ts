@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-
 import { APP_CONFIG } from '../../../bootstrap/config/index.js';
 import { decryptPii, parsePiiKeyHex } from '../../../shared/crypto/index.js';
 import { ConflictError } from '../../../shared/errors/index.js';
@@ -107,8 +106,7 @@ export class PrismaUserProfileRepository implements UserProfileRepositoryPort {
     },
   ): UserProfile {
     const identityLocked =
-      !!user.identityProfile?.shahkarVerifiedAt &&
-      !user.identityProfile.identityPendingPersonInfo;
+      !!user.identityProfile?.shahkarVerifiedAt && !user.identityProfile.identityPendingPersonInfo;
 
     let nationalIdMasked: string | null = null;
     if (identityLocked && user.identityProfile) {

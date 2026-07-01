@@ -15,12 +15,7 @@ export class ChangePasswordUseCase {
     private readonly otpCode: OtpCodeService,
   ) {}
 
-  async execute(
-    userId: string,
-    newPassword: string,
-    currentPassword?: string,
-    otpCode?: string,
-  ) {
+  async execute(userId: string, newPassword: string, currentPassword?: string, otpCode?: string) {
     const auth = await this.profiles.findAuthUserPhone(userId);
     if (!auth) throw new NotFoundError('User', userId);
 

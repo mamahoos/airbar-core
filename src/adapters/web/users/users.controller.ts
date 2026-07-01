@@ -81,12 +81,7 @@ export class UsersController {
   @Put('me/password')
   @ApiOperation({ summary: 'Change or set password' })
   changePasswordHandler(@CurrentUser() user: AuthUser, @Body() dto: ChangePasswordDto) {
-    return this.changePassword.execute(
-      user.id,
-      dto.newPassword,
-      dto.currentPassword,
-      dto.otpCode,
-    );
+    return this.changePassword.execute(user.id, dto.newPassword, dto.currentPassword, dto.otpCode);
   }
 
   @Get('me/sessions')
