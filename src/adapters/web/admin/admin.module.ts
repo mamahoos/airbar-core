@@ -1,0 +1,46 @@
+import { Module } from '@nestjs/common';
+
+import {
+  BanAdminUserUseCase,
+  CreateAdminPricingRuleUseCase,
+  GetAdminDashboardUseCase,
+  GetAdminSystemConfigUseCase,
+  GetAdminUserDetailUseCase,
+  ListAdminActivityLogsUseCase,
+  ListAdminDisputesUseCase,
+  ListAdminPendingKycUseCase,
+  ListAdminPricingRulesUseCase,
+  ListAdminShipmentsUseCase,
+  ListAdminUsersUseCase,
+  UnbanAdminUserUseCase,
+  UpdateAdminPricingRuleUseCase,
+  UpdateAdminSystemConfigUseCase,
+  UpdateAdminUserRoleUseCase,
+} from '../../../application/admin/admin.use-cases.js';
+import { AdminPersistenceModule } from '../../persistence/admin/admin-persistence.module.js';
+import { AuthModule } from '../auth/auth.module.js';
+
+import { AdminController } from './admin.controller.js';
+
+@Module({
+  imports: [AdminPersistenceModule, AuthModule],
+  controllers: [AdminController],
+  providers: [
+    GetAdminDashboardUseCase,
+    ListAdminUsersUseCase,
+    GetAdminUserDetailUseCase,
+    UpdateAdminUserRoleUseCase,
+    BanAdminUserUseCase,
+    UnbanAdminUserUseCase,
+    ListAdminShipmentsUseCase,
+    ListAdminDisputesUseCase,
+    ListAdminPendingKycUseCase,
+    ListAdminActivityLogsUseCase,
+    GetAdminSystemConfigUseCase,
+    UpdateAdminSystemConfigUseCase,
+    ListAdminPricingRulesUseCase,
+    CreateAdminPricingRuleUseCase,
+    UpdateAdminPricingRuleUseCase,
+  ],
+})
+export class AdminModule {}

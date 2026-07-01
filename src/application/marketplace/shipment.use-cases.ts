@@ -19,7 +19,10 @@ import {
 } from '../../domain/marketplace/trip.repository.port.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../shared/errors/index.js';
 import { buildPaginationMeta, normalizePagination } from '../../shared/pagination/pagination.js';
-import { CreateChatForShipmentUseCase, DeactivateChatForShipmentUseCase } from '../chat/chat.use-cases.js';
+import {
+  CreateChatForShipmentUseCase,
+  DeactivateChatForShipmentUseCase,
+} from '../chat/chat.use-cases.js';
 import { KycAccessService } from '../kyc/kyc-access.service.js';
 import { NotificationService } from '../notifications/notification.use-cases.js';
 

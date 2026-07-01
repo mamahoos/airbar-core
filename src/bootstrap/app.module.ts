@@ -6,6 +6,7 @@ import { CacheModule } from '../adapters/cache/cache.module.js';
 import { FinanceGrpcModule } from '../adapters/grpc-client/finance-grpc.module.js';
 import { PersistenceModule } from '../adapters/persistence/persistence.module.js';
 import { QueueModule } from '../adapters/queue/queue.module.js';
+import { AdminModule } from '../adapters/web/admin/admin.module.js';
 import { AuthModule } from '../adapters/web/auth/auth.module.js';
 import { ChatModule } from '../adapters/web/chat/chat.module.js';
 import { HealthModule } from '../adapters/web/health/health.module.js';
@@ -43,6 +44,7 @@ import type { AppConfig } from './config/index.js';
     NotificationsModule,
     ChatModule,
     StatsModule,
+    AdminModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

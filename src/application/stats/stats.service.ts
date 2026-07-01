@@ -10,27 +10,35 @@ export class StatsService {
 
   async getPublicStats() {
     const now = new Date();
-    const [totalUsers, verifiedUsers, totalTrips, activeTrips, totalShipments, deliveredShipments, reviewAgg, tripCountries] =
-      await Promise.all([
-        this.prisma.user.count({ where: { isBanned: false } }),
-        this.prisma.user.count({
-          where: {
-            isBanned: false,
-            kycLevel: {
-              in: ['IDENTITY_VERIFIED', 'DOCUMENT_VERIFIED', 'FACE_VERIFIED', 'FULLY_VERIFIED'],
-            },
+    const [
+      totalUsers,
+      verifiedUsers,
+      totalTrips,
+      activeTrips,
+      totalShipments,
+      deliveredShipments,
+      reviewAgg,
+      tripCountries,
+    ] = await Promise.all([
+      this.prisma.user.count({ where: { isBanned: false } }),
+      this.prisma.user.count({
+        where: {
+          isBanned: false,
+          kycLevel: {
+            in: ['IDENTITY_VERIFIED', 'DOCUMENT_VERIFIED', 'FACE_VERIFIED', 'FULLY_VERIFIED'],
           },
-        }),
-        this.prisma.trip.count(),
-        this.prisma.trip.count({ where: { status: 'ACTIVE', departureDate: { gt: now } } }),
-        this.prisma.shipment.count(),
-        this.prisma.shipment.count({ where: { status: { in: [...DELIVERED_STATUSES] } } }),
-        this.prisma.review.aggregate({ _avg: { rating: true }, _count: true }),
-        this.prisma.trip.findMany({
-          select: { destinationCountry: true },
-          distinct: ['destinationCountry'],
-        }),
-      ]);
+        },
+      }),
+      this.prisma.trip.count(),
+      this.prisma.trip.count({ where: { status: 'ACTIVE', departureDate: { gt: now } } }),
+      this.prisma.shipment.count(),
+      this.prisma.shipment.count({ where: { status: { in: [...DELIVERED_STATUSES] } } }),
+      this.prisma.review.aggregate({ _avg: { rating: true }, _count: true }),
+      this.prisma.trip.findMany({
+        select: { destinationCountry: true },
+        distinct: ['destinationCountry'],
+      }),
+    ]);
 
     return {
       users: totalUsers,

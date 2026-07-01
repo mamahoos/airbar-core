@@ -21,7 +21,9 @@ export class NotificationService {
   async create(input: CreateNotificationInput) {
     const notification = await this.notifications.create(input);
     if (input.type === 'PUSH') {
-      await this.push.send(input.userId, input.title, input.body, input.data).catch(() => undefined);
+      await this.push
+        .send(input.userId, input.title, input.body, input.data)
+        .catch(() => undefined);
     }
     return notification;
   }
@@ -49,7 +51,9 @@ export class NotificationService {
 
 @Injectable()
 export class ListNotificationsUseCase {
-  constructor(@Inject(NOTIFICATION_REPOSITORY) private readonly notifications: NotificationRepositoryPort) {}
+  constructor(
+    @Inject(NOTIFICATION_REPOSITORY) private readonly notifications: NotificationRepositoryPort,
+  ) {}
 
   async execute(userId: string, page?: number, limit?: number) {
     const { page: p, limit: l } = normalizePagination({ page, limit });
@@ -64,7 +68,9 @@ export class ListNotificationsUseCase {
 
 @Injectable()
 export class MarkNotificationReadUseCase {
-  constructor(@Inject(NOTIFICATION_REPOSITORY) private readonly notifications: NotificationRepositoryPort) {}
+  constructor(
+    @Inject(NOTIFICATION_REPOSITORY) private readonly notifications: NotificationRepositoryPort,
+  ) {}
 
   async execute(userId: string, notificationId: string) {
     try {
@@ -77,7 +83,9 @@ export class MarkNotificationReadUseCase {
 
 @Injectable()
 export class MarkAllNotificationsReadUseCase {
-  constructor(@Inject(NOTIFICATION_REPOSITORY) private readonly notifications: NotificationRepositoryPort) {}
+  constructor(
+    @Inject(NOTIFICATION_REPOSITORY) private readonly notifications: NotificationRepositoryPort,
+  ) {}
 
   async execute(userId: string) {
     await this.notifications.markAllRead(userId);
@@ -87,7 +95,9 @@ export class MarkAllNotificationsReadUseCase {
 
 @Injectable()
 export class DeleteNotificationUseCase {
-  constructor(@Inject(NOTIFICATION_REPOSITORY) private readonly notifications: NotificationRepositoryPort) {}
+  constructor(
+    @Inject(NOTIFICATION_REPOSITORY) private readonly notifications: NotificationRepositoryPort,
+  ) {}
 
   async execute(userId: string, notificationId: string) {
     try {

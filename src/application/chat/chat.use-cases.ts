@@ -93,12 +93,7 @@ export class SendChatMessageUseCase {
     private readonly redis: RedisService,
   ) {}
 
-  async execute(
-    userId: string,
-    chatId: string,
-    content: string,
-    attachments?: readonly string[],
-  ) {
+  async execute(userId: string, chatId: string, content: string, attachments?: readonly string[]) {
     const chat = await this.access.assertParticipant(userId, chatId);
     if (!chat.isActive) throw new ForbiddenError('Chat is no longer active');
 
