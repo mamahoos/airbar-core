@@ -113,14 +113,14 @@ describe('Marketplace flow integration smoke', () => {
       data: {
         tripId: trip.id,
         carrierId: carrier.id,
-        status: 'ASSIGNED',
+        status: 'MATCHED',
         agreedPrice: 100_000,
       },
     });
 
     expect(assigned.tripId).toBe(trip.id);
     expect(assigned.carrierId).toBe(carrier.id);
-    expect(assigned.status).toBe('ASSIGNED');
+    expect(assigned.status).toBe('MATCHED');
 
     await prisma.shipment.delete({ where: { id: shipment.id } });
     await prisma.trip.delete({ where: { id: trip.id } });
