@@ -9,7 +9,7 @@ Engineering docs for the Node/NestJS marketplace orchestrator (Scenario B).
 | N0 Bootstrap                            | Done    | [tasks/N0-bootstrap-report.md](./tasks/N0-bootstrap-report.md)   |
 | N1 Foundation & shared kernel           | Done    | [tasks/N1-foundation-report.md](./tasks/N1-foundation-report.md) |
 | N2 Auth                                 | Done    | [tasks/N2-auth-report.md](./tasks/N2-auth-report.md)             |
-| N3 Users + KYC                          | Planned | —                                                                |
+| N3 Users + KYC                          | Done    | [tasks/N3-users-kyc-report.md](./tasks/N3-users-kyc-report.md)   |
 | N4 Marketplace                          | Planned | —                                                                |
 | N5 Chat + Notifications + Admin + Stats | Planned | —                                                                |
 | N6 Finance orchestration                | Planned | —                                                                |
