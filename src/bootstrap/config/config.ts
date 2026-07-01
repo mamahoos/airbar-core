@@ -46,6 +46,8 @@ export const AppConfigSchema = z.object({
   /** airbar-finance gRPC endpoint — wired in N1, used from N6. */
   financeGrpcUrl: z.string().default('localhost:50051'),
   financeGrpcTls: z.coerce.boolean().default(false),
+  frontendUrl: z.string().url().default('http://localhost:3000'),
+  outboxMaxAttempts: z.coerce.number().int().positive().default(10),
 
   jwtSecret: z.string().min(16).default('dev-only-jwt-secret-change-in-production'),
   jwtRefreshSecret: z.string().min(16).default('dev-only-jwt-refresh-secret-change-in-production'),
