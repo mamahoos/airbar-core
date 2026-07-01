@@ -1,0 +1,9 @@
+dist
+node_modules
+coverage
+src/adapters/grpc-client/generated
+prisma/generated
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+.cursor
