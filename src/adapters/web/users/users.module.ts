@@ -13,11 +13,12 @@ import { AuthPersistenceModule } from '../../persistence/auth/auth-persistence.m
 import { UsersPersistenceModule } from '../../persistence/users/users-persistence.module.js';
 import { StorageModule } from '../../storage/storage.module.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { PaymentsModule } from '../payments/payments.module.js';
 
 import { UsersController } from './users.controller.js';
 
 @Module({
-  imports: [AuthPersistenceModule, UsersPersistenceModule, StorageModule, AuthModule],
+  imports: [AuthPersistenceModule, UsersPersistenceModule, StorageModule, AuthModule, PaymentsModule],
   controllers: [UsersController],
   providers: [
     GetProfileUseCase,

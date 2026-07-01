@@ -63,11 +63,21 @@ async function bootstrap(): Promise<void> {
     swaggerOptions: { persistAuthorization: true },
   });
 
+  app.enableShutdownHooks();
+
   await app.listen(config.port);
+
+  const shutdown = (signal: string) => {
+    logger.warn(`Received ${signal}, shutting down…`);
+    void app.close().finally(() => process.exit(0));
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 
   logger.log(`🚀 airbar-core on port ${config.port}`);
   logger.log(`📚 Swagger docs at http://localhost:${config.port}/docs`);
   logger.log(`🏥 Health at http://localhost:${config.port}/api/v1/health`);
+  logger.log(`📈 Metrics at http://localhost:${config.port}/api/v1/metrics`);
   logger.log(`🌍 Environment: ${config.nodeEnv}`);
 }
 

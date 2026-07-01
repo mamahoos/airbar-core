@@ -17,6 +17,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { ListSessionsUseCase } from '../../../application/auth/list-sessions.use-case.js';
+import {
+  GetWalletUseCase,
+  ListWalletTransactionsUseCase,
+} from '../../../application/finance/payment.use-cases.js';
 import { ChangePasswordUseCase } from '../../../application/users/change-password.use-case.js';
 import { GetProfileUseCase } from '../../../application/users/get-profile.use-case.js';
 import { UpdateAvatarUseCase } from '../../../application/users/update-avatar.use-case.js';
@@ -45,6 +49,8 @@ export class UsersController {
     private readonly revokeSession: RevokeSessionUseCase,
     private readonly listActivity: ListActivityLogsUseCase,
     private readonly getPublicProfile: GetPublicProfileUseCase,
+    private readonly getWallet: GetWalletUseCase,
+    private readonly listWalletTransactions: ListWalletTransactionsUseCase,
   ) {}
 
   @Get('me')
@@ -107,12 +113,15 @@ export class UsersController {
   }
 
   @Get('me/wallet')
-  @ApiOperation({ summary: 'Wallet balance — proxied to airbar-finance in N6' })
-  walletStub() {
-    return {
-      message: 'Wallet balance is served by airbar-finance; full proxy lands in N6.',
-      balance: null,
-    };
+  @ApiOperation({ summary: 'Wallet balance from airbar-finance' })
+  wallet(@CurrentUser() user: AuthUser) {
+    return this.getWallet.execute(user.id);
+  }
+
+  @Get('me/wallet/transactions')
+  @ApiOperation({ summary: 'Wallet transaction history from airbar-finance' })
+  walletTransactions(@CurrentUser() user: AuthUser) {
+    return this.listWalletTransactions.execute(user.id);
   }
 
   @Get(':id')

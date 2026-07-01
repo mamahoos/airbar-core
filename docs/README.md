@@ -12,8 +12,8 @@ Engineering docs for the Node/NestJS marketplace orchestrator (Scenario B).
 | N3 Users + KYC                          | Done    | [tasks/N3-users-kyc-report.md](./tasks/N3-users-kyc-report.md)   |
 | N4 Marketplace                          | Planned | —                                                                |
 | N5 Chat + Notifications + Admin + Stats | Planned | —                                                                |
-| N6 Finance orchestration                | Planned | —                                                                |
-| N7 Intake + Internal + hardening        | Planned | —                                                                |
+| N6 Finance orchestration                | In PR | [`N6-finance-report.md`](tasks/N6-finance-report.md)             |
+| N7 Intake + Internal + hardening        | In PR | [`N7-hardening-report.md`](tasks/N7-hardening-report.md)         |
 
 Parent plan: [tasks/00-plan.md](./tasks/00-plan.md) · Architecture: [architecture.md](./architecture.md)
 
