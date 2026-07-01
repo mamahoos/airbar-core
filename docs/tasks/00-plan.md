@@ -24,20 +24,21 @@ These are defaults I'm proceeding with. Override any of them and I'll adjust.
 
 ## Phases
 
-| Phase | Title | Scope | PR | Report |
-|-------|-------|-------|----|--------|
-| N0 | Bootstrap | Repo skeleton, tooling, CI gates, health, Docker, Prisma baseline | feat/n0-bootstrap | `N0-bootstrap-report.md` |
-| N1 | Foundation & shared kernel | Clean Architecture base, errors, pagination, branded IDs, response envelope, proto codegen, gRPC client skeleton, idempotency keys | feat/n1-foundation | `N1-foundation-report.md` |
-| N2 | Auth | OTP (SMS), JWT access/refresh, register, login, logout, sessions, roles, guards | feat/n2-auth | `N2-auth-report.md` |
-| N3 | Users + KYC | profile, avatar, sessions, activity log, KYC (Shahkar, identity, bank card, documents, api.ir) | feat/n3-users-kyc | `N3-users-kyc-report.md` |
-| N4 | Marketplace | trips, shipments, matching, pricing, search, lifecycle, quote/track | feat/n4-marketplace | `N4-marketplace-report.md` |
-| N5 | Chat + Notifications + Admin + Stats | non-financial surfaces (admin payments list defers to N6) | feat/n5-chat-notif-admin | `N5-chat-notif-admin-report.md` |
-| N6 | Finance orchestration | gRPC client + FinanceOrchestrator + integration_outbox + BullMQ worker + bridge fields + payments/wallet/withdrawal refactor + cron auto-release + admin payout/dispute via gRPC | feat/n6-finance-orchestration | `N6-finance-report.md` |
-| N7 | Intake + Internal + hardening | intake drafts, internal API, cron jobs, prometheus metrics, graceful shutdown | feat/n7-intake-internal-hardening | `N7-hardening-report.md` |
+| Phase | Title                                | Scope                                                                                                                                                                            | PR                                | Report                          |
+| ----- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ------------------------------- |
+| N0    | Bootstrap                            | Repo skeleton, tooling, CI gates, health, Docker, Prisma baseline                                                                                                                | feat/n0-bootstrap                 | `N0-bootstrap-report.md`        |
+| N1    | Foundation & shared kernel           | Clean Architecture base, errors, pagination, branded IDs, response envelope, proto codegen, gRPC client skeleton, idempotency keys                                               | feat/n1-foundation                | `N1-foundation-report.md`       |
+| N2    | Auth                                 | OTP (SMS), JWT access/refresh, register, login, logout, sessions, roles, guards                                                                                                  | feat/n2-auth                      | `N2-auth-report.md`             |
+| N3    | Users + KYC                          | profile, avatar, sessions, activity log, KYC (Shahkar, identity, bank card, documents, api.ir)                                                                                   | feat/n3-users-kyc                 | `N3-users-kyc-report.md`        |
+| N4    | Marketplace                          | trips, shipments, matching, pricing, search, lifecycle, quote/track                                                                                                              | feat/n4-marketplace               | `N4-marketplace-report.md`      |
+| N5    | Chat + Notifications + Admin + Stats | non-financial surfaces (admin payments list defers to N6)                                                                                                                        | feat/n5-chat-notif-admin          | `N5-chat-notif-admin-report.md` |
+| N6    | Finance orchestration                | gRPC client + FinanceOrchestrator + integration_outbox + BullMQ worker + bridge fields + payments/wallet/withdrawal refactor + cron auto-release + admin payout/dispute via gRPC | feat/n6-finance-orchestration     | `N6-finance-report.md`          |
+| N7    | Intake + Internal + hardening        | intake drafts, internal API, cron jobs, prometheus metrics, graceful shutdown                                                                                                    | feat/n7-intake-internal-hardening | `N7-hardening-report.md`        |
 
 ### Phase detail
 
 #### N0 — Bootstrap
+
 - `package.json` (Node 22, npm scripts: `build`, `dev`, `start`, `lint`, `format`, `typecheck`, `test`, `test:integration`, `test:cov`, `prisma:*`)
 - `tsconfig.json` strict, `tsconfig.build.json`
 - ESLint flat config + Prettier
@@ -52,6 +53,7 @@ These are defaults I'm proceeding with. Override any of them and I'll adjust.
 - TDD: health controller tests, config validation tests
 
 #### N1 — Foundation & shared kernel
+
 - `shared/errors` (mapped to Nest exceptions), `shared/pagination`, `shared/ids` (branded), `shared/result`, `shared/money`, `shared/idempotency` (key builders matching finance patterns)
 - Global exception filter, transform interceptor, logging interceptor (ported from monolith but cleaned)
 - Copy `proto/airbar_finance_v1.proto` into `proto/`; `ts-proto` codegen target `src/adapters/grpc-client/generated/`
@@ -60,7 +62,9 @@ These are defaults I'm proceeding with. Override any of them and I'll adjust.
 - Tests: idempotency key builders, error mapping, pagination math
 
 #### N2 — Auth
+
 Port `auth/*` from monolith with Clean Architecture split:
+
 - domain: `User`, `Session`, `Otp`, roles enum
 - application: `SendOtp`, `VerifyOtp`, `Register`, `Login`, `Refresh`, `Logout`, `ListSessions`
 - adapters: web (controllers + DTOs + zod), persistence (Prisma repos), `sms` provider abstraction (LimoSMS/api.ir)
@@ -68,12 +72,14 @@ Port `auth/*` from monolith with Clean Architecture split:
 - TDD: every use case has a unit spec; integration spec for OTP rate limiting
 
 #### N3 — Users + KYC
+
 - Users: profile CRUD, avatar (MinIO), password change, sessions, activity log, `me/wallet` proxies finance (N6)
 - KYC: Shahkar verification, identity (api.ir PersonInfo), bank card (api.ir IBAN/card inquiry), postal code, documents upload, admin review, `KycLevel` guard + `@RequireKyc`
 - PII boundary: IBAN/card/national_id encrypted at rest in `airbar_api`
 - `user_payout_profiles` (IBAN ciphertext) for withdrawal flow in N6
 
 #### N4 — Marketplace
+
 - Trips: create/publish/search/cancel, my trips, requests
 - Shipments: quote/track/create/cancel/accept/reject/status/dispute, my/ carrying
 - Matching: compatible trip/shipment pairs + assign
@@ -83,12 +89,14 @@ Port `auth/*` from monolith with Clean Architecture split:
 - TDD: state machine transitions, pricing math, matching filters (price + cargo types — last commit on monolith fixed this; preserve the fix)
 
 #### N5 — Chat + Notifications + Admin + Stats
+
 - Chat: thread per shipment, messages
 - Notifications: in-app, read/unread, list
 - Admin: dashboard, users, ban/unban, KYC pending, logs, config, pricing rules, **disputes list** (resolve actions defer to N6)
 - Stats: public stats, popular routes, testimonials, market (live market stats call finance in N6)
 
 #### N6 — Finance orchestration (the big one)
+
 - `FinanceOrchestrator` implementation mapping domain events → gRPC calls with idempotency keys
 - `integration_outbox` Prisma model + migration; `IntegrationOutboxService` (insert + enqueue) + BullMQ processor + per-command handlers + backoff + max attempts + admin replay endpoint
 - `payments.service` rewrite: createEscrow + createPaymentOrder → redirect; remove ZarinPal/Stripe providers; remove PSP callback routes (finance owns callbacks)
@@ -100,6 +108,7 @@ Port `auth/*` from monolith with Clean Architecture split:
 - Tests: orchestrator idempotency key builders, outbox fail→retry→done, gRPC client contract
 
 #### N7 — Intake + Internal + hardening
+
 - Intake: drafts (telegram DM → notification service delegation), claim flow, stats; `intake-key` guard
 - Internal: API-key-guarded `users/:id`, `users/bulk`, `notifications`
 - Cron jobs consolidated

@@ -4,27 +4,27 @@ Engineering docs for the Node/NestJS marketplace orchestrator (Scenario B).
 
 ## Roadmap & phases
 
-| Phase | Status | Report |
-|-------|--------|--------|
-| N0 Bootstrap | In progress | [tasks/N0-bootstrap-report.md](./tasks/N0-bootstrap-report.md) |
-| N1 Foundation & shared kernel | Planned | [tasks/00-plan.md](./tasks/00-plan.md) |
-| N2 Auth | Planned | — |
-| N3 Users + KYC | Planned | — |
-| N4 Marketplace | Planned | — |
-| N5 Chat + Notifications + Admin + Stats | Planned | — |
-| N6 Finance orchestration | Planned | — |
-| N7 Intake + Internal + hardening | Planned | — |
+| Phase                                   | Status      | Report                                                         |
+| --------------------------------------- | ----------- | -------------------------------------------------------------- |
+| N0 Bootstrap                            | In progress | [tasks/N0-bootstrap-report.md](./tasks/N0-bootstrap-report.md) |
+| N1 Foundation & shared kernel           | Planned     | [tasks/00-plan.md](./tasks/00-plan.md)                         |
+| N2 Auth                                 | Planned     | —                                                              |
+| N3 Users + KYC                          | Planned     | —                                                              |
+| N4 Marketplace                          | Planned     | —                                                              |
+| N5 Chat + Notifications + Admin + Stats | Planned     | —                                                              |
+| N6 Finance orchestration                | Planned     | —                                                              |
+| N7 Intake + Internal + hardening        | Planned     | —                                                              |
 
 Parent plan: [tasks/00-plan.md](./tasks/00-plan.md) · Architecture: [architecture.md](./architecture.md)
 
 ## Quick reference
 
-| Topic | Location |
-|-------|----------|
-| Local setup, Docker, env | [development.md](./development.md) |
-| gRPC contract (finance) | [`../proto/airbar_finance_v1.proto`](../proto/airbar_finance_v1.proto) |
-| Prisma migrations | `prisma/migrations/` |
-| Architecture | [architecture.md](./architecture.md) |
+| Topic                    | Location                                                               |
+| ------------------------ | ---------------------------------------------------------------------- |
+| Local setup, Docker, env | [development.md](./development.md)                                     |
+| gRPC contract (finance)  | [`../proto/airbar_finance_v1.proto`](../proto/airbar_finance_v1.proto) |
+| Prisma migrations        | `prisma/migrations/`                                                   |
+| Architecture             | [architecture.md](./architecture.md)                                   |
 
 ## Configuration (production rule)
 

@@ -41,10 +41,10 @@ curl -sf http://localhost:4000/api/v1/health
 
 ## Environment files
 
-| File | Commit? | Purpose |
-|------|---------|---------|
-| `.env.example` | Yes | Template for all required variables |
-| `.env` | **No** | Local overrides (gitignored) |
+| File           | Commit? | Purpose                             |
+| -------------- | ------- | ----------------------------------- |
+| `.env.example` | Yes     | Template for all required variables |
+| `.env`         | **No**  | Local overrides (gitignored)        |
 
 Production deployments must inject env via the orchestrator — not via `.env` on disk.
 
@@ -58,12 +58,12 @@ make migrate-down      # rollback one step
 
 ## Tests
 
-| Scope | Command |
-|-------|---------|
-| Unit (CI) | `npm test` |
+| Scope                           | Command                 |
+| ------------------------------- | ----------------------- |
+| Unit (CI)                       | `npm test`              |
 | Integration (Prisma + Postgres) | `make test-integration` |
-| Coverage | `npm run test:cov` |
-| Full verify | `make verify` |
+| Coverage                        | `npm run test:cov`      |
+| Full verify                     | `make verify`           |
 
 ## CI
 

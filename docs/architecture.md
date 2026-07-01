@@ -6,15 +6,15 @@ Go) is a separate service reached over **gRPC** + a transactional outbox.
 
 ## References
 
-| Topic | Source |
-|-------|--------|
-| Architecture choice (Scenario B) | `scenario-b-development/01-معماری-انتخابی.md` |
-| Node refactor plan | `scenario-b-development/03-هسته-مرکزی-node.md` |
-| Outbox pattern | `scenario-b-development/05-الگوی-outbox.md` |
-| Boundary contract | `test/BOUNDARY-CONTRACT.md` |
-| gRPC contract | `airbar-finance/proto/airbar_finance_v1.proto` |
-| Original behavior | `airbar-api/` (NestJS monolith — **reference, not deploy target**) |
-| Finance service | `airbar-finance/` (Go — already shipped F0..F6) |
+| Topic                            | Source                                                             |
+| -------------------------------- | ------------------------------------------------------------------ |
+| Architecture choice (Scenario B) | `scenario-b-development/01-معماری-انتخابی.md`                      |
+| Node refactor plan               | `scenario-b-development/03-هسته-مرکزی-node.md`                     |
+| Outbox pattern                   | `scenario-b-development/05-الگوی-outbox.md`                        |
+| Boundary contract                | `test/BOUNDARY-CONTRACT.md`                                        |
+| gRPC contract                    | `airbar-finance/proto/airbar_finance_v1.proto`                     |
+| Original behavior                | `airbar-api/` (NestJS monolith — **reference, not deploy target**) |
+| Finance service                  | `airbar-finance/` (Go — already shipped F0..F6)                    |
 
 ## Two services, two databases
 
@@ -27,14 +27,14 @@ clients → HTTPS → airbar-core (Node/NestJS) → PostgreSQL airbar_api
                               Zibal PSP ── HTTPS callback ─────┘ (finance edge only)
 ```
 
-| Concern | Owner |
-|---------|-------|
-| users, auth, OTP, sessions, KYC, identity, payout profile | `airbar-core` |
-| trips, shipments, chat, reviews, disputes, pricing, cities | `airbar-core` |
-| notifications, activity log, system config, drafts | `airbar-core` |
+| Concern                                                                                 | Owner                  |
+| --------------------------------------------------------------------------------------- | ---------------------- |
+| users, auth, OTP, sessions, KYC, identity, payout profile                               | `airbar-core`          |
+| trips, shipments, chat, reviews, disputes, pricing, cities                              | `airbar-core`          |
+| notifications, activity log, system config, drafts                                      | `airbar-core`          |
 | `shipments.finance_escrow_id`, `shipments.payment_order_id`, `shipments.payment_method` | `airbar-core` (bridge) |
-| `integration_outbox` + BullMQ worker | `airbar-core` |
-| escrows, payment_orders, ledger (SSOT balance), withdrawals, Zibal, reconciliation | `airbar-finance` |
+| `integration_outbox` + BullMQ worker                                                    | `airbar-core`          |
+| escrows, payment_orders, ledger (SSOT balance), withdrawals, Zibal, reconciliation      | `airbar-finance`       |
 
 ## Layering (Clean Architecture)
 
@@ -99,22 +99,22 @@ adapters → application → domain ← adapters
 
 ## Reliability patterns
 
-| Pattern | Where |
-|---------|-------|
-| Transactional outbox | `adapters/queue` + `integration_outbox` table |
-| Idempotency keys | `shared/idempotency` → gRPC metadata |
-| Try-sync-first, outbox-on-fail | `application/finance/*-orchestrator` |
-| Cron auto-release + poller | `application/shipments` cron jobs |
-| Backoff + max attempts | outbox worker |
+| Pattern                        | Where                                         |
+| ------------------------------ | --------------------------------------------- |
+| Transactional outbox           | `adapters/queue` + `integration_outbox` table |
+| Idempotency keys               | `shared/idempotency` → gRPC metadata          |
+| Try-sync-first, outbox-on-fail | `application/finance/*-orchestrator`          |
+| Cron auto-release + poller     | `application/shipments` cron jobs             |
+| Backoff + max attempts         | outbox worker                                 |
 
 ## Testing strategy
 
-| Layer | Tool | What |
-|-------|------|------|
-| Unit (small) | Jest | domain rules, use cases with fake repositories |
-| Integration (medium) | Jest + testcontainers Postgres | Prisma repositories, outbox worker |
-| gRPC contract (medium) | Jest + finance stub | client against in-process finance or mock server |
-| E2E (large) | Jest + supertest | HTTP flows with mocked finance |
+| Layer                  | Tool                           | What                                             |
+| ---------------------- | ------------------------------ | ------------------------------------------------ |
+| Unit (small)           | Jest                           | domain rules, use cases with fake repositories   |
+| Integration (medium)   | Jest + testcontainers Postgres | Prisma repositories, outbox worker               |
+| gRPC contract (medium) | Jest + finance stub            | client against in-process finance or mock server |
+| E2E (large)            | Jest + supertest               | HTTP flows with mocked finance                   |
 
 ## CI/CD (inspired from `airbar-finance`)
 
