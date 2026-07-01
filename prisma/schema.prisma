@@ -532,3 +532,47 @@ model IntegrationOutbox {
   @@index([status, nextRetryAt])
   @@map("integration_outbox")
 }
+
+enum DraftType {
+  TRIP
+  SHIPMENT
+}
+
+enum DraftStatus {
+  NEW
+  CLAIMED
+  EXPIRED
+}
+
+enum DraftSource {
+  TELEGRAM
+  API
+}
+
+model DraftRequest {
+  id                  String       @id @default(uuid())
+  previewToken        String       @unique @map("preview_token")
+  type                DraftType
+  status              DraftStatus  @default(NEW)
+  source              DraftSource  @default(TELEGRAM)
+  payload             Json
+  rawPayload          Json?        @map("raw_payload")
+  confidence          Float?
+  telegramChatId      String?      @map("telegram_chat_id")
+  telegramUserId      String?      @map("telegram_user_id")
+  telegramUsername    String?      @map("telegram_username")
+  telegramMessageId   String?      @map("telegram_message_id")
+  sourceChannel       String?      @map("source_channel")
+  claimedById         String?      @map("claimed_by_id")
+  claimedTripId       String?      @map("claimed_trip_id")
+  claimedShipmentId   String?      @map("claimed_shipment_id")
+  claimedAt           DateTime?    @map("claimed_at")
+  notifiedAt          DateTime?    @map("notified_at")
+  expiresAt           DateTime?    @map("expires_at")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([type])
+  @@map("draft_requests")
+}

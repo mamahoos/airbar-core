@@ -11,8 +11,11 @@ import { AdminModule } from '../adapters/web/admin/admin.module.js';
 import { AuthModule } from '../adapters/web/auth/auth.module.js';
 import { ChatModule } from '../adapters/web/chat/chat.module.js';
 import { HealthModule } from '../adapters/web/health/health.module.js';
+import { IntakeModule } from '../adapters/web/intake/intake.module.js';
+import { InternalModule } from '../adapters/web/internal/internal.module.js';
 import { KycModule } from '../adapters/web/kyc/kyc.module.js';
 import { MarketplaceModule } from '../adapters/web/marketplace/marketplace.module.js';
+import { MetricsModule } from '../adapters/web/metrics/metrics.module.js';
 import { NotificationsModule } from '../adapters/web/notifications/notifications.module.js';
 import { PaymentsModule } from '../adapters/web/payments/payments.module.js';
 import { StatsModule } from '../adapters/web/stats/stats.module.js';
@@ -49,6 +52,9 @@ import type { AppConfig } from './config/index.js';
     StatsModule,
     AdminModule,
     PaymentsModule,
+    IntakeModule,
+    InternalModule,
+    MetricsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

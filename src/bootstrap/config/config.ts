@@ -49,6 +49,12 @@ export const AppConfigSchema = z.object({
   frontendUrl: z.string().url().default('http://localhost:3000'),
   outboxMaxAttempts: z.coerce.number().int().positive().default(10),
 
+  intakeApiKey: z.string().optional(),
+  internalApiKey: z.string().optional(),
+  publicWebUrl: z.string().url().optional(),
+  intakeTestMode: z.coerce.boolean().default(true),
+  intakeTestTelegramChatId: z.string().optional(),
+
   jwtSecret: z.string().min(16).default('dev-only-jwt-secret-change-in-production'),
   jwtRefreshSecret: z.string().min(16).default('dev-only-jwt-refresh-secret-change-in-production'),
   jwtExpiresIn: z.string().default('7d'),
