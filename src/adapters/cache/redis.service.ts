@@ -56,6 +56,36 @@ export class RedisService implements OnModuleDestroy {
     return this.client.incr(key);
   }
 
+  async incrbyfloat(key: string, increment: number): Promise<string> {
+    return this.client.incrbyfloat(key, increment);
+  }
+
+  async zincrby(key: string, increment: number, member: string): Promise<void> {
+    await this.client.zincrby(key, increment, member);
+  }
+
+  async zrevrangeWithScores(
+    key: string,
+    start: number,
+    stop: number,
+  ): Promise<Array<{ member: string; score: number }>> {
+    const rows = await this.client.zrevrange(key, start, stop, 'WITHSCORES');
+    const result: Array<{ member: string; score: number }> = [];
+    for (let i = 0; i < rows.length; i += 2) {
+      const member = rows[i];
+      const scoreRaw = rows[i + 1];
+      if (member !== undefined && scoreRaw !== undefined) {
+        result.push({ member, score: Number(scoreRaw) });
+      }
+    }
+    return result;
+  }
+
+  /** For Redis pipelines (e.g. market-stats backfill). */
+  getClient(): Redis {
+    return this.client;
+  }
+
   async expire(key: string, ttlSeconds: number): Promise<void> {
     await this.client.expire(key, ttlSeconds);
   }

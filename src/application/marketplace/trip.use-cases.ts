@@ -10,6 +10,7 @@ import {
 } from '../../domain/marketplace/trip.repository.port.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../shared/errors/index.js';
 import { buildPaginationMeta, normalizePagination } from '../../shared/pagination/pagination.js';
+import { MarketStatsService } from '../stats/market-stats.service.js';
 
 @Injectable()
 export class CreateTripUseCase {
@@ -75,7 +76,10 @@ export class DeleteTripUseCase {
 
 @Injectable()
 export class PublishTripUseCase {
-  constructor(@Inject(TRIP_REPOSITORY) private readonly trips: TripRepositoryPort) {}
+  constructor(
+    @Inject(TRIP_REPOSITORY) private readonly trips: TripRepositoryPort,
+    private readonly marketStats: MarketStatsService,
+  ) {}
 
   async execute(userId: string, tripId: string) {
     const trip = await this.trips.findById(tripId);
@@ -84,7 +88,12 @@ export class PublishTripUseCase {
     if (trip.status !== 'DRAFT') {
       throw new ValidationError('Only draft trips can be published');
     }
-    return this.trips.publish(tripId);
+    const published = await this.trips.publish(tripId);
+    await this.marketStats.recordTripSupply({
+      originCity: published.originCity,
+      destinationCity: published.destinationCity,
+    });
+    return published;
   }
 }
 

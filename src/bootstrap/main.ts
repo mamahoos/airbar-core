@@ -27,9 +27,18 @@ async function bootstrap(): Promise<void> {
 
   const allowedOrigins = config.corsOrigins;
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
       callback(new Error('Not allowed by CORS'));
     },
     credentials: true,

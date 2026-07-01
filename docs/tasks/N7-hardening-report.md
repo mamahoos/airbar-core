@@ -1,8 +1,8 @@
 # N7 — Intake, Internal API, and Hardening report
 
-**Branch:** `feat/n7-intake-internal-hardening` (stacked on N6)  
+**Branch:** merged via `feat/complete-remaining`  
 **Issue:** #9  
-**Status:** Ready for PR — completes rewrite phases N0–N7
+**Status:** ✅ Merged to `main` (rewrite N0–N7 complete)
 
 ## Delivered
 
@@ -40,17 +40,14 @@
 ## Test plan
 
 - [x] `make verify`
-- [ ] `POST /intake/drafts` with `x-intake-key`
-- [ ] Claim draft with JWT → shipment/trip created
-- [ ] `GET /api/v1/metrics` returns Prometheus text
-- [ ] Internal user lookup with `x-internal-key`
+- [x] `POST /intake/drafts` with `x-intake-key`
+- [x] Claim draft with JWT → shipment/trip created (integration smoke)
+- [x] `GET /api/v1/metrics` returns Prometheus text
+- [x] Internal user lookup with `x-internal-key`
 
 ## Merge order (full stack)
 
-1. #25 N4 → `main`
-2. Rebase #26 N5 → merge
-3. Rebase #27 N6 → merge
-4. Rebase this PR → merge → closes #9
+All phases merged to `main` via PRs #10, #19–#20, #23, #25, #29, and follow-up #30.
 
 ## Rewrite complete
 

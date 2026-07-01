@@ -12,7 +12,7 @@ orchestrator that delegates all money movement to the Go service
 
 These are defaults I'm proceeding with. Override any of them and I'll adjust.
 
-1. **Stack:** Node 22 LTS, npm, NestJS 10 + Express (preserves original platform), Prisma 5, Jest, BullMQ, Redis, MinIO.
+1. **Stack:** Node 22 LTS, npm, NestJS 11 + Express (preserves original platform), Prisma 5, Jest, BullMQ, Redis, MinIO.
 2. **Type safety:** strict TS, branded IDs, zod at boundaries, `ts-proto` for gRPC codegen.
 3. **Package layout:** Clean Architecture — `src/{domain,application,adapters,shared,bootstrap}` (see `architecture.md`).
 4. **Fresh schema:** `airbar-core` is a **rewrite**, not an in-place refactor. The Prisma schema omits the legacy `Payment`, `Payout`, `WalletTransaction` tables and `User.walletBalance` from day one — those concerns now live in `airbar-finance`. The original `airbar-api` DB is **not** migrated; cutover is out of scope here.
@@ -117,12 +117,14 @@ Port `auth/*` from monolith with Clean Architecture split:
 
 ## Definition of Done (per phase)
 
-- [ ] Code + tests (unit; integration where it crosses a boundary)
-- [ ] All CI gates green on the PR
-- [ ] Phase report committed to `docs/tasks/`
-- [ ] Linked issue closed by the merge
-- [ ] No PII in logs; no secrets in repo
-- [ ] `npm run lint && npm run typecheck && npm test && npm run build` clean locally
+- [x] Code + tests (unit; integration where it crosses a boundary)
+- [x] All CI gates green on the PR
+- [x] Phase report committed to `docs/tasks/`
+- [x] Linked issue closed by the merge
+- [x] No PII in logs; no secrets in repo
+- [x] `npm run lint && npm run typecheck && npm test && npm run build` clean locally
+
+**Rewrite status (N0–N7):** complete on `main`. Post-rewrite follow-ups tracked in GitHub issues (e.g. deploy, Zibal E2E).
 
 ## Out of scope (maintainer will handle later)
 

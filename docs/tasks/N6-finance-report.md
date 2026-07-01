@@ -1,8 +1,8 @@
 # N6 — Finance orchestration report
 
-**Branch:** `feat/n6-finance-orchestration` (stacked on N5)  
+**Branch:** merged via `feat/n5-through-n7`  
 **Issue:** #8  
-**Status:** Ready for PR after N5 merge
+**Status:** ✅ Merged to `main`
 
 ## Delivered
 
@@ -66,8 +66,7 @@
 1. Merge #25 (N4) → #26 (N5) → this PR
 2. Rebase onto `main` before final merge
 
-## Deferred
+## Deferred (post-rewrite)
 
-- `/stats/market` Redis leaderboards (needs live finance aggregates)
 - Treasury / reconciliation admin (finance-only ops)
 - E2E against Zibal sandbox

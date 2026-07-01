@@ -29,6 +29,7 @@ import {
 } from '../finance/finance-orchestrator.port.js';
 import { KycAccessService } from '../kyc/kyc-access.service.js';
 import { NotificationService } from '../notifications/notification.use-cases.js';
+import { MarketStatsService } from '../stats/market-stats.service.js';
 
 import { marketplaceKycRequirement } from './marketplace-kyc-gates.js';
 import { PricingQuoteService } from './pricing-quote.service.js';
@@ -45,6 +46,7 @@ export class CreateShipmentUseCase {
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     private readonly pricing: PricingQuoteService,
     private readonly kyc: KycAccessService,
+    private readonly marketStats: MarketStatsService,
   ) {}
 
   async execute(senderId: string, input: Omit<CreateShipmentInput, 'systemPrice'>) {
@@ -62,6 +64,12 @@ export class CreateShipmentUseCase {
       systemPrice,
     });
     await this.shipments.incrementUserShipmentCount(senderId, 1);
+    await this.marketStats.recordShipmentDemand({
+      originCity: input.originCity,
+      destinationCity: input.destinationCity,
+      cargoType: input.cargoType,
+      weight: input.weight,
+    });
     return shipment;
   }
 }
