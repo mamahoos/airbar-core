@@ -1,0 +1,24 @@
+// AirBar Core — marketplace orchestrator (airbar_api database).
+//
+// Financial tables (Payment, Payout, WalletTransaction) are NOT here — they
+// live in airbar_finance. This schema only carries the marketplace domain
+// plus the bridge fields that reference finance aggregates by id.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Minimal User for N0 — proves the migration path. Extended in N2/N3.
+model User {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
