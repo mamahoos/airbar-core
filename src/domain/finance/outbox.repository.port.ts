@@ -33,7 +33,12 @@ export interface OutboxRepositoryPort {
   markProcessing(id: string): Promise<void>;
   markDone(id: string): Promise<void>;
   markFailed(id: string, error: string): Promise<void>;
-  markPendingForRetry(id: string, attemptCount: number, nextRetryAt: Date, error: string): Promise<void>;
+  markPendingForRetry(
+    id: string,
+    attemptCount: number,
+    nextRetryAt: Date,
+    error: string,
+  ): Promise<void>;
   resetForReplay(id: string): Promise<OutboxRow>;
   listFailed(page: number, limit: number): Promise<{ data: OutboxRow[]; total: number }>;
 }

@@ -25,16 +25,16 @@
 
 ### FinanceOrchestrator (try-sync-first, outbox-on-fail)
 
-| Command | Trigger |
-|---------|---------|
-| CreateEscrow | Accept shipment offer |
-| CreatePaymentOrder / PayFromWallet | `POST /payments` |
-| MarkDelivered | Carrier sets DELIVERED |
-| FreezeEscrow | Open dispute |
-| ReleaseEscrow | Sender CONFIRMED or auto-release cron |
-| RefundEscrow | Admin dispute resolve REFUND |
-| CreateWithdrawal | `POST /payments/withdrawals` |
-| Process/RejectWithdrawal | Admin endpoints |
+| Command                            | Trigger                               |
+| ---------------------------------- | ------------------------------------- |
+| CreateEscrow                       | Accept shipment offer                 |
+| CreatePaymentOrder / PayFromWallet | `POST /payments`                      |
+| MarkDelivered                      | Carrier sets DELIVERED                |
+| FreezeEscrow                       | Open dispute                          |
+| ReleaseEscrow                      | Sender CONFIRMED or auto-release cron |
+| RefundEscrow                       | Admin dispute resolve REFUND          |
+| CreateWithdrawal                   | `POST /payments/withdrawals`          |
+| Process/RejectWithdrawal           | Admin endpoints                       |
 
 ### HTTP
 

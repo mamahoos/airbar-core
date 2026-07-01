@@ -12,10 +12,7 @@ import { FINANCE_OUTBOX_QUEUE } from './finance-outbox.constants.js';
 import { FinanceOutboxProcessor } from './finance-outbox.processor.js';
 
 @Module({
-  imports: [
-    FinancePersistenceModule,
-    BullModule.registerQueue({ name: FINANCE_OUTBOX_QUEUE }),
-  ],
+  imports: [FinancePersistenceModule, BullModule.registerQueue({ name: FINANCE_OUTBOX_QUEUE })],
   providers: [
     OutboxCommandHandler,
     ShipmentFinanceBridgeService,

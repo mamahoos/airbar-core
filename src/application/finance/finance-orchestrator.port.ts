@@ -51,7 +51,8 @@ export interface RejectWithdrawalInput extends ProcessWithdrawalInput {
   readonly reason: string;
 }
 
-export type FinanceSyncResult<T> = { readonly ok: true; readonly value: T } | { readonly ok: false };
+export type FinanceSyncResult<T> =
+  { readonly ok: true; readonly value: T } | { readonly ok: false };
 
 export interface FinanceOrchestratorPort {
   checkFinanceReady(): Promise<FinanceReadyStatus>;

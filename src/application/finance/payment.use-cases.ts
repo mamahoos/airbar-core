@@ -21,10 +21,7 @@ import {
 import { KycAccessService } from '../kyc/kyc-access.service.js';
 
 import { financeKycRequirement } from './finance-kyc-gates.js';
-import {
-  FINANCE_ORCHESTRATOR,
-  type FinanceOrchestratorPort,
-} from './finance-orchestrator.port.js';
+import { FINANCE_ORCHESTRATOR, type FinanceOrchestratorPort } from './finance-orchestrator.port.js';
 import { IntegrationOutboxService } from './integration-outbox.service.js';
 
 import type { AppConfig } from '../../bootstrap/config/index.js';

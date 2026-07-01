@@ -8,8 +8,6 @@ import { METRICS_REGISTRY } from './metrics.constants.js';
 import type { Response } from 'express';
 import type { Registry } from 'prom-client';
 
-
-
 @ApiExcludeController()
 @Controller('metrics')
 export class MetricsController {

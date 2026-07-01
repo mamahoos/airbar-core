@@ -151,11 +151,19 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
   }
 
   async tryMarkDelivered(input: ShipmentFinanceCommandInput): Promise<FinanceSyncResult<void>> {
-    return this.shipmentCommand('MarkDelivered', input.shipmentId, markDeliveredKey(input.shipmentId));
+    return this.shipmentCommand(
+      'MarkDelivered',
+      input.shipmentId,
+      markDeliveredKey(input.shipmentId),
+    );
   }
 
   async tryFreezeEscrow(input: ShipmentFinanceCommandInput): Promise<FinanceSyncResult<void>> {
-    return this.shipmentCommand('FreezeEscrow', input.shipmentId, freezeEscrowKey(input.shipmentId));
+    return this.shipmentCommand(
+      'FreezeEscrow',
+      input.shipmentId,
+      freezeEscrowKey(input.shipmentId),
+    );
   }
 
   async tryReleaseEscrow(input: ShipmentFinanceCommandInput): Promise<FinanceSyncResult<void>> {
@@ -167,11 +175,18 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
   }
 
   async tryRefundEscrow(input: ShipmentFinanceCommandInput): Promise<FinanceSyncResult<void>> {
-    return this.shipmentCommand('RefundEscrow', input.shipmentId, refundEscrowKey(input.shipmentId));
+    return this.shipmentCommand(
+      'RefundEscrow',
+      input.shipmentId,
+      refundEscrowKey(input.shipmentId),
+    );
   }
 
   async tryPartialRefundEscrow(input: PartialRefundInput): Promise<FinanceSyncResult<void>> {
-    const idempotencyKey = partialRefundEscrowKey(input.shipmentId, String(input.refundAmountRials));
+    const idempotencyKey = partialRefundEscrowKey(
+      input.shipmentId,
+      String(input.refundAmountRials),
+    );
     const payload = {
       shipmentId: input.shipmentId,
       refundAmount: String(input.refundAmountRials),
@@ -234,9 +249,12 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     const payload = { withdrawalId: input.withdrawalId };
     return this.trySync(
       () =>
-        this.finance.processWithdrawal({ withdrawalId: input.withdrawalId, idempotencyKey }, {
-          idempotencyKey,
-        }),
+        this.finance.processWithdrawal(
+          { withdrawalId: input.withdrawalId, idempotencyKey },
+          {
+            idempotencyKey,
+          },
+        ),
       () => Promise.resolve(undefined),
       'ProcessWithdrawal',
       AGGREGATE_WITHDRAWAL,
@@ -295,7 +313,15 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
           return this.finance.refundEscrow({ shipmentId, idempotencyKey }, { idempotencyKey });
       }
     };
-    return this.trySync(call, () => Promise.resolve(undefined), command, AGGREGATE_SHIPMENT, shipmentId, payload, idempotencyKey);
+    return this.trySync(
+      call,
+      () => Promise.resolve(undefined),
+      command,
+      AGGREGATE_SHIPMENT,
+      shipmentId,
+      payload,
+      idempotencyKey,
+    );
   }
 
   private paymentUrls() {
@@ -318,7 +344,7 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
   ): Promise<FinanceSyncResult<T>> {
     try {
       const response = await call();
-      const value = await onSuccess((response ?? {}));
+      const value = await onSuccess(response ?? {});
       return { ok: true, value };
     } catch (error) {
       if (isRetryableFinanceError(error)) {

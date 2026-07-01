@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 import { APP_CONFIG } from '../../../bootstrap/config/index.js';
 
@@ -13,7 +19,9 @@ export class IntakeKeyGuard implements CanActivate {
     if (!expected) {
       throw new UnauthorizedException('Intake endpoint is not configured');
     }
-    const req = context.switchToHttp().getRequest<{ headers: Record<string, string | undefined> }>();
+    const req = context
+      .switchToHttp()
+      .getRequest<{ headers: Record<string, string | undefined> }>();
     const provided = req.headers['x-intake-key'];
     if (!provided || provided !== expected) {
       throw new UnauthorizedException('Invalid intake key');

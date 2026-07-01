@@ -43,7 +43,14 @@ import { ShipmentsController } from './shipments.controller.js';
 import { TripsController } from './trips.controller.js';
 
 @Module({
-  imports: [MarketplacePersistenceModule, KycModule, AuthModule, ChatModule, NotificationsModule, FinanceOutboxModule],
+  imports: [
+    MarketplacePersistenceModule,
+    KycModule,
+    AuthModule,
+    ChatModule,
+    NotificationsModule,
+    FinanceOutboxModule,
+  ],
   controllers: [TripsController, ShipmentsController, MatchingController, LocationsController],
   providers: [
     PricingQuoteService,

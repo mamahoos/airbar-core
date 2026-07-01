@@ -31,16 +31,16 @@
 
 ### Admin (non-financial — N5 scope)
 
-| Area | Endpoints |
-|------|-----------|
+| Area      | Endpoints                                         |
+| --------- | ------------------------------------------------- |
 | Dashboard | `GET /admin/dashboard` (no Payment/Payout tables) |
-| Users | list, detail, ban, unban, role (SUPER_ADMIN) |
-| Shipments | paginated list |
-| Disputes | **list only** — resolve/refund deferred to N6 |
-| KYC | pending documents queue |
-| Logs | activity logs with filters |
-| Config | get/update (update = SUPER_ADMIN) |
-| Pricing | list, create, update rules |
+| Users     | list, detail, ban, unban, role (SUPER_ADMIN)      |
+| Shipments | paginated list                                    |
+| Disputes  | **list only** — resolve/refund deferred to N6     |
+| KYC       | pending documents queue                           |
+| Logs      | activity logs with filters                        |
+| Config    | get/update (update = SUPER_ADMIN)                 |
+| Pricing   | list, create, update rules                        |
 
 **Intentionally omitted (N6):** payments list, payouts, dispute resolve, shipment refund, wallet/escrow.
 

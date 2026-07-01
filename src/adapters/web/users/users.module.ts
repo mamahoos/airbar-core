@@ -18,7 +18,13 @@ import { PaymentsModule } from '../payments/payments.module.js';
 import { UsersController } from './users.controller.js';
 
 @Module({
-  imports: [AuthPersistenceModule, UsersPersistenceModule, StorageModule, AuthModule, PaymentsModule],
+  imports: [
+    AuthPersistenceModule,
+    UsersPersistenceModule,
+    StorageModule,
+    AuthModule,
+    PaymentsModule,
+  ],
   controllers: [UsersController],
   providers: [
     GetProfileUseCase,

@@ -9,7 +9,11 @@ import type { OutboxCommand } from '../../domain/finance/outbox.command.js';
 export class ShipmentFinanceBridgeService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async apply(command: OutboxCommand, payload: Record<string, unknown>, result: OutboxCommandResult) {
+  async apply(
+    command: OutboxCommand,
+    payload: Record<string, unknown>,
+    result: OutboxCommandResult,
+  ) {
     switch (command) {
       case 'CreateEscrow':
         if (result.escrowId) {
