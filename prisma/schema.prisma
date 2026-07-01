@@ -63,6 +63,9 @@ model User {
   bankAccounts     UserBankAccount[]
   addresses        UserAddress[]
   payoutProfile    UserPayoutProfile?
+  trips            Trip[]
+  sentShipments    Shipment[] @relation("SenderShipments")
+  carriedShipments Shipment[] @relation("CarrierShipments")
 
   @@map("users")
 }
@@ -219,4 +222,190 @@ model ActivityLog {
   @@index([resource])
   @@index([createdAt])
   @@map("activity_logs")
+}
+
+enum TripStatus {
+  DRAFT
+  ACTIVE
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ShipmentStatus {
+  PENDING
+  MATCHED
+  ACCEPTED
+  PAYMENT_PENDING
+  PAID
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  CONFIRMED
+  DISPUTED
+  CANCELLED
+  REFUNDED
+}
+
+enum CargoType {
+  DOCUMENTS
+  ELECTRONICS
+  CLOTHING
+  FOOD
+  MEDICINE
+  COSMETICS
+  JEWELRY
+  OTHER
+}
+
+enum Currency {
+  IRR
+  USD
+  EUR
+  USDT
+}
+
+model Trip {
+  id                 String     @id @default(uuid())
+  userId             String     @map("user_id")
+  originCity         String     @map("origin_city")
+  originCountry      String     @map("origin_country")
+  originAirport      String?    @map("origin_airport")
+  destinationCity    String     @map("destination_city")
+  destinationCountry String     @map("destination_country")
+  destinationAirport String?    @map("destination_airport")
+  departureDate      DateTime   @map("departure_date")
+  arrivalDate        DateTime?  @map("arrival_date")
+  flightNumber       String?    @map("flight_number")
+  availableWeight    Float      @map("available_weight")
+  maxWeight          Float      @map("max_weight")
+  availableVolume    Float?     @map("available_volume")
+  acceptedCargoTypes CargoType[] @map("accepted_cargo_types")
+  restrictions       String[]
+  notes              String?
+  basePricePerKg     Int        @map("base_price_per_kg")
+  currency           Currency   @default(IRR)
+  status             TripStatus @default(DRAFT)
+  isVerified         Boolean    @default(false) @map("is_verified")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shipments Shipment[]
+
+  @@index([userId])
+  @@index([originCity, destinationCity])
+  @@index([departureDate])
+  @@index([status])
+  @@map("trips")
+}
+
+model Shipment {
+  id                  String         @id @default(uuid())
+  trackingCode        String         @unique @map("tracking_code")
+  senderId            String         @map("sender_id")
+  carrierId           String?        @map("carrier_id")
+  tripId              String?        @map("trip_id")
+  originCity          String         @map("origin_city")
+  originCountry       String         @map("origin_country")
+  originAddress       String?        @map("origin_address")
+  originLocation      Json?          @map("origin_location")
+  destinationCity     String         @map("destination_city")
+  destinationCountry  String         @map("destination_country")
+  destinationAddress  String?        @map("destination_address")
+  destinationLocation Json?          @map("destination_location")
+  cargoType           CargoType      @map("cargo_type")
+  description         String
+  weight              Float
+  dimensions          Json?
+  declaredValue       Int?           @map("declared_value")
+  photos              String[]
+  pickupDate          DateTime?      @map("pickup_date")
+  deliveryDate        DateTime?      @map("delivery_date")
+  senderContact       Json?          @map("sender_contact")
+  receiverContact     Json           @map("receiver_contact")
+  systemPrice         Int            @map("system_price")
+  agreedPrice         Int?           @map("agreed_price")
+  currency            Currency       @default(IRR)
+  status              ShipmentStatus @default(PENDING)
+  currentLocation     Json?          @map("current_location")
+  trackingHistory     Json[]         @map("tracking_history")
+  financeEscrowId     String?        @map("finance_escrow_id")
+  paymentOrderId      String?        @map("payment_order_id")
+  paymentMethod       String?        @map("payment_method")
+  pickedUpAt          DateTime?      @map("picked_up_at")
+  deliveredAt         DateTime?      @map("delivered_at")
+  confirmedAt         DateTime?      @map("confirmed_at")
+  disputeReason       String?        @map("dispute_reason")
+  disputedAt          DateTime?      @map("disputed_at")
+  disputedById        String?        @map("disputed_by_id")
+  disputeResolvedAt   DateTime?      @map("dispute_resolved_at")
+  disputeResolution   String?        @map("dispute_resolution")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  sender  User  @relation("SenderShipments", fields: [senderId], references: [id], onDelete: Cascade)
+  carrier User? @relation("CarrierShipments", fields: [carrierId], references: [id])
+  trip    Trip? @relation(fields: [tripId], references: [id])
+
+  @@index([senderId])
+  @@index([carrierId])
+  @@index([tripId])
+  @@index([trackingCode])
+  @@index([status])
+  @@map("shipments")
+}
+
+model PricingRule {
+  id                 String     @id @default(uuid())
+  name               String
+  description        String?
+  originCountry      String?    @map("origin_country")
+  destinationCountry String?    @map("destination_country")
+  cargoType          CargoType? @map("cargo_type")
+  basePrice          Int        @map("base_price")
+  pricePerKg         Int        @map("price_per_kg")
+  pricePerKm         Int?       @map("price_per_km")
+  riskMultiplier     Float      @default(1) @map("risk_multiplier")
+  platformFeePercent Float      @default(10) @map("platform_fee_percent")
+  minPlatformFee     Int        @default(0) @map("min_platform_fee")
+  isActive           Boolean    @default(true) @map("is_active")
+  priority           Int        @default(0)
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  @@map("pricing_rules")
+}
+
+model City {
+  id          String  @id @default(uuid())
+  name        String
+  nameEn      String  @map("name_en")
+  country     String
+  countryCode String  @map("country_code")
+  latitude    Float?
+  longitude   Float?
+  timezone    String?
+  isActive    Boolean @default(true) @map("is_active")
+
+  @@unique([name, country])
+  @@index([country])
+  @@map("cities")
+}
+
+model Airport {
+  id          String  @id @default(uuid())
+  code        String  @unique
+  name        String
+  nameEn      String  @map("name_en")
+  city        String
+  country     String
+  countryCode String  @map("country_code")
+  latitude    Float?
+  longitude   Float?
+  isActive    Boolean @default(true) @map("is_active")
+
+  @@index([city])
+  @@index([country])
+  @@map("airports")
 }
