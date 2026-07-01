@@ -21,4 +21,4 @@ Local verify:
 - **Go:** `cd airbar-finance && make verify && make test-integration`
 - **Node (future):** `npm ci && npm run lint && npx tsc --noEmit && npm test && npm run build`
 
-Branch protection: require **quality gate** on PRs to `main`. See `.cursor/rules/git-workflow-pr.mdc`.
+Branch protection: require **quality gate** on PRs to `main`. Definition in `.github/rulesets/protect-main.json`; apply with `make rulesets-apply` or see `docs/github-rulesets.md`. See `.cursor/rules/git-workflow-pr.mdc`.

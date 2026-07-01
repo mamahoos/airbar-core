@@ -25,6 +25,7 @@ Parent plan: [tasks/00-plan.md](./tasks/00-plan.md) · Architecture: [architectu
 | gRPC contract (finance)  | [`../proto/airbar_finance_v1.proto`](../proto/airbar_finance_v1.proto) |
 | Prisma migrations        | `prisma/migrations/`                                                   |
 | Architecture             | [architecture.md](./architecture.md)                                   |
+| GitHub rulesets (`main`) | [github-rulesets.md](./github-rulesets.md)                             |
 
 ## Configuration (production rule)
 

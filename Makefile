@@ -53,5 +53,9 @@ build: ## Build the app
 
 verify: lint typecheck test build ## Run all local quality gates (does not include integration)
 
+rulesets-apply: ## Apply GitHub branch rulesets from .github/rulesets/
+	chmod +x scripts/apply-github-rulesets.sh
+	./scripts/apply-github-rulesets.sh
+
 clean: ## Remove build artifacts
 	rm -rf dist coverage
