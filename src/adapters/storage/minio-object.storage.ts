@@ -54,4 +54,10 @@ export class MinioObjectStorage implements ObjectStoragePort, OnModuleInit {
     const protocol = this.useSsl ? 'https' : 'http';
     return `${protocol}://${this.endpoint}:${this.port}/${this.bucket}/${objectName}`;
   }
+
+  async getSignedUrl(objectName: string, expirySeconds = 3600): Promise<string> {
+    const maxExpiry = 7 * 24 * 3600;
+    const expiry = Math.min(expirySeconds, maxExpiry);
+    return this.client.presignedGetObject(this.bucket, objectName, expiry);
+  }
 }
