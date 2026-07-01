@@ -33,4 +33,27 @@ export class PrismaActivityLogRepository implements ActivityLogRepositoryPort {
       },
     });
   }
+
+  async listForUser(userId: string, skip: number, take: number) {
+    const [rows, total] = await Promise.all([
+      this.prisma.activityLog.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      this.prisma.activityLog.count({ where: { userId } }),
+    ]);
+    return {
+      items: rows.map((r) => ({
+        id: r.id,
+        action: r.action,
+        resource: r.resource,
+        resourceId: r.resourceId,
+        details: r.details,
+        createdAt: r.createdAt,
+      })),
+      total,
+    };
+  }
 }
