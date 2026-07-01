@@ -30,6 +30,40 @@ export class RedisService implements OnModuleDestroy {
     }
   }
 
+  async get(key: string): Promise<string | null> {
+    return this.client.get(key);
+  }
+
+  async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
+    if (ttlSeconds !== undefined) {
+      await this.client.set(key, value, 'EX', ttlSeconds);
+      return;
+    }
+    await this.client.set(key, value);
+  }
+
+  async del(...keys: string[]): Promise<void> {
+    if (keys.length > 0) {
+      await this.client.del(...keys);
+    }
+  }
+
+  async exists(key: string): Promise<boolean> {
+    return (await this.client.exists(key)) === 1;
+  }
+
+  async incr(key: string): Promise<number> {
+    return this.client.incr(key);
+  }
+
+  async expire(key: string, ttlSeconds: number): Promise<void> {
+    await this.client.expire(key, ttlSeconds);
+  }
+
+  async ttl(key: string): Promise<number> {
+    return this.client.ttl(key);
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.client.quit();
   }

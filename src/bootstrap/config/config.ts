@@ -47,6 +47,24 @@ export const AppConfigSchema = z.object({
   financeGrpcUrl: z.string().default('localhost:50051'),
   financeGrpcTls: z.coerce.boolean().default(false),
 
+  jwtSecret: z.string().min(16).default('dev-only-jwt-secret-change-in-production'),
+  jwtRefreshSecret: z.string().min(16).default('dev-only-jwt-refresh-secret-change-in-production'),
+  jwtExpiresIn: z.string().default('7d'),
+  jwtRefreshExpiresIn: z.string().default('30d'),
+
+  otpLength: z.coerce.number().int().min(4).max(8).default(6),
+  otpExpiresIn: z.coerce.number().int().positive().default(300),
+  otpMaxPerHour: z.coerce.number().int().positive().default(10),
+  otpCooldownSeconds: z.coerce.number().int().positive().default(60),
+
+  smsProvider: z.enum(['limosms', 'api_ir', 'dev']).default('dev'),
+  limosmsApiKey: z.string().optional(),
+  limosmsSenderNumber: z.string().optional(),
+  limosmsOtpPattern: z.string().optional(),
+  limosmsFooter: z.string().optional(),
+  apiIrBearerToken: z.string().optional(),
+  apiIrDevMock: z.coerce.boolean().default(false),
+
   logLevel: z.enum(['error', 'warn', 'log', 'debug', 'verbose']).default('log'),
 });
 

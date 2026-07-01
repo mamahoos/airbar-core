@@ -18,8 +18,11 @@ describe('Postgres integration smoke', () => {
   });
 
   it('can insert and read a User row', async () => {
-    const created = await prisma.user.create({ data: {} });
+    const created = await prisma.user.create({
+      data: { phone: '09120000001' },
+    });
     expect(created.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(created.phone).toBe('09120000001');
 
     const found = await prisma.user.findUnique({ where: { id: created.id } });
     expect(found?.id).toBe(created.id);
