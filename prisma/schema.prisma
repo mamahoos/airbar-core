@@ -507,3 +507,28 @@ model SystemConfig {
 
   @@map("system_configs")
 }
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+model IntegrationOutbox {
+  id             String       @id @default(uuid())
+  aggregateType  String       @map("aggregate_type")
+  aggregateId    String       @map("aggregate_id")
+  command        String
+  payload        Json
+  idempotencyKey String       @unique @map("idempotency_key")
+  status         OutboxStatus @default(PENDING)
+  attemptCount   Int          @default(0) @map("attempt_count")
+  nextRetryAt    DateTime?    @map("next_retry_at")
+  lastError      String?      @map("last_error")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  processedAt    DateTime?    @map("processed_at")
+
+  @@index([status, nextRetryAt])
+  @@map("integration_outbox")
+}
