@@ -64,6 +64,8 @@ export const AppConfigSchema = z.object({
   limosmsFooter: z.string().optional(),
   apiIrBearerToken: z.string().optional(),
   apiIrDevMock: z.coerce.boolean().default(false),
+  apiIrBaseUrl: z.string().url().default('https://s.api.ir/api/sw1'),
+  apiIrTimeoutMs: z.coerce.number().int().positive().default(15_000),
 
   piiEncryptionKey: z
     .string()
