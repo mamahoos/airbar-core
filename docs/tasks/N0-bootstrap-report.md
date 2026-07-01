@@ -19,17 +19,17 @@ Makefile, and CI quality gates — no business logic yet.
 
 ### Application bootstrap (Clean Architecture)
 
-| Layer | Path | Description |
-|-------|------|-------------|
-| Config | `src/bootstrap/config/` | zod schema + `loadConfig` (camelizes `SCREAMING_SNAKE` env keys); `ConfigModule` exposes frozen `AppConfig` |
-| Domain | `src/domain/health/` | `HealthIndicatorPort` + result types — no framework imports |
-| Application | `src/application/health/` | `HealthService` aggregator (pure orchestration, unit-testable with fakes) |
-| Adapter — web | `src/adapters/web/health/` | `HealthController` → `GET /api/v1/health` |
-| Adapter — persistence | `src/adapters/persistence/` | `PrismaService` (lifecycle-managed) + `PrismaHealthIndicator` |
-| Adapter — cache | `src/adapters/cache/` | `RedisService` (ioredis) + `RedisHealthIndicator` |
-| Adapter — queue | `src/adapters/queue/` | `QueueModule` (BullMQ shares Redis) |
-| Adapter — health | `src/adapters/health/` | Prisma + Redis health indicators |
-| Bootstrap | `src/bootstrap/{app.module,main}.ts` | composition root: Helmet, compression, CORS, ValidationPipe, URI versioning `api/v`, Swagger `/docs` |
+| Layer                 | Path                                 | Description                                                                                                 |
+| --------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Config                | `src/bootstrap/config/`              | zod schema + `loadConfig` (camelizes `SCREAMING_SNAKE` env keys); `ConfigModule` exposes frozen `AppConfig` |
+| Domain                | `src/domain/health/`                 | `HealthIndicatorPort` + result types — no framework imports                                                 |
+| Application           | `src/application/health/`            | `HealthService` aggregator (pure orchestration, unit-testable with fakes)                                   |
+| Adapter — web         | `src/adapters/web/health/`           | `HealthController` → `GET /api/v1/health`                                                                   |
+| Adapter — persistence | `src/adapters/persistence/`          | `PrismaService` (lifecycle-managed) + `PrismaHealthIndicator`                                               |
+| Adapter — cache       | `src/adapters/cache/`                | `RedisService` (ioredis) + `RedisHealthIndicator`                                                           |
+| Adapter — queue       | `src/adapters/queue/`                | `QueueModule` (BullMQ shares Redis)                                                                         |
+| Adapter — health      | `src/adapters/health/`               | Prisma + Redis health indicators                                                                            |
+| Bootstrap             | `src/bootstrap/{app.module,main}.ts` | composition root: Helmet, compression, CORS, ValidationPipe, URI versioning `api/v`, Swagger `/docs`        |
 
 ### Dependency rule
 
@@ -42,16 +42,16 @@ Adapters implement ports and are wired in `AppModule`.
 
 ### Tooling
 
-| File | Purpose |
-|------|---------|
-| `package.json` | Node 22, npm scripts for build/dev/lint/format/typecheck/test/test:integration/prisma |
-| `tsconfig.json` | strict, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `isolatedModules`, `module: node16` (`.js`-suffix imports) |
-| `tsconfig.build.json` | excludes specs + generated grpc client |
-| `tsconfig.eslint.json` | includes specs + test for type-checked lint |
-| `eslint.config.mjs` | flat config, `typescript-eslint` type-checked, `import/order`, Prettier last |
-| `.prettierrc.json` + `.prettierignore` | format config |
-| `jest.config.json` | multi-project: `unit` + `integration` |
-| `nest-cli.json` | Nest CLI build config |
+| File                                   | Purpose                                                                                                                      |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `package.json`                         | Node 22, npm scripts for build/dev/lint/format/typecheck/test/test:integration/prisma                                        |
+| `tsconfig.json`                        | strict, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `isolatedModules`, `module: node16` (`.js`-suffix imports) |
+| `tsconfig.build.json`                  | excludes specs + generated grpc client                                                                                       |
+| `tsconfig.eslint.json`                 | includes specs + test for type-checked lint                                                                                  |
+| `eslint.config.mjs`                    | flat config, `typescript-eslint` type-checked, `import/order`, Prettier last                                                 |
+| `.prettierrc.json` + `.prettierignore` | format config                                                                                                                |
+| `jest.config.json`                     | multi-project: `unit` + `integration`                                                                                        |
+| `nest-cli.json`                        | Nest CLI build config                                                                                                        |
 
 ### Prisma
 
@@ -61,14 +61,14 @@ Adapters implement ports and are wired in `AppModule`.
 
 ### Infra
 
-| File | Change |
-|------|--------|
-| `Dockerfile` | multi-stage build (`node:22-bookworm-slim`), Prisma generate, runtime `--omit=dev` |
-| `docker-compose.yml` | postgres:16 + redis:7 + app; host ports 5435 / 6382 (avoid finance clashes) |
-| `docker-compose.resources.yml` | postgres + redis only for local dev |
-| `.dockerignore` | |
-| `.env.example` | all N0 keys + reserved keys for N2..N7 |
-| `Makefile` | `verify`, `test-integration`, `migrate-up/status/down`, `lint`, `format`, `typecheck`, `proto`, `build` |
+| File                           | Change                                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `Dockerfile`                   | multi-stage build (`node:22-bookworm-slim`), Prisma generate, runtime `--omit=dev`                      |
+| `docker-compose.yml`           | postgres:16 + redis:7 + app; host ports 5435 / 6382 (avoid finance clashes)                             |
+| `docker-compose.resources.yml` | postgres + redis only for local dev                                                                     |
+| `.dockerignore`                |                                                                                                         |
+| `.env.example`                 | all N0 keys + reserved keys for N2..N7                                                                  |
+| `Makefile`                     | `verify`, `test-integration`, `migrate-up/status/down`, `lint`, `format`, `typecheck`, `proto`, `build` |
 
 ### CI (`.github/workflows/ci.yml`)
 
@@ -90,11 +90,11 @@ existing `github-actions` ecosystem.
 
 ### Tests
 
-| Suite | Tests |
-|-------|-------|
-| `src/bootstrap/config/config.spec.ts` | 6 — parses valid env, defaults, CORS split, ConfigError listing, unknown NODE_ENV, missing DATABASE_URL |
-| `src/application/health/health.service.spec.ts` | 3 — all up, any down, no indicators |
-| `test/integration/db.smoke.integration-spec.ts` | 3 — SELECT 1, users table exists, insert/read/delete |
+| Suite                                           | Tests                                                                                                   |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `src/bootstrap/config/config.spec.ts`           | 6 — parses valid env, defaults, CORS split, ConfigError listing, unknown NODE_ENV, missing DATABASE_URL |
+| `src/application/health/health.service.spec.ts` | 3 — all up, any down, no indicators                                                                     |
+| `test/integration/db.smoke.integration-spec.ts` | 3 — SELECT 1, users table exists, insert/read/delete                                                    |
 
 ---
 
