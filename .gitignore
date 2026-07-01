@@ -140,7 +140,6 @@ dist/
 coverage/
 
 # Prisma generated client (regenerated locally and in CI)
-src/adapters/grpc-client/generated/
 
 # Local env
 .env
