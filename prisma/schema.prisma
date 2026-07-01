@@ -1,8 +1,7 @@
 // AirBar Core — marketplace orchestrator (airbar_api database).
 //
-// Financial tables (Payment, Payout, WalletTransaction) are NOT here — they
-// live in airbar_finance. This schema only carries the marketplace domain
-// plus the bridge fields that reference finance aggregates by id.
+// Financial tables live in airbar_finance. This schema carries marketplace
+// domain plus bridge fields referencing finance aggregates by id.
 
 generator client {
   provider      = "prisma-client-js"
@@ -14,11 +13,91 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Minimal User for N0 — proves the migration path. Extended in N2/N3.
+enum UserRole {
+  USER
+  CARRIER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum KycLevel {
+  NONE
+  MOBILE_VERIFIED
+  IDENTITY_VERIFIED
+  DOCUMENT_VERIFIED
+  FACE_VERIFIED
+  FULLY_VERIFIED
+}
+
 model User {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id           String    @id @default(uuid())
+  phone        String    @unique
+  email        String?   @unique
+  passwordHash String?   @map("password_hash")
+  firstName    String?   @map("first_name")
+  lastName     String?   @map("last_name")
+  role         UserRole  @default(USER)
+  kycLevel     KycLevel  @default(NONE) @map("kyc_level")
+  isActive     Boolean   @default(true) @map("is_active")
+  isBanned     Boolean   @default(false) @map("is_banned")
+  banReason    String?   @map("ban_reason")
+  lastLoginAt  DateTime? @map("last_login_at")
+  lastLoginIp  String?   @map("last_login_ip")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  sessions     Session[]
+  activityLogs ActivityLog[]
 
   @@map("users")
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  token      String   @unique
+  deviceInfo Json?    @map("device_info")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+model Otp {
+  id        String   @id @default(uuid())
+  phone     String
+  code      String
+  attempts  Int      @default(0)
+  verified  Boolean  @default(false)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone, code])
+  @@map("otps")
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  action     String
+  resource   String
+  resourceId String?  @map("resource_id")
+  details    Json?
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+  @@map("activity_logs")
 }
