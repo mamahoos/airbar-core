@@ -1,0 +1,27 @@
+---
+description: GitHub rulesets on main — require PR + quality gate; how to apply
+alwaysApply: true
+---
+
+# GitHub branch protection (rulesets)
+
+`main` must use a **repository ruleset**, not informal discipline only.
+
+## Required ruleset
+
+- **PR required** before merge to `main` (no direct pushes for app code)
+- **Status check:** `quality gate` from `.github/workflows/ci.yml`
+- **Block force-push** and default-branch deletion
+
+Definition: `.github/rulesets/protect-main.json`  
+Apply: `make rulesets-apply` or see `docs/github-rulesets.md`
+
+## Agent behavior
+
+- Never merge or push to `main` for application code.
+- Before telling the user a PR is merge-ready, confirm **quality gate** is green on the PR targeting `main`.
+- If rulesets are missing (GitHub shows "You haven't created any rulesets"), run or document `scripts/apply-github-rulesets.sh`.
+
+## Private repo note
+
+Rulesets API may return HTTP 403 on GitHub Free private repos — use the manual UI steps in `docs/github-rulesets.md` or upgrade to GitHub Pro.
