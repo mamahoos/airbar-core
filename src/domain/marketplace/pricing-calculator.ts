@@ -1,13 +1,6 @@
-export enum CargoType {
-  DOCUMENTS = 'DOCUMENTS',
-  ELECTRONICS = 'ELECTRONICS',
-  CLOTHING = 'CLOTHING',
-  FOOD = 'FOOD',
-  MEDICINE = 'MEDICINE',
-  COSMETICS = 'COSMETICS',
-  JEWELRY = 'JEWELRY',
-  OTHER = 'OTHER',
-}
+import { CargoType } from '@prisma/client';
+
+export { CargoType };
 
 export interface PricingRuleInput {
   readonly basePrice: number;
