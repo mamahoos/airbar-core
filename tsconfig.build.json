@@ -6,7 +6,6 @@
     "test",
     "coverage",
     "**/*.spec.ts",
-    "**/*.integration-spec.ts",
-    "src/adapters/grpc-client/generated/**"
+    "**/*.integration-spec.ts"
   ]
 }

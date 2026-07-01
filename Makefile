@@ -45,8 +45,8 @@ test-integration: ## Run integration tests (requires Postgres + migrations)
 test-cov: ## Run tests with coverage
 	npm run test:cov
 
-proto: ## Regenerate finance gRPC client stubs (ts-proto). Requires buf + protoc-gen-ts.
-	@echo "Proto codegen is wired in N1 — see docs/tasks/00-plan.md"
+proto: ## Regenerate finance gRPC client stubs (ts-proto)
+	npm run proto:generate
 
 build: ## Build the app
 	npm run build

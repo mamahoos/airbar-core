@@ -4,6 +4,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
 import helmet from 'helmet';
 
+import { HttpExceptionFilter } from '../adapters/web/common/http-exception.filter.js';
+import { LoggingInterceptor } from '../adapters/web/common/logging.interceptor.js';
+import { TransformInterceptor } from '../adapters/web/common/transform.interceptor.js';
+
 import { AppModule } from './app.module.js';
 import { loadConfig } from './config/index.js';
 
@@ -43,6 +47,9 @@ async function bootstrap(): Promise<void> {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
+
+  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
 
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1', prefix: 'api/v' });
 
