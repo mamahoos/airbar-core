@@ -22,9 +22,7 @@ export class FinanceGrpcClient implements OnModuleDestroy {
   private readonly healthClient: FinanceHealthServiceClient;
 
   constructor(@Inject(APP_CONFIG) config: AppConfig) {
-    const creds = config.financeGrpcTls
-      ? credentials.createSsl()
-      : credentials.createInsecure();
+    const creds = config.financeGrpcTls ? credentials.createSsl() : credentials.createInsecure();
     this.healthClient = new FinanceHealthServiceClient(config.financeGrpcUrl, creds);
   }
 
@@ -45,7 +43,9 @@ export class FinanceGrpcClient implements OnModuleDestroy {
     return new Date(Date.now() + FINANCE_GRPC_DEADLINE_MS);
   }
 
-  private unary<T>(invoke: (callback: (error: ServiceError | null, response: T) => void) => void): Promise<T> {
+  private unary<T>(
+    invoke: (callback: (error: ServiceError | null, response: T) => void) => void,
+  ): Promise<T> {
     return new Promise((resolve, reject) => {
       invoke((error, response) => {
         if (error) {

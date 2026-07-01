@@ -37,7 +37,10 @@ export function refundEscrowKey(shipmentId: ShipmentId | string): string {
   return `refund:${shipmentId}`;
 }
 
-export function partialRefundEscrowKey(shipmentId: ShipmentId | string, amountRials: string): string {
+export function partialRefundEscrowKey(
+  shipmentId: ShipmentId | string,
+  amountRials: string,
+): string {
   return `partial:${shipmentId}:${amountRials}`;
 }
 

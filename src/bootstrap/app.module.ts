@@ -9,6 +9,13 @@ import { HealthModule } from '../adapters/web/health/health.module.js';
 import { ConfigModule } from './config/index.js';
 
 @Module({
-  imports: [ConfigModule, PersistenceModule, CacheModule, QueueModule, FinanceGrpcModule, HealthModule],
+  imports: [
+    ConfigModule,
+    PersistenceModule,
+    CacheModule,
+    QueueModule,
+    FinanceGrpcModule,
+    HealthModule,
+  ],
 })
 export class AppModule {}

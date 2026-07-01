@@ -18,8 +18,6 @@ describe('buildGrpcMetadata', () => {
     const md = buildGrpcMetadata();
     const ids = md.get(GRPC_METADATA.REQUEST_ID);
     expect(ids).toHaveLength(1);
-    expect(ids[0]).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-    );
+    expect(ids[0]).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
   });
 });

@@ -26,7 +26,12 @@ export function normalizePagination(params: PaginationParams): { page: number; l
   return { page, limit };
 }
 
-export function toSkipTake(params: PaginationParams): { skip: number; take: number; page: number; limit: number } {
+export function toSkipTake(params: PaginationParams): {
+  skip: number;
+  take: number;
+  page: number;
+  limit: number;
+} {
   const { page, limit } = normalizePagination(params);
   return { skip: (page - 1) * limit, take: limit, page, limit };
 }
