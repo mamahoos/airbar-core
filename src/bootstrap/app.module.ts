@@ -7,9 +7,12 @@ import { FinanceGrpcModule } from '../adapters/grpc-client/finance-grpc.module.j
 import { PersistenceModule } from '../adapters/persistence/persistence.module.js';
 import { QueueModule } from '../adapters/queue/queue.module.js';
 import { AuthModule } from '../adapters/web/auth/auth.module.js';
+import { ChatModule } from '../adapters/web/chat/chat.module.js';
 import { HealthModule } from '../adapters/web/health/health.module.js';
 import { KycModule } from '../adapters/web/kyc/kyc.module.js';
 import { MarketplaceModule } from '../adapters/web/marketplace/marketplace.module.js';
+import { NotificationsModule } from '../adapters/web/notifications/notifications.module.js';
+import { StatsModule } from '../adapters/web/stats/stats.module.js';
 import { UsersModule } from '../adapters/web/users/users.module.js';
 
 import { ConfigModule, APP_CONFIG } from './config/index.js';
@@ -37,6 +40,9 @@ import type { AppConfig } from './config/index.js';
     UsersModule,
     KycModule,
     MarketplaceModule,
+    NotificationsModule,
+    ChatModule,
+    StatsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

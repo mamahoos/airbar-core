@@ -19,7 +19,9 @@ import {
 } from '../../domain/marketplace/trip.repository.port.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../shared/errors/index.js';
 import { buildPaginationMeta, normalizePagination } from '../../shared/pagination/pagination.js';
+import { CreateChatForShipmentUseCase, DeactivateChatForShipmentUseCase } from '../chat/chat.use-cases.js';
 import { KycAccessService } from '../kyc/kyc-access.service.js';
+import { NotificationService } from '../notifications/notification.use-cases.js';
 
 import { marketplaceKycRequirement } from './marketplace-kyc-gates.js';
 import { PricingQuoteService } from './pricing-quote.service.js';
@@ -115,6 +117,7 @@ export class CancelShipmentUseCase {
   constructor(
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     @Inject(TRIP_REPOSITORY) private readonly trips: TripRepositoryPort,
+    private readonly deactivateChat: DeactivateChatForShipmentUseCase,
   ) {}
 
   async execute(senderId: string, shipmentId: string) {
@@ -138,6 +141,7 @@ export class CancelShipmentUseCase {
       await this.trips.adjustAvailableWeight(shipment.tripId, shipment.weight);
     }
 
+    await this.deactivateChat.execute(shipmentId);
     return this.shipments.cancel(shipmentId);
   }
 }
@@ -147,6 +151,7 @@ export class AcceptShipmentOfferUseCase {
   constructor(
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     private readonly kyc: KycAccessService,
+    private readonly notifications: NotificationService,
   ) {}
 
   async execute(senderId: string, shipmentId: string, agreedPrice?: number) {
@@ -161,7 +166,14 @@ export class AcceptShipmentOfferUseCase {
       throw new ValidationError('Shipment is not in MATCHED status');
     }
 
-    return this.shipments.acceptOffer(shipmentId, agreedPrice ?? shipment.systemPrice);
+    const updated = await this.shipments.acceptOffer(
+      shipmentId,
+      agreedPrice ?? shipment.systemPrice,
+    );
+    if (updated.carrierId) {
+      await this.notifications.notifyShipmentAccepted(updated.carrierId, shipmentId);
+    }
+    return updated;
   }
 }
 
@@ -170,6 +182,7 @@ export class RejectShipmentOfferUseCase {
   constructor(
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     @Inject(TRIP_REPOSITORY) private readonly trips: TripRepositoryPort,
+    private readonly deactivateChat: DeactivateChatForShipmentUseCase,
   ) {}
 
   async execute(senderId: string, shipmentId: string) {
@@ -186,6 +199,7 @@ export class RejectShipmentOfferUseCase {
       await this.trips.adjustAvailableWeight(shipment.tripId, shipment.weight);
     }
 
+    await this.deactivateChat.execute(shipmentId);
     return this.shipments.rejectOffer(shipmentId);
   }
 }
@@ -295,6 +309,8 @@ export class AssignShipmentToTripUseCase {
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     @Inject(TRIP_REPOSITORY) private readonly trips: TripRepositoryPort,
     private readonly kyc: KycAccessService,
+    private readonly createChat: CreateChatForShipmentUseCase,
+    private readonly notifications: NotificationService,
   ) {}
 
   async execute(shipmentId: string, tripId: string, carrierId: string) {
@@ -322,6 +338,8 @@ export class AssignShipmentToTripUseCase {
 
     const updated = await this.shipments.assignToTrip(shipmentId, tripId, carrierId);
     await this.trips.adjustAvailableWeight(tripId, -shipment.weight);
+    await this.createChat.execute(shipmentId);
+    await this.notifications.notifyNewMatch(shipment.senderId, shipmentId, tripId);
     return updated;
   }
 }

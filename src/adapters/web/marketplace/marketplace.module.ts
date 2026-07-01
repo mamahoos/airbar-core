@@ -32,7 +32,9 @@ import {
 } from '../../../application/marketplace/trip.use-cases.js';
 import { MarketplacePersistenceModule } from '../../persistence/marketplace/marketplace-persistence.module.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { ChatModule } from '../chat/chat.module.js';
 import { KycModule } from '../kyc/kyc.module.js';
+import { NotificationsModule } from '../notifications/notifications.module.js';
 
 import { LocationsController } from './locations.controller.js';
 import { MatchingController } from './matching.controller.js';
@@ -40,7 +42,7 @@ import { ShipmentsController } from './shipments.controller.js';
 import { TripsController } from './trips.controller.js';
 
 @Module({
-  imports: [MarketplacePersistenceModule, KycModule, AuthModule],
+  imports: [MarketplacePersistenceModule, KycModule, AuthModule, ChatModule, NotificationsModule],
   controllers: [TripsController, ShipmentsController, MatchingController, LocationsController],
   providers: [
     PricingQuoteService,
