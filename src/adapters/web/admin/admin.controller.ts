@@ -246,7 +246,7 @@ export class AdminController {
   }
 
   @Get('disputes')
-  @ApiOperation({ summary: 'List disputed shipments (resolve deferred to N6)' })
+  @ApiOperation({ summary: 'List disputed shipments' })
   disputes() {
     return this.listDisputes.execute();
   }

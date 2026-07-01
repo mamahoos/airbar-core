@@ -8,6 +8,7 @@ import { PrismaService } from '../../adapters/persistence/prisma.service.js';
 import { APP_CONFIG } from '../../bootstrap/config/index.js';
 import { NotFoundError, ValidationError } from '../../shared/errors/index.js';
 import { PricingQuoteService } from '../marketplace/pricing-quote.service.js';
+import { MarketStatsService } from '../stats/market-stats.service.js';
 
 import type { CreateDraftDto } from '../../adapters/web/intake/dto/intake.dto.js';
 import type { AppConfig } from '../../bootstrap/config/index.js';
@@ -36,6 +37,7 @@ export class IntakeService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly pricing: PricingQuoteService,
+    private readonly marketStats: MarketStatsService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -189,6 +191,13 @@ export class IntakeService {
     await this.prisma.user.update({
       where: { id: userId },
       data: { totalShipments: { increment: 1 } },
+    });
+
+    await this.marketStats.recordShipmentDemand({
+      originCity: shipment.originCity,
+      destinationCity: shipment.destinationCity,
+      cargoType: shipment.cargoType,
+      weight: shipment.weight,
     });
 
     await this.prisma.draftRequest.update({

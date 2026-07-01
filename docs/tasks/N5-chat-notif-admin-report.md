@@ -1,8 +1,8 @@
 # N5 — Chat, Notifications, Admin, Stats report
 
-**Branch:** `feat/n5-chat-notif-admin-stats` (stacked on N4)  
+**Branch:** merged via `feat/n5-through-n7`  
 **Issue:** #7  
-**Status:** Ready for PR after N4 merge
+**Status:** ✅ Merged to `main`
 
 ## Delivered
 
@@ -36,7 +36,7 @@
 | Dashboard | `GET /admin/dashboard` (no Payment/Payout tables) |
 | Users     | list, detail, ban, unban, role (SUPER_ADMIN)      |
 | Shipments | paginated list                                    |
-| Disputes  | **list only** — resolve/refund deferred to N6     |
+| Disputes  | list + resolve via N6 finance gRPC                |
 | KYC       | pending documents queue                           |
 | Logs      | activity logs with filters                        |
 | Config    | get/update (update = SUPER_ADMIN)                 |
@@ -44,9 +44,8 @@
 
 **Intentionally omitted (N6):** payments list, payouts, dispute resolve, shipment refund, wallet/escrow.
 
-### Deferred
+### Deferred (post-rewrite)
 
-- Redis market leaderboards (`/stats/market`) — N6 with finance live stats
 - External push via notification microservice URL
 
 ## Test plan

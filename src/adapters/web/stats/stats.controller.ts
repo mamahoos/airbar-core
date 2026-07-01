@@ -3,6 +3,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNumber, IsOptional } from 'class-validator';
 
+import { MarketStatsService } from '../../../application/stats/market-stats.service.js';
 import { StatsService } from '../../../application/stats/stats.service.js';
 import { Public } from '../common/decorators/public.decorator.js';
 
@@ -16,7 +17,10 @@ class LimitQueryDto {
 @ApiTags('stats')
 @Controller('stats')
 export class StatsController {
-  constructor(private readonly stats: StatsService) {}
+  constructor(
+    private readonly stats: StatsService,
+    private readonly marketStats: MarketStatsService,
+  ) {}
 
   @Get()
   @Public()
@@ -37,5 +41,12 @@ export class StatsController {
   @ApiOperation({ summary: 'Recent positive reviews' })
   async testimonials(@Query() query: LimitQueryDto) {
     return this.stats.getTestimonials(query.limit ?? 6);
+  }
+
+  @Get('market')
+  @Public()
+  @ApiOperation({ summary: 'Live market leaderboards (Redis-backed)' })
+  async market(@Query() query: LimitQueryDto) {
+    return this.marketStats.getMarketStats(query.limit ?? 5);
   }
 }
