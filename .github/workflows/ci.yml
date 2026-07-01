@@ -16,7 +16,7 @@ env:
 jobs:
   changes:
     name: detect changes
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, airbar-core]
     permissions:
       contents: read
       pull-requests: read
@@ -50,7 +50,7 @@ jobs:
     name: lint
     needs: changes
     if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, airbar-core]
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
@@ -66,7 +66,7 @@ jobs:
     name: typecheck
     needs: changes
     if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, airbar-core]
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
@@ -83,7 +83,7 @@ jobs:
     name: unit tests
     needs: changes
     if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, airbar-core]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -106,7 +106,7 @@ jobs:
     name: build
     needs: changes
     if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, airbar-core]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -123,10 +123,12 @@ jobs:
     name: integration tests
     needs: changes
     if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, airbar-core]
     timeout-minutes: 15
     env:
-      DATABASE_URL: postgresql://ci_user:ci_ephemeral_db_password@localhost:5432/airbar_api_test?schema=public
+      DATABASE_URL: postgresql://ci_user:ci_ephemeral_db_password@localhost:5433/airbar_api_test?schema=public
+      REDIS_HOST: localhost
+      REDIS_PORT: '6380'
     services:
       postgres:
         image: postgres:16-alpine
@@ -135,7 +137,7 @@ jobs:
           POSTGRES_USER: ci_user
           POSTGRES_PASSWORD: ci_ephemeral_db_password
         ports:
-          - 5432:5432
+          - 5433:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -144,7 +146,7 @@ jobs:
       redis:
         image: redis:7-alpine
         ports:
-          - 6379:6379
+          - 6380:6379
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -166,7 +168,7 @@ jobs:
     name: npm audit
     needs: changes
     if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, airbar-core]
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
@@ -175,8 +177,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      # Production deps only; audit critical severity. High-severity transitive
-      # vulns (lodash, multer) require a NestJS 10→11 upgrade — tracked separately.
+      # Production deps only; audit critical severity.
       - run: npm audit --omit=dev --audit-level=critical
 
   # --- Final quality gate (all groups must pass) ---
@@ -184,7 +185,7 @@ jobs:
     name: quality gate
     needs: [lint, typecheck, unit-test, build, integration, audit]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, airbar-core]
     timeout-minutes: 2
     steps:
       - name: Require all checks
