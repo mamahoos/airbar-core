@@ -9,7 +9,6 @@ import {
   ListActivityLogsUseCase,
   RevokeSessionUseCase,
 } from '../../../application/users/users-misc.use-case.js';
-import { USER_PROFILE_REPOSITORY } from '../../../domain/users/user-profile.repository.port.js';
 import { AuthPersistenceModule } from '../../persistence/auth/auth-persistence.module.js';
 import { UsersPersistenceModule } from '../../persistence/users/users-persistence.module.js';
 import { StorageModule } from '../../storage/storage.module.js';
@@ -29,6 +28,5 @@ import { UsersController } from './users.controller.js';
     ListActivityLogsUseCase,
     RevokeSessionUseCase,
   ],
-  exports: [USER_PROFILE_REPOSITORY],
 })
 export class UsersModule {}
