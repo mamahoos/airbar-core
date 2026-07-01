@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "coverage",
+    "**/*.spec.ts",
+    "**/*.integration-spec.ts",
+    "src/adapters/grpc-client/generated/**"
+  ]
+}

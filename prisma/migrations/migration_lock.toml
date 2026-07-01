@@ -1,0 +1,4 @@
+# Prisma migration lock file
+# Do not modify. Ensures all migrations use the same provider.
+
+provider = "postgresql"

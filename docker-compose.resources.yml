@@ -1,0 +1,37 @@
+# Resources only — postgres + redis for local development.
+# Run `npm run dev` separately, or use docker-compose.yml for the full stack.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: airbar-core-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-airbar_api}
+      POSTGRES_USER: ${DB_USER:-airbar}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-airbar_secret}
+    ports:
+      - '5435:5432'
+    volumes:
+      - airbar-core-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', '${DB_USER:-airbar}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: airbar-core-redis
+    ports:
+      - '6382:6379'
+    volumes:
+      - airbar-core-redis:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  airbar-core-pg:
+  airbar-core-redis:

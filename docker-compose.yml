@@ -1,0 +1,61 @@
+# Full local stack — app + postgres + redis.
+# Postgres on host 5435 and Redis on host 6382 to avoid clashes with
+# other local Airbar services (finance uses 5434 / 6381).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: airbar-core-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-airbar_api}
+      POSTGRES_USER: ${DB_USER:-airbar}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-airbar_secret}
+    ports:
+      - '5435:5432'
+    volumes:
+      - airbar-core-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', '${DB_USER:-airbar}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: airbar-core-redis
+    ports:
+      - '6382:6379'
+    volumes:
+      - airbar-core-redis:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: airbar-core-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://${DB_USER:-airbar}:${DB_PASSWORD:-airbar_secret}@postgres:5432/${DB_NAME:-airbar_api}?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      FINANCE_GRPC_URL: ${FINANCE_GRPC_URL:-finance:50051}
+      FINANCE_GRPC_TLS: ${FINANCE_GRPC_TLS:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+    ports:
+      - '4000:4000'
+    restart: unless-stopped
+
+volumes:
+  airbar-core-pg:
+  airbar-core-redis:

@@ -10,33 +10,193 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: '22'
+
 jobs:
-  workflow-lint:
-    name: validate workflows
+  changes:
+    name: detect changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+      ci: ${{ steps.filter.outputs.ci }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'src/**'
+              - 'prisma/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig*.json'
+              - 'nest-cli.json'
+              - 'jest.config.json'
+              - 'eslint.config.mjs'
+              - '.prettierrc.json'
+              - 'Dockerfile'
+              - 'docker-compose*.yml'
+              - 'Makefile'
+            ci:
+              - '.github/**'
+
+  # --- Group 1: fast static checks (parallel) ---
+  lint:
+    name: lint
+    needs: changes
+    if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-      - name: Install PyYAML
-        run: pip install pyyaml
-      - name: Check workflow YAML syntax
-        run: |
-          python3 - <<'PY'
-          import pathlib
-          import yaml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
 
-          root = pathlib.Path(".github/workflows")
-          for path in sorted(root.glob("*.yml")):
-              with path.open() as f:
-                  yaml.safe_load(f)
-              print(f"OK: {path}")
-          PY
+  typecheck:
+    name: typecheck
+    needs: changes
+    if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run typecheck
 
-  repo-health:
-    name: repo health
+  # --- Group 2: unit tests + build (parallel) ---
+  unit-test:
+    name: unit tests
+    needs: changes
+    if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm test -- --coverage
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-coverage
+          path: coverage/
+          retention-days: 7
+
+  build:
+    name: build
+    needs: changes
+    if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run build
+
+  # --- Group 3: integration tests (Postgres + migrations) ---
+  integration:
+    name: integration tests
+    needs: changes
+    if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: postgresql://ci_user:ci_ephemeral_db_password@localhost:5432/airbar_api_test?schema=public
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: airbar_api_test
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_ephemeral_db_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: npm run test:integration
+
+  # --- Group 4: security ---
+  audit:
+    name: npm audit
+    needs: changes
+    if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # Production deps only; audit critical severity. High-severity transitive
+      # vulns (lodash, multer) require a NestJS 10→11 upgrade — tracked separately.
+      - run: npm audit --omit=dev --audit-level=critical
+
+  # --- Final quality gate (all groups must pass) ---
+  quality-gate:
+    name: quality gate
+    needs: [lint, typecheck, unit-test, build, integration, audit]
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - uses: actions/checkout@v7
-      - name: Verify shared Cursor rules exist
-        run: test -f .cursor/rules/git-workflow-pr.mdc
+      - name: Require all checks
+        run: |
+          check() {
+            local name="$1"
+            local result="$2"
+            if [[ "$result" == "skipped" ]]; then
+              echo "SKIP: $name (no relevant changes)"
+              return 0
+            fi
+            if [[ "$result" != "success" ]]; then
+              echo "FAIL: $name ($result)"
+              exit 1
+            fi
+            echo "OK: $name"
+          }
+
+          check lint "${{ needs.lint.result }}"
+          check typecheck "${{ needs.typecheck.result }}"
+          check unit-test "${{ needs.unit-test.result }}"
+          check build "${{ needs.build.result }}"
+          check integration "${{ needs.integration.result }}"
+          check audit "${{ needs.audit.result }}"

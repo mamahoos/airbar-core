@@ -134,3 +134,19 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Build artifacts
+dist/
+coverage/
+
+# Prisma generated client (regenerated locally and in CI)
+src/adapters/grpc-client/generated/
+
+# Local env
+.env
+.env.*.local
+
+# Editor
+.idea/
+.vscode/
+*.swp
