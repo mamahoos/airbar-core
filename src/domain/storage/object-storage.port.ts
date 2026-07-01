@@ -6,6 +6,7 @@ export interface ObjectStoragePort {
     isPublic?: boolean,
   ): Promise<string>;
   getPublicUrl(objectName: string): string;
+  getSignedUrl(objectName: string, expirySeconds?: number): Promise<string>;
 }
 
 export const OBJECT_STORAGE = Symbol('OBJECT_STORAGE');
