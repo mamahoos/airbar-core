@@ -15,6 +15,7 @@ export interface SessionRepositoryPort {
   updateToken(sessionId: string, token: string, expiresAt: Date): Promise<void>;
   deleteByUserAndToken(userId: string, token: string): Promise<void>;
   deleteAllForUser(userId: string): Promise<void>;
+  deleteByIdForUser(userId: string, sessionId: string): Promise<boolean>;
   listActiveForUser(userId: string): Promise<readonly UserSession[]>;
 }
 
