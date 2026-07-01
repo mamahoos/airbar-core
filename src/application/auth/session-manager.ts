@@ -48,10 +48,7 @@ export class SessionManager {
     });
   }
 
-  async rotateSession(
-    sessionId: string,
-    user: AuthUser,
-  ): Promise<TokenPair> {
+  async rotateSession(sessionId: string, user: AuthUser): Promise<TokenPair> {
     const tokens = this.issueTokens(user);
     await this.sessions.updateToken(sessionId, tokens.refreshToken, this.refreshExpiresAt());
     return tokens;

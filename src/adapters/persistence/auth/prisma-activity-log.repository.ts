@@ -7,7 +7,6 @@ import { PrismaService } from '../prisma.service.js';
 import type { ActivityLogRepositoryPort } from '../../../domain/auth/ports/activity-log.repository.port.js';
 import type { Prisma } from '@prisma/client';
 
-
 @Injectable()
 export class PrismaActivityLogRepository implements ActivityLogRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}

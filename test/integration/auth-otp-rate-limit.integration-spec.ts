@@ -12,8 +12,7 @@ describe('OTP rate limiting integration', () => {
   const phone = '09129998877';
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .compile();
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     rateLimiter = moduleRef.get(OtpRateLimiter);
     redis = moduleRef.get(RedisService);
   });

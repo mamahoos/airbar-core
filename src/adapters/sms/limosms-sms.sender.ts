@@ -43,11 +43,16 @@ export class LimosmsSmsSender implements SmsSenderPort {
       ? `کد تایید AirBar: ${code}\nاین کد تا ۵ دقیقه معتبر است.\n${footer}`
       : `کد تایید AirBar: ${code}\nاین کد تا ۵ دقیقه معتبر است.`;
 
-    return this.post('/api/sendsms', {
-      Message: message,
-      SenderNumber: senderNumber,
-      MobileNumber: [this.normalizePhone(phone)],
-    }, apiKey, phone);
+    return this.post(
+      '/api/sendsms',
+      {
+        Message: message,
+        SenderNumber: senderNumber,
+        MobileNumber: [this.normalizePhone(phone)],
+      },
+      apiKey,
+      phone,
+    );
   }
 
   private async sendPattern(

@@ -62,8 +62,8 @@ describe('LoginUseCase', () => {
 
   it('rejects invalid password', async () => {
     users.findByPhone.mockResolvedValue(user);
-    await expect(
-      useCase.execute({ phone: user.phone, password: 'wrong' }),
-    ).rejects.toBeInstanceOf(UnauthorizedError);
+    await expect(useCase.execute({ phone: user.phone, password: 'wrong' })).rejects.toBeInstanceOf(
+      UnauthorizedError,
+    );
   });
 });

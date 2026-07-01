@@ -6,10 +6,7 @@ import { UnauthorizedError } from '../../shared/errors/index.js';
 
 import type { AppConfig } from '../../bootstrap/config/index.js';
 import type { AuthUser } from '../../domain/auth/auth-user.js';
-import type {
-  JwtPayload,
-  TokenServicePort,
-} from '../../domain/auth/ports/token.service.port.js';
+import type { JwtPayload, TokenServicePort } from '../../domain/auth/ports/token.service.port.js';
 
 const ACCESS_TOKEN_SECONDS = 7 * 24 * 60 * 60;
 

@@ -11,7 +11,6 @@ import type {
 import type { UserSession } from '../../../domain/auth/session.js';
 import type { Prisma } from '@prisma/client';
 
-
 @Injectable()
 export class PrismaSessionRepository implements SessionRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
@@ -22,7 +21,9 @@ export class PrismaSessionRepository implements SessionRepositoryPort {
         id: randomUUID(),
         userId: input.userId,
         token: input.token,
-        ...(input.deviceInfo !== undefined ? { deviceInfo: input.deviceInfo as Prisma.InputJsonValue } : {}),
+        ...(input.deviceInfo !== undefined
+          ? { deviceInfo: input.deviceInfo as Prisma.InputJsonValue }
+          : {}),
         ipAddress: input.ipAddress ?? null,
         userAgent: input.userAgent ?? null,
         expiresAt: input.expiresAt,

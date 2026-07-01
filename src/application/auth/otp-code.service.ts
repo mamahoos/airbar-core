@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { APP_CONFIG } from '../../bootstrap/config/index.js';
-import { OTP_REPOSITORY, type OtpRepositoryPort } from '../../domain/auth/ports/otp.repository.port.js';
+import {
+  OTP_REPOSITORY,
+  type OtpRepositoryPort,
+} from '../../domain/auth/ports/otp.repository.port.js';
 import { SMS_SENDER, type SmsSenderPort } from '../../domain/auth/ports/sms.sender.port.js';
 import { ValidationError } from '../../shared/errors/index.js';
 import { isIranianPhone } from '../../shared/phone/index.js';

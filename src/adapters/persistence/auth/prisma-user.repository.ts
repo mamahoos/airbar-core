@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 
-
 import { KycLevel as DomainKycLevel } from '../../../domain/auth/kyc-level.js';
 import { UserRole as DomainUserRole } from '../../../domain/auth/user-role.js';
 import { PrismaService } from '../prisma.service.js';
