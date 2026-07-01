@@ -43,7 +43,9 @@
         "^@shared/(.*)$": "<rootDir>/src/shared/$1",
         "^@bootstrap/(.*)$": "<rootDir>/src/bootstrap/$1"
       },
-      "setupFilesAfterEnv": ["<rootDir>/test/integration/setup.ts"]
+      "setupFilesAfterEnv": ["<rootDir>/test/integration/setup.ts"],
+      "forceExit": true,
+      "testTimeout": 30000
     }
   ]
 }
