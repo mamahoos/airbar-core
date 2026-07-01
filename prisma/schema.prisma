@@ -1,7 +1,4 @@
 // AirBar Core — marketplace orchestrator (airbar_api database).
-//
-// Financial tables live in airbar_finance. This schema carries marketplace
-// domain plus bridge fields referencing finance aggregates by id.
 
 generator client {
   provider      = "prisma-client-js"
@@ -29,27 +26,148 @@ enum KycLevel {
   FULLY_VERIFIED
 }
 
-model User {
-  id           String    @id @default(uuid())
-  phone        String    @unique
-  email        String?   @unique
-  passwordHash String?   @map("password_hash")
-  firstName    String?   @map("first_name")
-  lastName     String?   @map("last_name")
-  role         UserRole  @default(USER)
-  kycLevel     KycLevel  @default(NONE) @map("kyc_level")
-  isActive     Boolean   @default(true) @map("is_active")
-  isBanned     Boolean   @default(false) @map("is_banned")
-  banReason    String?   @map("ban_reason")
-  lastLoginAt  DateTime? @map("last_login_at")
-  lastLoginIp  String?   @map("last_login_ip")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
 
-  sessions     Session[]
-  activityLogs ActivityLog[]
+model User {
+  id                        String    @id @default(uuid())
+  phone                     String    @unique
+  email                     String?   @unique
+  passwordHash              String?   @map("password_hash")
+  firstName                 String?   @map("first_name")
+  lastName                  String?   @map("last_name")
+  avatarUrl                 String?   @map("avatar_url")
+  bio                       String?
+  role                      UserRole  @default(USER)
+  kycLevel                  KycLevel  @default(NONE) @map("kyc_level")
+  isActive                  Boolean   @default(true) @map("is_active")
+  isBanned                  Boolean   @default(false) @map("is_banned")
+  banReason                 String?   @map("ban_reason")
+  rating                    Float     @default(0)
+  totalTrips                Int       @default(0) @map("total_trips")
+  totalShipments            Int       @default(0) @map("total_shipments")
+  identityPendingPersonInfo Boolean   @default(false) @map("identity_pending_person_info")
+  lastLoginAt               DateTime? @map("last_login_at")
+  lastLoginIp               String?   @map("last_login_ip")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  updatedAt                 DateTime  @updatedAt @map("updated_at")
+
+  sessions         Session[]
+  activityLogs     ActivityLog[]
+  kycDocuments     KycDocument[]
+  identityProfile  UserIdentityProfile?
+  bankAccounts     UserBankAccount[]
+  addresses        UserAddress[]
+  payoutProfile    UserPayoutProfile?
 
   @@map("users")
+}
+
+model UserIdentityProfile {
+  userId                  String    @id @map("user_id")
+  nationalIdHash          String    @unique @map("national_id_hash")
+  nationalIdCiphertext    String    @map("national_id_ciphertext")
+  firstNameOfficial       String?   @map("first_name_official")
+  lastNameOfficial        String?   @map("last_name_official")
+  fatherName              String?   @map("father_name")
+  birthDate               DateTime? @map("birth_date")
+  birthDateJalali         String?   @map("birth_date_jalali")
+  gender                  String?
+  isAlive                 Boolean?  @map("is_alive")
+  personInfoRaw           Json?     @map("person_info_raw")
+  shahkarVerifiedAt       DateTime? @map("shahkar_verified_at")
+  personInfoVerifiedAt    DateTime? @map("person_info_verified_at")
+  personImageStorageKey   String?   @map("person_image_storage_key")
+  passportNumber          String?   @map("passport_number")
+  passportStatusRaw       Json?     @map("passport_status_raw")
+  identityPendingPersonInfo Boolean @default(false) @map("identity_pending_person_info")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_identity_profiles")
+}
+
+model UserBankAccount {
+  id                  String    @id @default(uuid())
+  userId              String    @map("user_id")
+  cardNumberMasked    String    @map("card_number_masked")
+  cardNumberHash      String    @map("card_number_hash")
+  cardNumberCiphertext String?  @map("card_number_ciphertext")
+  ibanHash            String?   @map("iban_hash")
+  ibanCiphertext      String?   @map("iban_ciphertext")
+  bankName            String?   @map("bank_name")
+  accountHolderName   String?   @map("account_holder_name")
+  cardMatchVerifiedAt DateTime? @map("card_match_verified_at")
+  ibanMatchVerifiedAt DateTime? @map("iban_match_verified_at")
+  isDefault           Boolean   @default(false) @map("is_default")
+  isActive            Boolean   @default(true) @map("is_active")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cardNumberHash])
+  @@index([userId])
+  @@map("user_bank_accounts")
+}
+
+model UserPayoutProfile {
+  userId         String   @id @map("user_id")
+  ibanHash       String   @unique @map("iban_hash")
+  ibanCiphertext String   @map("iban_ciphertext")
+  accountName    String?  @map("account_name")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_payout_profiles")
+}
+
+model UserAddress {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  label       String?
+  postalCode  String   @map("postal_code")
+  fullAddress String?  @map("full_address")
+  province    String?
+  city        String?
+  district    String?
+  latitude    Float?
+  longitude   Float?
+  isDefault   Boolean  @default(false) @map("is_default")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([postalCode])
+  @@map("user_addresses")
+}
+
+model KycDocument {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  type            String
+  fileUrl         String    @map("file_url")
+  status          KycStatus @default(PENDING)
+  verifiedBy      String?   @map("verified_by")
+  verifiedAt      DateTime? @map("verified_at")
+  rejectionReason String?   @map("rejection_reason")
+  metadata        Json?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("kyc_documents")
 }
 
 model Session {
