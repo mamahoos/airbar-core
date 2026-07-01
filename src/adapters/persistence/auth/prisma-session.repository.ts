@@ -54,6 +54,13 @@ export class PrismaSessionRepository implements SessionRepositoryPort {
     await this.prisma.session.deleteMany({ where: { userId } });
   }
 
+  async deleteByIdForUser(userId: string, sessionId: string): Promise<boolean> {
+    const result = await this.prisma.session.deleteMany({
+      where: { id: sessionId, userId },
+    });
+    return result.count > 0;
+  }
+
   async listActiveForUser(userId: string): Promise<readonly UserSession[]> {
     const rows = await this.prisma.session.findMany({
       where: { userId, expiresAt: { gt: new Date() } },
