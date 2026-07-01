@@ -66,6 +66,10 @@ model User {
   trips            Trip[]
   sentShipments    Shipment[] @relation("SenderShipments")
   carriedShipments Shipment[] @relation("CarrierShipments")
+  notifications    Notification[]
+  chatMessages     ChatMessage[]
+  reviewsAuthored  Review[]     @relation("ReviewAuthor")
+  reviewsReceived  Review[]     @relation("ReviewTarget")
 
   @@map("users")
 }
@@ -347,6 +351,8 @@ model Shipment {
   sender  User  @relation("SenderShipments", fields: [senderId], references: [id], onDelete: Cascade)
   carrier User? @relation("CarrierShipments", fields: [carrierId], references: [id])
   trip    Trip? @relation(fields: [tripId], references: [id])
+  chat    Chat?
+  reviews Review[]
 
   @@index([senderId])
   @@index([carrierId])
@@ -408,4 +414,96 @@ model Airport {
   @@index([city])
   @@index([country])
   @@map("airports")
+}
+
+enum NotificationType {
+  PUSH
+  SMS
+  EMAIL
+}
+
+model Chat {
+  id         String   @id @default(uuid())
+  shipmentId String   @unique @map("shipment_id")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  shipment Shipment      @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@map("chats")
+}
+
+model ChatMessage {
+  id          String    @id @default(uuid())
+  chatId      String    @map("chat_id")
+  senderId    String    @map("sender_id")
+  content     String
+  attachments String[]
+  isRead      Boolean   @default(false) @map("is_read")
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@index([senderId])
+  @@map("chat_messages")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean          @default(false) @map("is_read")
+  readAt    DateTime?        @map("read_at")
+  sentAt    DateTime?        @map("sent_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+model Review {
+  id            String   @id @default(uuid())
+  shipmentId    String   @map("shipment_id")
+  authorId      String   @map("author_id")
+  targetId      String   @map("target_id")
+  rating        Int
+  comment       String?
+  communication Int?
+  punctuality   Int?
+  packaging     Int?
+  overall       Int?
+  isVisible     Boolean  @default(true) @map("is_visible")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  author   User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  target   User     @relation("ReviewTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([shipmentId, authorId])
+  @@index([targetId])
+  @@map("reviews")
+}
+
+model SystemConfig {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       Json
+  description String?
+  updatedBy   String?  @map("updated_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("system_configs")
 }
