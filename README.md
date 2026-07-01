@@ -4,7 +4,7 @@ Node.js / NestJS marketplace orchestrator for Airbar (Scenario B): users, auth,
 KYC, trips, shipments, matching, chat, notifications, and finance orchestration
 over gRPC to [`airbar-finance`](https://github.com/mamahoos/airbar-finance).
 
-**Status:** N1 Foundation — shared kernel, HTTP cross-cutting, gRPC client skeleton.
+**Status:** N2 Auth — OTP, JWT, sessions, guards (on top of N1 foundation PR).
 
 Full docs: [docs/README.md](docs/README.md) · [docs/architecture.md](docs/architecture.md) · [docs/development.md](docs/development.md)
 
