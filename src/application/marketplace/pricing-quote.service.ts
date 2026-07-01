@@ -17,9 +17,7 @@ export interface QuoteInput {
 
 @Injectable()
 export class PricingQuoteService {
-  constructor(
-    @Inject(PRICING_RULE_REPOSITORY) private readonly rules: PricingRuleRepositoryPort,
-  ) {}
+  constructor(@Inject(PRICING_RULE_REPOSITORY) private readonly rules: PricingRuleRepositoryPort) {}
 
   async getQuote(input: QuoteInput) {
     const rule = await this.rules.findBestMatch(input);

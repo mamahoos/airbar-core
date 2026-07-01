@@ -17,11 +17,7 @@ import {
   TRIP_REPOSITORY,
   type TripRepositoryPort,
 } from '../../domain/marketplace/trip.repository.port.js';
-import {
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from '../../shared/errors/index.js';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../shared/errors/index.js';
 import { buildPaginationMeta, normalizePagination } from '../../shared/pagination/pagination.js';
 import { KycAccessService } from '../kyc/kyc-access.service.js';
 
@@ -136,8 +132,7 @@ export class CancelShipmentUseCase {
     }
 
     if (
-      (shipment.status === ShipmentStatus.MATCHED ||
-        shipment.status === ShipmentStatus.ACCEPTED) &&
+      (shipment.status === ShipmentStatus.MATCHED || shipment.status === ShipmentStatus.ACCEPTED) &&
       shipment.tripId
     ) {
       await this.trips.adjustAvailableWeight(shipment.tripId, shipment.weight);
@@ -155,10 +150,7 @@ export class AcceptShipmentOfferUseCase {
   ) {}
 
   async execute(senderId: string, shipmentId: string, agreedPrice?: number) {
-    await this.kyc.assertRequirement(
-      senderId,
-      marketplaceKycRequirement('ACCEPT_SHIPMENT_SENDER'),
-    );
+    await this.kyc.assertRequirement(senderId, marketplaceKycRequirement('ACCEPT_SHIPMENT_SENDER'));
 
     const shipment = await this.shipments.findById(shipmentId);
     if (!shipment) throw new NotFoundError('Shipment', shipmentId);
@@ -169,10 +161,7 @@ export class AcceptShipmentOfferUseCase {
       throw new ValidationError('Shipment is not in MATCHED status');
     }
 
-    return this.shipments.acceptOffer(
-      shipmentId,
-      agreedPrice ?? shipment.systemPrice,
-    );
+    return this.shipments.acceptOffer(shipmentId, agreedPrice ?? shipment.systemPrice);
   }
 }
 
@@ -226,7 +215,8 @@ export class UpdateShipmentStatusUseCase {
     if (!isCarrier && !isSender) throw new ForbiddenError('Not authorized');
 
     const actor = status === ShipmentStatus.CONFIRMED ? 'sender' : 'carrier';
-    if (actor === 'sender' && !isSender) throw new ForbiddenError('Not authorized for this status update');
+    if (actor === 'sender' && !isSender)
+      throw new ForbiddenError('Not authorized for this status update');
     if (actor === 'carrier' && !isCarrier) {
       throw new ForbiddenError('Not authorized for this status update');
     }

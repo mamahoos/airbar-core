@@ -136,16 +136,16 @@ export interface UpdateShipmentStatusInput {
 }
 
 export interface ShipmentRepositoryPort {
-  create(senderId: string, trackingCode: string, input: CreateShipmentInput): Promise<ShipmentRecord>;
+  create(
+    senderId: string,
+    trackingCode: string,
+    input: CreateShipmentInput,
+  ): Promise<ShipmentRecord>;
   findById(id: string, viewerId?: string): Promise<ShipmentRecord | null>;
   findByTrackingCode(trackingCode: string): Promise<PublicTrackingRecord | null>;
   update(shipmentId: string, input: UpdateShipmentInput): Promise<ShipmentRecord>;
   updateStatus(shipmentId: string, input: UpdateShipmentStatusInput): Promise<ShipmentRecord>;
-  assignToTrip(
-    shipmentId: string,
-    tripId: string,
-    carrierId: string,
-  ): Promise<ShipmentRecord>;
+  assignToTrip(shipmentId: string, tripId: string, carrierId: string): Promise<ShipmentRecord>;
   acceptOffer(shipmentId: string, agreedPrice: number): Promise<ShipmentRecord>;
   rejectOffer(shipmentId: string): Promise<ShipmentRecord>;
   cancel(shipmentId: string): Promise<ShipmentRecord>;

@@ -4,12 +4,54 @@ const prisma = new PrismaClient();
 
 async function main(): Promise<void> {
   const cities = [
-    { name: 'تهران', nameEn: 'Tehran', country: 'ایران', countryCode: 'IR', latitude: 35.6892, longitude: 51.389 },
-    { name: 'اصفهان', nameEn: 'Isfahan', country: 'ایران', countryCode: 'IR', latitude: 32.6546, longitude: 51.668 },
-    { name: 'شیراز', nameEn: 'Shiraz', country: 'ایران', countryCode: 'IR', latitude: 29.5918, longitude: 52.5837 },
-    { name: 'مشهد', nameEn: 'Mashhad', country: 'ایران', countryCode: 'IR', latitude: 36.2605, longitude: 59.6168 },
-    { name: 'استانبول', nameEn: 'Istanbul', country: 'ترکیه', countryCode: 'TR', latitude: 41.0082, longitude: 28.9784 },
-    { name: 'دبی', nameEn: 'Dubai', country: 'امارات', countryCode: 'AE', latitude: 25.2048, longitude: 55.2708 },
+    {
+      name: 'تهران',
+      nameEn: 'Tehran',
+      country: 'ایران',
+      countryCode: 'IR',
+      latitude: 35.6892,
+      longitude: 51.389,
+    },
+    {
+      name: 'اصفهان',
+      nameEn: 'Isfahan',
+      country: 'ایران',
+      countryCode: 'IR',
+      latitude: 32.6546,
+      longitude: 51.668,
+    },
+    {
+      name: 'شیراز',
+      nameEn: 'Shiraz',
+      country: 'ایران',
+      countryCode: 'IR',
+      latitude: 29.5918,
+      longitude: 52.5837,
+    },
+    {
+      name: 'مشهد',
+      nameEn: 'Mashhad',
+      country: 'ایران',
+      countryCode: 'IR',
+      latitude: 36.2605,
+      longitude: 59.6168,
+    },
+    {
+      name: 'استانبول',
+      nameEn: 'Istanbul',
+      country: 'ترکیه',
+      countryCode: 'TR',
+      latitude: 41.0082,
+      longitude: 28.9784,
+    },
+    {
+      name: 'دبی',
+      nameEn: 'Dubai',
+      country: 'امارات',
+      countryCode: 'AE',
+      latitude: 25.2048,
+      longitude: 55.2708,
+    },
   ];
 
   for (const city of cities) {
@@ -21,9 +63,30 @@ async function main(): Promise<void> {
   }
 
   const airports = [
-    { code: 'IKA', name: 'فرودگاه امام خمینی', nameEn: 'Imam Khomeini International', city: 'تهران', country: 'ایران', countryCode: 'IR' },
-    { code: 'IST', name: 'فرودگاه استانبول', nameEn: 'Istanbul Airport', city: 'استانبول', country: 'ترکیه', countryCode: 'TR' },
-    { code: 'DXB', name: 'فرودگاه دبی', nameEn: 'Dubai International', city: 'دبی', country: 'امارات', countryCode: 'AE' },
+    {
+      code: 'IKA',
+      name: 'فرودگاه امام خمینی',
+      nameEn: 'Imam Khomeini International',
+      city: 'تهران',
+      country: 'ایران',
+      countryCode: 'IR',
+    },
+    {
+      code: 'IST',
+      name: 'فرودگاه استانبول',
+      nameEn: 'Istanbul Airport',
+      city: 'استانبول',
+      country: 'ترکیه',
+      countryCode: 'TR',
+    },
+    {
+      code: 'DXB',
+      name: 'فرودگاه دبی',
+      nameEn: 'Dubai International',
+      city: 'دبی',
+      country: 'امارات',
+      countryCode: 'AE',
+    },
   ];
 
   for (const airport of airports) {

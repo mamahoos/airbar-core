@@ -48,10 +48,7 @@ export function calculateMatchScore(input: {
   const dateMatch = Math.max(0, 100 - daysUntilDeparture * 5);
   const capacityRatio = input.shipmentWeight / input.tripAvailableWeight;
   const capacityMatch = capacityRatio * 100;
-  const cargoTypeMatch = tripAcceptsCargoType(
-    input.tripAcceptedCargoTypes,
-    input.shipmentCargoType,
-  )
+  const cargoTypeMatch = tripAcceptsCargoType(input.tripAcceptedCargoTypes, input.shipmentCargoType)
     ? 100
     : 0;
   const carrierRating = input.carrierRating * 20;

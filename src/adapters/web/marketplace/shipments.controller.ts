@@ -64,10 +64,7 @@ export class ShipmentsController {
   @Get('my')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get my shipments (sender)' })
-  async my(
-    @CurrentUser() user: AuthUser,
-    @Query() query: ShipmentListQueryDto,
-  ) {
+  async my(@CurrentUser() user: AuthUser, @Query() query: ShipmentListQueryDto) {
     return this.listMyShipments.execute(
       user.id,
       'sender',
@@ -80,10 +77,7 @@ export class ShipmentsController {
   @Get('carrying')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get shipments I am carrying' })
-  async carrying(
-    @CurrentUser() user: AuthUser,
-    @Query() query: ShipmentListQueryDto,
-  ) {
+  async carrying(@CurrentUser() user: AuthUser, @Query() query: ShipmentListQueryDto) {
     return this.listMyShipments.execute(
       user.id,
       'carrier',

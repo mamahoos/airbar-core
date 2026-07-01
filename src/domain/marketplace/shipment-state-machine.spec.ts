@@ -8,15 +8,15 @@ import {
 
 describe('shipment status transitions', () => {
   it('allows carrier pickup after paid', () => {
-    expect(
-      canTransitionStatus(ShipmentStatus.PAID, ShipmentStatus.PICKED_UP, 'carrier'),
-    ).toBe(true);
+    expect(canTransitionStatus(ShipmentStatus.PAID, ShipmentStatus.PICKED_UP, 'carrier')).toBe(
+      true,
+    );
   });
 
   it('rejects sender confirming before delivered', () => {
-    expect(
-      canTransitionStatus(ShipmentStatus.IN_TRANSIT, ShipmentStatus.CONFIRMED, 'sender'),
-    ).toBe(false);
+    expect(canTransitionStatus(ShipmentStatus.IN_TRANSIT, ShipmentStatus.CONFIRMED, 'sender')).toBe(
+      false,
+    );
   });
 
   it('allows dispute from delivered', () => {

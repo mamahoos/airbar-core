@@ -8,11 +8,7 @@ import {
   type TripStatus,
   type UpdateTripInput,
 } from '../../domain/marketplace/trip.repository.port.js';
-import {
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from '../../shared/errors/index.js';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../shared/errors/index.js';
 import { buildPaginationMeta, normalizePagination } from '../../shared/pagination/pagination.js';
 
 @Injectable()

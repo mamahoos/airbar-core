@@ -120,7 +120,8 @@ export class PrismaShipmentRepository implements ShipmentRepositoryPort {
     return {
       ...shipment,
       status: shipment.status as ShipmentStatus,
-      trackingHistory: shipment.trackingHistory as unknown as PublicTrackingRecord['trackingHistory'],
+      trackingHistory:
+        shipment.trackingHistory as unknown as PublicTrackingRecord['trackingHistory'],
     };
   }
 
@@ -291,11 +292,7 @@ export class PrismaShipmentRepository implements ShipmentRepositoryPort {
     return this.toRecord(shipment);
   }
 
-  async openDispute(
-    shipmentId: string,
-    userId: string,
-    reason: string,
-  ): Promise<ShipmentRecord> {
+  async openDispute(shipmentId: string, userId: string, reason: string): Promise<ShipmentRecord> {
     const shipment = await this.prisma.shipment.update({
       where: { id: shipmentId },
       data: {

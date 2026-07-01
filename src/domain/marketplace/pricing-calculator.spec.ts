@@ -35,7 +35,12 @@ describe('pricing calculator', () => {
       destinationCountry: 'IR',
       cargoType: CargoType.ELECTRONICS,
       weight: 1,
-      rule: { basePrice: 100_000, pricePerKg: 50_000, platformFeePercent: 10, minPlatformFee: 10_000 },
+      rule: {
+        basePrice: 100_000,
+        pricePerKg: 50_000,
+        platformFeePercent: 10,
+        minPlatformFee: 10_000,
+      },
     });
     expect(quote.totalPrice).toBe(quote.basePrice + quote.platformFee);
     expect(quote.platformFee).toBeGreaterThanOrEqual(10_000);

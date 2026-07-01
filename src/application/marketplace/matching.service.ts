@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { RedisService } from '../../adapters/cache/redis.service.js';
-import { calculateMatchScore, shipmentCargoTypesForTrip } from '../../domain/marketplace/matching-filters.js';
+import {
+  calculateMatchScore,
+  shipmentCargoTypesForTrip,
+} from '../../domain/marketplace/matching-filters.js';
 import {
   SHIPMENT_REPOSITORY,
   type ShipmentRepositoryPort,

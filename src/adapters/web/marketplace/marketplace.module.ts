@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 
-import { ListAirportsUseCase, ListCitiesUseCase } from '../../../application/marketplace/lookup.use-cases.js';
+import {
+  ListAirportsUseCase,
+  ListCitiesUseCase,
+} from '../../../application/marketplace/lookup.use-cases.js';
 import { MatchingService } from '../../../application/marketplace/matching.service.js';
 import { PricingQuoteService } from '../../../application/marketplace/pricing-quote.service.js';
 import {

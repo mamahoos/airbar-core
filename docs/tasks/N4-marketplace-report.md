@@ -49,45 +49,45 @@
 
 ## Deferred to later phases
 
-| Item | Phase |
-|------|-------|
-| Chat on assign | N5 |
-| Notifications on match/status | N5 |
-| Escrow release on `CONFIRMED` | N6 |
+| Item                              | Phase |
+| --------------------------------- | ----- |
+| Chat on assign                    | N5    |
+| Notifications on match/status     | N5    |
+| Escrow release on `CONFIRMED`     | N6    |
 | Market stats (Redis leaderboards) | N5/N6 |
-| Payment / `PAID` transition | N6 |
+| Payment / `PAID` transition       | N6    |
 
 ## API surface (parity with monolith)
 
-| Method | Path | Auth |
-|--------|------|------|
-| GET | `/trips/search` | Public |
-| GET | `/trips/my` | JWT |
-| GET | `/trips/:id` | Public |
-| GET | `/trips/:id/requests` | JWT |
-| POST | `/trips` | JWT |
-| PUT | `/trips/:id` | JWT |
-| DELETE | `/trips/:id` | JWT |
-| POST | `/trips/:id/publish` | JWT |
-| POST | `/trips/:id/cancel` | JWT |
-| POST | `/shipments/quote` | Public |
-| GET | `/shipments/track/:code` | Public |
-| GET | `/shipments/my` | JWT |
-| GET | `/shipments/carrying` | JWT |
-| GET | `/shipments/:id` | JWT |
-| POST | `/shipments` | JWT + KYC |
-| PUT | `/shipments/:id` | JWT |
-| POST | `/shipments/:id/cancel` | JWT |
-| POST | `/shipments/:id/accept` | JWT + KYC |
-| POST | `/shipments/:id/reject` | JWT |
-| POST | `/shipments/:id/status` | JWT |
-| POST | `/shipments/:id/dispute` | JWT |
-| GET | `/matching/trips/:shipmentId` | JWT |
-| GET | `/matching/shipments/:tripId` | JWT |
-| POST | `/matching/assign/:shipmentId/:tripId` | JWT + KYC |
-| POST | `/matching/auto` | Admin |
-| GET | `/locations/cities` | Public |
-| GET | `/locations/airports` | Public |
+| Method | Path                                   | Auth      |
+| ------ | -------------------------------------- | --------- |
+| GET    | `/trips/search`                        | Public    |
+| GET    | `/trips/my`                            | JWT       |
+| GET    | `/trips/:id`                           | Public    |
+| GET    | `/trips/:id/requests`                  | JWT       |
+| POST   | `/trips`                               | JWT       |
+| PUT    | `/trips/:id`                           | JWT       |
+| DELETE | `/trips/:id`                           | JWT       |
+| POST   | `/trips/:id/publish`                   | JWT       |
+| POST   | `/trips/:id/cancel`                    | JWT       |
+| POST   | `/shipments/quote`                     | Public    |
+| GET    | `/shipments/track/:code`               | Public    |
+| GET    | `/shipments/my`                        | JWT       |
+| GET    | `/shipments/carrying`                  | JWT       |
+| GET    | `/shipments/:id`                       | JWT       |
+| POST   | `/shipments`                           | JWT + KYC |
+| PUT    | `/shipments/:id`                       | JWT       |
+| POST   | `/shipments/:id/cancel`                | JWT       |
+| POST   | `/shipments/:id/accept`                | JWT + KYC |
+| POST   | `/shipments/:id/reject`                | JWT       |
+| POST   | `/shipments/:id/status`                | JWT       |
+| POST   | `/shipments/:id/dispute`               | JWT       |
+| GET    | `/matching/trips/:shipmentId`          | JWT       |
+| GET    | `/matching/shipments/:tripId`          | JWT       |
+| POST   | `/matching/assign/:shipmentId/:tripId` | JWT + KYC |
+| POST   | `/matching/auto`                       | Admin     |
+| GET    | `/locations/cities`                    | Public    |
+| GET    | `/locations/airports`                  | Public    |
 
 ## Test plan
 
