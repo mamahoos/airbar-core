@@ -64,6 +64,20 @@ export const AppConfigSchema = z.object({
   limosmsFooter: z.string().optional(),
   apiIrBearerToken: z.string().optional(),
   apiIrDevMock: z.coerce.boolean().default(false),
+  apiIrBaseUrl: z.string().url().default('https://s.api.ir/api/sw1'),
+  apiIrTimeoutMs: z.coerce.number().int().positive().default(15_000),
+
+  piiEncryptionKey: z
+    .string()
+    .regex(/^[0-9a-fA-F]{64}$/, 'PII_ENCRYPTION_KEY must be 64 hex characters')
+    .default('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+
+  minioEndpoint: z.string().default('localhost'),
+  minioPort: z.coerce.number().int().positive().default(9000),
+  minioAccessKey: z.string().default('minioadmin'),
+  minioSecretKey: z.string().default('minioadmin'),
+  minioBucket: z.string().default('airbar'),
+  minioUseSsl: z.coerce.boolean().default(false),
 
   logLevel: z.enum(['error', 'warn', 'log', 'debug', 'verbose']).default('log'),
 });

@@ -76,6 +76,6 @@ const smsSenderProvider: Provider = {
     RolesGuard,
     jwtAuthGuardProvider,
   ],
-  exports: [RolesGuard, TOKEN_SERVICE],
+  exports: [RolesGuard, TOKEN_SERVICE, ListSessionsUseCase, OtpCodeService],
 })
 export class AuthModule {}

@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import { Test, type TestingModule } from '@nestjs/testing';
 
+import { CacheModule } from '../../src/adapters/cache/cache.module.js';
 import { RedisService } from '../../src/adapters/cache/redis.service.js';
 import { OtpRateLimiter } from '../../src/application/auth/otp-rate-limiter.js';
-import { AppModule } from '../../src/bootstrap/app.module.js';
+import { ConfigModule } from '../../src/bootstrap/config/index.js';
 import { ValidationError } from '../../src/shared/errors/index.js';
 
 describe('OTP rate limiting integration', () => {
@@ -13,7 +14,10 @@ describe('OTP rate limiting integration', () => {
   const phone = '09129998877';
 
   beforeAll(async () => {
-    moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    moduleRef = await Test.createTestingModule({
+      imports: [ConfigModule, CacheModule],
+      providers: [OtpRateLimiter],
+    }).compile();
     rateLimiter = moduleRef.get(OtpRateLimiter);
     redis = moduleRef.get(RedisService);
   });
