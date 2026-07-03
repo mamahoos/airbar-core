@@ -2,6 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { RedisService } from '../../adapters/cache/redis.service.js';
 import {
+  MATCH_SUGGESTION_REPOSITORY,
+  type MatchSuggestionRepositoryPort,
+} from '../../domain/marketplace/match-suggestion.repository.port.js';
+import {
   calculateMatchScore,
   shipmentCargoTypesForTrip,
 } from '../../domain/marketplace/matching-filters.js';
@@ -19,6 +23,8 @@ export class MatchingService {
   constructor(
     @Inject(TRIP_REPOSITORY) private readonly trips: TripRepositoryPort,
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
+    @Inject(MATCH_SUGGESTION_REPOSITORY)
+    private readonly suggestions: MatchSuggestionRepositoryPort,
     private readonly redis: RedisService,
   ) {}
 
@@ -80,7 +86,13 @@ export class MatchingService {
 
       const trip = await this.trips.findById(best.id);
       if (trip && trip.status === 'ACTIVE' && trip.availableWeight >= shipment.weight) {
-        await this.storeMatchSuggestion(shipment.id, trip.id);
+        await this.storeMatchSuggestion({
+          shipmentId: shipment.id,
+          tripId: trip.id,
+          score: best.matchScore.score,
+          factors: best.matchScore.factors,
+          source: 'auto_match',
+        });
         matchedCount++;
       }
     }
@@ -93,9 +105,12 @@ export class MatchingService {
     let suggested = 0;
 
     for (const trip of matches) {
-      await this.storeMatchSuggestion(shipmentId, trip.id, {
+      await this.storeMatchSuggestion({
+        shipmentId,
+        tripId: trip.id,
         source: 'shipment_created',
         score: trip.matchScore.score,
+        factors: trip.matchScore.factors,
       });
       suggested++;
     }
@@ -104,12 +119,28 @@ export class MatchingService {
   }
 
   async processTripPublished(tripId: string): Promise<{ suggested: number }> {
+    const trip = await this.trips.findById(tripId);
+    if (!trip) return { suggested: 0 };
+
     const matches = await this.findMatchingShipments(tripId);
     let suggested = 0;
 
     for (const shipment of matches) {
-      await this.storeMatchSuggestion(shipment.id, tripId, {
+      const matchScore = calculateMatchScore({
+        shipmentWeight: shipment.weight,
+        shipmentCargoType: shipment.cargoType,
+        tripId,
+        tripDepartureDate: trip.departureDate,
+        tripAvailableWeight: trip.availableWeight,
+        tripAcceptedCargoTypes: trip.acceptedCargoTypes,
+        carrierRating: trip.user?.rating ?? 0,
+      });
+      await this.storeMatchSuggestion({
+        shipmentId: shipment.id,
+        tripId,
         source: 'trip_published',
+        score: matchScore.score,
+        factors: matchScore.factors,
       });
       suggested++;
     }
@@ -117,15 +148,34 @@ export class MatchingService {
     return { suggested };
   }
 
-  private async storeMatchSuggestion(
-    shipmentId: string,
-    tripId: string,
-    metadata: Record<string, unknown> = {},
-  ): Promise<void> {
-    const key = `match:${shipmentId}:${tripId}`;
+  async listPersistedSuggestionsForShipment(shipmentId: string, limit = 20) {
+    return this.suggestions.listForShipment(shipmentId, limit);
+  }
+
+  async listPersistedSuggestionsForTrip(tripId: string, limit = 20) {
+    return this.suggestions.listForTrip(tripId, limit);
+  }
+
+  private async storeMatchSuggestion(input: {
+    readonly shipmentId: string;
+    readonly tripId: string;
+    readonly score: number;
+    readonly factors: unknown;
+    readonly source: string;
+  }): Promise<void> {
+    await this.suggestions.upsert(input);
+
+    const key = `match:${input.shipmentId}:${input.tripId}`;
     await this.redis.set(
       key,
-      JSON.stringify({ shipmentId, tripId, suggestedAt: new Date().toISOString(), ...metadata }),
+      JSON.stringify({
+        shipmentId: input.shipmentId,
+        tripId: input.tripId,
+        suggestedAt: new Date().toISOString(),
+        source: input.source,
+        score: input.score,
+        factors: input.factors,
+      }),
       86_400,
     );
   }

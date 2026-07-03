@@ -302,6 +302,7 @@ model Trip {
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   shipments Shipment[]
+  matchSuggestions MatchSuggestion[]
 
   @@index([userId])
   @@index([originCity, destinationCity])
@@ -359,6 +360,7 @@ model Shipment {
   trip    Trip? @relation(fields: [tripId], references: [id])
   chat    Chat?
   reviews Review[]
+  matchSuggestions MatchSuggestion[]
 
   @@index([senderId])
   @@index([carrierId])
@@ -366,6 +368,27 @@ model Shipment {
   @@index([trackingCode])
   @@index([status])
   @@map("shipments")
+}
+
+model MatchSuggestion {
+  id          String   @id @default(uuid())
+  shipmentId  String   @map("shipment_id")
+  tripId      String   @map("trip_id")
+  score       Float
+  factors     Json
+  source      String
+  status      String   @default("SUGGESTED")
+  suggestedAt DateTime @default(now()) @map("suggested_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  trip     Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@unique([shipmentId, tripId])
+  @@index([shipmentId, status, score])
+  @@index([tripId, status, score])
+  @@index([status, suggestedAt])
+  @@map("match_suggestions")
 }
 
 model PricingRule {

@@ -7,6 +7,11 @@ import { MatchingService } from './matching.service.js';
 
 import type { RedisService } from '../../adapters/cache/redis.service.js';
 import type {
+  MatchSuggestionInput,
+  MatchSuggestionRecord,
+  MatchSuggestionRepositoryPort,
+} from '../../domain/marketplace/match-suggestion.repository.port.js';
+import type {
   ShipmentRecord,
   ShipmentRepositoryPort,
 } from '../../domain/marketplace/shipment.repository.port.js';
@@ -17,15 +22,26 @@ describe('MatchingService event processing', () => {
     const shipment = shipmentRecord();
     const trip = tripRecord();
     const redis = redisMock();
+    const suggestions = matchSuggestionRepository();
     const service = new MatchingService(
       tripRepository({ trip, activeMatches: [trip] }),
       shipmentRepository({ shipment }),
+      suggestions,
       redis as unknown as RedisService,
     );
 
     const result = await service.processShipmentCreated(shipment.id);
 
     expect(result).toEqual({ suggested: 1 });
+    expect(suggestions.upsert.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        shipmentId: 'shipment-1',
+        tripId: 'trip-1',
+        source: 'shipment_created',
+        score: expect.any(Number),
+        factors: expect.objectContaining({ cargoTypeMatch: 100 }),
+      }),
+    );
     expect(redis.set.mock.calls[0]?.[0]).toBe('match:shipment-1:trip-1');
     expect(JSON.parse(String(redis.set.mock.calls[0]?.[1]))).toEqual(
       expect.objectContaining({
@@ -42,15 +58,26 @@ describe('MatchingService event processing', () => {
     const shipment = shipmentRecord();
     const trip = tripRecord();
     const redis = redisMock();
+    const suggestions = matchSuggestionRepository();
     const service = new MatchingService(
       tripRepository({ trip }),
       shipmentRepository({ shipment, pendingMatches: [shipment] }),
+      suggestions,
       redis as unknown as RedisService,
     );
 
     const result = await service.processTripPublished(trip.id);
 
     expect(result).toEqual({ suggested: 1 });
+    expect(suggestions.upsert.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        shipmentId: 'shipment-1',
+        tripId: 'trip-1',
+        source: 'trip_published',
+        score: expect.any(Number),
+        factors: expect.objectContaining({ cargoTypeMatch: 100 }),
+      }),
+    );
     expect(redis.set.mock.calls[0]?.[0]).toBe('match:shipment-1:trip-1');
     expect(JSON.parse(String(redis.set.mock.calls[0]?.[1]))).toEqual(
       expect.objectContaining({
@@ -66,6 +93,26 @@ function redisMock() {
   return {
     set: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
   };
+}
+
+function matchSuggestionRepository(): jest.Mocked<MatchSuggestionRepositoryPort> {
+  return {
+    upsert: jest
+      .fn<(input: MatchSuggestionInput) => Promise<MatchSuggestionRecord>>()
+      .mockImplementation(async (input) => ({
+        id: 'suggestion-1',
+        shipmentId: input.shipmentId,
+        tripId: input.tripId,
+        score: input.score,
+        factors: input.factors,
+        source: input.source,
+        status: 'SUGGESTED',
+        suggestedAt: new Date('2026-07-03T00:00:00Z'),
+        updatedAt: new Date('2026-07-03T00:00:00Z'),
+      })),
+    listForShipment: jest.fn(),
+    listForTrip: jest.fn(),
+  } as unknown as jest.Mocked<MatchSuggestionRepositoryPort>;
 }
 
 function tripRepository(input: {
