@@ -9,6 +9,11 @@ import { MatchingEventsService } from '../../../application/marketplace/matching
 import { MatchingService } from '../../../application/marketplace/matching.service.js';
 import { PricingQuoteService } from '../../../application/marketplace/pricing-quote.service.js';
 import {
+  ListShipmentReviewsUseCase,
+  ListUserReviewsUseCase,
+  SubmitReviewUseCase,
+} from '../../../application/marketplace/review.use-cases.js';
+import {
   AcceptShipmentOfferUseCase,
   AssignShipmentToTripUseCase,
   CancelShipmentUseCase,
@@ -44,6 +49,7 @@ import { StatsModule } from '../stats/stats.module.js';
 
 import { LocationsController } from './locations.controller.js';
 import { MatchingController } from './matching.controller.js';
+import { ReviewsController } from './reviews.controller.js';
 import { ShipmentsController } from './shipments.controller.js';
 import { TripsController } from './trips.controller.js';
 
@@ -58,7 +64,13 @@ import { TripsController } from './trips.controller.js';
     FinanceOutboxModule,
     StatsModule,
   ],
-  controllers: [TripsController, ShipmentsController, MatchingController, LocationsController],
+  controllers: [
+    TripsController,
+    ShipmentsController,
+    MatchingController,
+    LocationsController,
+    ReviewsController,
+  ],
   providers: [
     PricingQuoteService,
     CreateTripUseCase,
@@ -86,6 +98,9 @@ import { TripsController } from './trips.controller.js';
     MarketplaceMatchingProcessor,
     ListCitiesUseCase,
     ListAirportsUseCase,
+    SubmitReviewUseCase,
+    ListUserReviewsUseCase,
+    ListShipmentReviewsUseCase,
   ],
   exports: [CreateTripUseCase, CreateShipmentUseCase],
 })
