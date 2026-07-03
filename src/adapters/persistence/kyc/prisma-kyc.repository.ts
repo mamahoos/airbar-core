@@ -398,11 +398,30 @@ export class PrismaKycRepository implements KycRepositoryPort {
     });
   }
 
+  async assignDocument(documentId: string, assignedTo: string): Promise<{ id: string } | null> {
+    const document = await this.prisma.kycDocument.findUnique({
+      where: { id: documentId },
+      select: { id: true },
+    });
+    if (!document) return null;
+
+    await this.prisma.kycDocument.update({
+      where: { id: documentId },
+      data: {
+        assignedTo,
+        assignedAt: new Date(),
+      },
+    });
+    return { id: document.id };
+  }
+
   async reviewDocument(
     adminId: string,
     documentId: string,
     status: string,
+    reasonCode?: string,
     rejectionReason?: string,
+    reviewNote?: string,
   ): Promise<{ userId: string } | null> {
     const document = await this.prisma.kycDocument.findUnique({ where: { id: documentId } });
     if (!document) return null;
@@ -413,6 +432,8 @@ export class PrismaKycRepository implements KycRepositoryPort {
         status: status as KycStatus,
         verifiedBy: adminId,
         verifiedAt: new Date(),
+        reviewReasonCode: reasonCode ?? null,
+        reviewNote: reviewNote ?? null,
         rejectionReason: status === 'REJECTED' ? (rejectionReason ?? null) : null,
       },
     });

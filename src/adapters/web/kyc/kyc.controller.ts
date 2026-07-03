@@ -17,6 +17,7 @@ import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagg
 
 import { GetKycStatusUseCase } from '../../../application/kyc/get-kyc-status.use-case.js';
 import {
+  AssignKycDocumentUseCase,
   DeleteBankAccountUseCase,
   LookupPostalCodeUseCase,
   ReviewKycDocumentUseCase,
@@ -33,6 +34,7 @@ import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { RequireKyc } from './decorators/require-kyc.decorator.js';
 import {
   LookupPostalCodeDto,
+  AssignKycDocumentDto,
   ReviewKycDocumentDto,
   VerifyBankCardDto,
   VerifyIdentityDto,
@@ -53,6 +55,7 @@ export class KycController {
     private readonly lookupPostalCode: LookupPostalCodeUseCase,
     private readonly uploadDocument: UploadKycDocumentUseCase,
     private readonly reviewDocument: ReviewKycDocumentUseCase,
+    private readonly assignDocument: AssignKycDocumentUseCase,
   ) {}
 
   @Get('status')
@@ -140,6 +143,25 @@ export class KycController {
     @Param('documentId') documentId: string,
     @Body() dto: ReviewKycDocumentDto,
   ) {
-    return this.reviewDocument.execute(user.id, documentId, dto.status, dto.rejectionReason);
+    return this.reviewDocument.execute(
+      user.id,
+      documentId,
+      dto.status,
+      dto.reasonCode,
+      dto.rejectionReason,
+      dto.reviewNote,
+    );
+  }
+
+  @Post('admin/assign/:documentId')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Assign KYC document review to an admin' })
+  assignDocumentRoute(
+    @CurrentUser() user: AuthUser,
+    @Param('documentId') documentId: string,
+    @Body() dto: AssignKycDocumentDto,
+  ) {
+    return this.assignDocument.execute(documentId, dto.assignedTo?.trim() || user.id);
   }
 }

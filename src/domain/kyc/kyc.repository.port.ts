@@ -61,11 +61,14 @@ export interface KycRepositoryPort {
   deactivateBankAccount(userId: string, accountId: string): Promise<boolean>;
   saveAddress(userId: string, postalCode: string, data: Record<string, unknown>): Promise<unknown>;
   upsertKycDocument(userId: string, type: string, fileUrl: string): Promise<unknown>;
+  assignDocument(documentId: string, assignedTo: string): Promise<{ id: string } | null>;
   reviewDocument(
     adminId: string,
     documentId: string,
     status: string,
+    reasonCode?: string,
     rejectionReason?: string,
+    reviewNote?: string,
   ): Promise<{ userId: string } | null>;
   decryptNationalId(ciphertext: string): string;
   encryptNationalId(nationalId: string): { hash: string; ciphertext: string };

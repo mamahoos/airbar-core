@@ -17,6 +17,15 @@ const VALID_DOCUMENT_TYPES = [
   'address_proof',
 ] as const;
 const IDENTITY_DOCUMENT_TYPES = new Set(['national_id', 'passport', 'driver_license']);
+const REVIEW_REASON_CODES = new Set([
+  'CLEAR',
+  'BLURRY_IMAGE',
+  'EXPIRED_DOCUMENT',
+  'MISMATCHED_IDENTITY',
+  'WRONG_DOCUMENT_TYPE',
+  'SUSPECTED_FRAUD',
+  'OTHER',
+]);
 
 @Injectable()
 export class VerifyBankCardUseCase {
@@ -150,12 +159,49 @@ export class UploadKycDocumentUseCase {
 export class ReviewKycDocumentUseCase {
   constructor(@Inject(KYC_REPOSITORY) private readonly kyc: KycRepositoryPort) {}
 
-  async execute(adminId: string, documentId: string, status: string, rejectionReason?: string) {
-    const result = await this.kyc.reviewDocument(adminId, documentId, status, rejectionReason);
+  async execute(
+    adminId: string,
+    documentId: string,
+    status: string,
+    reasonCode?: string,
+    rejectionReason?: string,
+    reviewNote?: string,
+  ) {
+    const cleanReasonCode = reasonCode?.trim().toUpperCase();
+    if (cleanReasonCode && !REVIEW_REASON_CODES.has(cleanReasonCode)) {
+      throw new ValidationError('Invalid KYC review reason code');
+    }
+    if (status === 'REJECTED' && !cleanReasonCode) {
+      throw new ValidationError('KYC rejection reason code is required');
+    }
+    const cleanRejectionReason = rejectionReason?.trim();
+    if (status === 'REJECTED' && !cleanRejectionReason) {
+      throw new ValidationError('KYC rejection reason is required');
+    }
+
+    const result = await this.kyc.reviewDocument(
+      adminId,
+      documentId,
+      status,
+      cleanReasonCode ?? (status === 'APPROVED' ? 'CLEAR' : undefined),
+      cleanRejectionReason,
+      reviewNote?.trim() || undefined,
+    );
     if (!result) throw new NotFoundError('KYC document', documentId);
     if (status === 'APPROVED') {
       await this.kyc.upgradeKycLevelIfNeeded(result.userId);
     }
     return { success: true };
+  }
+}
+
+@Injectable()
+export class AssignKycDocumentUseCase {
+  constructor(@Inject(KYC_REPOSITORY) private readonly kyc: KycRepositoryPort) {}
+
+  async execute(documentId: string, assignedTo: string) {
+    const result = await this.kyc.assignDocument(documentId, assignedTo);
+    if (!result) throw new NotFoundError('KYC document', documentId);
+    return { id: documentId, assignedTo };
   }
 }

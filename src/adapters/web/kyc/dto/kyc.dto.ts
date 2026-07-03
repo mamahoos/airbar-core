@@ -32,5 +32,19 @@ export class ReviewKycDocumentDto {
 
   @IsOptional()
   @IsString()
+  reasonCode?: string;
+
+  @IsOptional()
+  @IsString()
   rejectionReason?: string;
+
+  @IsOptional()
+  @IsString()
+  reviewNote?: string;
+}
+
+export class AssignKycDocumentDto {
+  @IsOptional()
+  @IsString()
+  assignedTo?: string;
 }

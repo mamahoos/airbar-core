@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { GetKycStatusUseCase } from '../../../application/kyc/get-kyc-status.use-case.js';
 import { KycAccessService } from '../../../application/kyc/kyc-access.service.js';
 import {
+  AssignKycDocumentUseCase,
   DeleteBankAccountUseCase,
   LookupPostalCodeUseCase,
   ReviewKycDocumentUseCase,
@@ -31,6 +32,7 @@ import { KycController } from './kyc.controller.js';
     LookupPostalCodeUseCase,
     UploadKycDocumentUseCase,
     ReviewKycDocumentUseCase,
+    AssignKycDocumentUseCase,
   ],
   exports: [KycAccessService, KycLevelGuard],
 })

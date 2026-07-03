@@ -166,9 +166,13 @@ model KycDocument {
   type            String
   fileUrl         String    @map("file_url")
   status          KycStatus @default(PENDING)
+  assignedTo      String?   @map("assigned_to")
+  assignedAt      DateTime? @map("assigned_at")
   verifiedBy      String?   @map("verified_by")
   verifiedAt      DateTime? @map("verified_at")
   rejectionReason String?   @map("rejection_reason")
+  reviewReasonCode String?  @map("review_reason_code")
+  reviewNote      String?   @map("review_note")
   metadata        Json?
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
@@ -176,6 +180,7 @@ model KycDocument {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([status, assignedTo])
   @@map("kyc_documents")
 }
 

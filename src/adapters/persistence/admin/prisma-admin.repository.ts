@@ -188,7 +188,7 @@ export class PrismaAdminRepository implements AdminRepositoryPort {
         include: {
           user: { select: { id: true, firstName: true, lastName: true, phone: true } },
         },
-        orderBy: { createdAt: 'asc' },
+        orderBy: [{ assignedAt: 'asc' }, { createdAt: 'asc' }],
         skip,
         take: safeLimit,
       }),
