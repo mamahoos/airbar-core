@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Ip,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CargoType, ShipmentStatus, UserRole } from '@prisma/client';
 import { Type } from 'class-transformer';
@@ -33,7 +44,9 @@ import {
 import {
   GetAdminReconciliationRunUseCase,
   GetAdminTreasurySummaryUseCase,
+  GetAdminOutboxUseCase,
   ListAdminReconciliationRunsUseCase,
+  ListAdminOutboxUseCase,
   ProcessAdminWithdrawalUseCase,
   RejectAdminWithdrawalUseCase,
   ReplayOutboxUseCase,
@@ -198,6 +211,30 @@ class ProcessWithdrawalDto {
   receiptUrl!: string;
 }
 
+class AdminOutboxQueryDto extends PaginationQueryDto {
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @IsOptional()
+  @IsString()
+  command?: string;
+
+  @IsOptional()
+  @IsString()
+  aggregateType?: string;
+
+  @IsOptional()
+  @IsString()
+  aggregateId?: string;
+}
+
+class ReplayOutboxDto {
+  @IsString()
+  @IsNotEmpty()
+  reason!: string;
+}
+
 @ApiTags('admin')
 @Controller('admin')
 @UseGuards(RolesGuard)
@@ -228,6 +265,8 @@ export class AdminController {
     private readonly runReconciliation: RunAdminReconciliationUseCase,
     private readonly listReconciliationRuns: ListAdminReconciliationRunsUseCase,
     private readonly getReconciliationRun: GetAdminReconciliationRunUseCase,
+    private readonly listOutbox: ListAdminOutboxUseCase,
+    private readonly getOutbox: GetAdminOutboxUseCase,
   ) {}
 
   @Get('dashboard')
@@ -332,11 +371,35 @@ export class AdminController {
     return this.resolveDispute.execute(shipmentId, dto.resolution, dto.note);
   }
 
+  @Get('integration-outbox')
+  @Roles(DomainUserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'List finance integration outbox rows (super admin)' })
+  integrationOutbox(@Query() query: AdminOutboxQueryDto) {
+    return this.listOutbox.execute(query);
+  }
+
+  @Get('integration-outbox/:id')
+  @Roles(DomainUserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Get finance integration outbox row detail (super admin)' })
+  integrationOutboxDetail(@Param('id') id: string) {
+    return this.getOutbox.execute(id);
+  }
+
   @Post('integration-outbox/:id/replay')
   @Roles(DomainUserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Replay failed outbox row (super admin)' })
-  replayOutboxRoute(@Param('id') id: string) {
-    return this.replayOutbox.execute(id);
+  replayOutboxRoute(
+    @CurrentUser() admin: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: ReplayOutboxDto,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.replayOutbox.execute(admin.id, id, {
+      reason: dto.reason,
+      ipAddress,
+      ...(userAgent ? { userAgent } : {}),
+    });
   }
 
   @Get('finance/treasury')

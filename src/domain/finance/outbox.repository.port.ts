@@ -27,6 +27,15 @@ export interface InsertOutboxInput {
   readonly idempotencyKey: string;
 }
 
+export interface ListOutboxFilter {
+  readonly status?: OutboxRowStatus | undefined;
+  readonly command?: OutboxCommand | undefined;
+  readonly aggregateType?: string | undefined;
+  readonly aggregateId?: string | undefined;
+  readonly page: number;
+  readonly limit: number;
+}
+
 export interface OutboxRepositoryPort {
   insert(input: InsertOutboxInput): Promise<OutboxRow>;
   findById(id: string): Promise<OutboxRow | null>;
@@ -40,5 +49,6 @@ export interface OutboxRepositoryPort {
     error: string,
   ): Promise<void>;
   resetForReplay(id: string): Promise<OutboxRow>;
+  list(filter: ListOutboxFilter): Promise<{ data: OutboxRow[]; total: number }>;
   listFailed(page: number, limit: number): Promise<{ data: OutboxRow[]; total: number }>;
 }

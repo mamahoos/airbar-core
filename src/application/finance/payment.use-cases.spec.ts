@@ -1,7 +1,11 @@
+import { IntegrationOutboxService } from './integration-outbox.service.js';
 import {
+  GetAdminOutboxUseCase,
   GetAdminTreasurySummaryUseCase,
+  ListAdminOutboxUseCase,
   ListAdminReconciliationRunsUseCase,
   ProcessAdminWithdrawalUseCase,
+  ReplayOutboxUseCase,
 } from './payment.use-cases.js';
 
 import type { FinanceOrchestratorPort } from './finance-orchestrator.port.js';
@@ -88,5 +92,158 @@ describe('Admin finance ops use cases', () => {
       items: [{ id: 'run-1', status: 'PASSED', findings: { debitEqualsCredit: true } }],
     });
     expect(finance.listReconciliationRuns).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Admin outbox ops use cases', () => {
+  it('masks sensitive payload fields in admin outbox rows', async () => {
+    const service = new IntegrationOutboxService(
+      {
+        list: jest.fn().mockResolvedValue({
+          data: [
+            {
+              id: 'outbox-1',
+              aggregateType: 'withdrawal',
+              aggregateId: 'wd-1',
+              command: 'CreateWithdrawal',
+              payload: {
+                destinationIban: 'IR820540102680020817909002',
+                nested: { nationalId: '0012345678', amount: '100000' },
+              },
+              idempotencyKey: 'wd:user-1:nonce',
+              status: 'FAILED',
+              attemptCount: 1,
+              nextRetryAt: null,
+              lastError: 'timeout',
+              createdAt: new Date('2026-07-03T00:00:00.000Z'),
+              processedAt: null,
+            },
+          ],
+          total: 1,
+        }),
+      } as never,
+      { add: jest.fn() } as never,
+      { outboxMaxAttempts: 10 } as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.listForAdmin({ page: 1, limit: 10 }),
+    ).resolves.toMatchObject({
+      data: [
+        {
+          id: 'outbox-1',
+          payload: {
+            destinationIban: '[masked]',
+            nested: { nationalId: '[masked]', amount: '100000' },
+          },
+        },
+      ],
+      total: 1,
+    });
+  });
+
+  it('lists outbox rows with filters and pagination', async () => {
+    const outbox = {
+      listForAdmin: jest.fn().mockResolvedValue({
+        data: [
+          {
+            id: 'outbox-1',
+            command: 'ProcessWithdrawal',
+            status: 'FAILED',
+            attemptCount: 10,
+            payload: { destinationIban: '[masked]' },
+          },
+        ],
+        total: 1,
+      }),
+    };
+    const useCase = new ListAdminOutboxUseCase(outbox as never);
+
+    await expect(
+      useCase.execute({
+        page: 1,
+        limit: 10,
+        status: 'FAILED',
+        command: 'ProcessWithdrawal',
+        aggregateType: 'withdrawal',
+      }),
+    ).resolves.toMatchObject({
+      data: [{ id: 'outbox-1', status: 'FAILED' }],
+      pagination: { totalItems: 1, page: 1, limit: 10 },
+    });
+    expect(outbox.listForAdmin).toHaveBeenCalledWith({
+      page: 1,
+      limit: 10,
+      status: 'FAILED',
+      command: 'ProcessWithdrawal',
+      aggregateType: 'withdrawal',
+      aggregateId: undefined,
+    });
+  });
+
+  it('rejects invalid outbox filters', async () => {
+    const useCase = new ListAdminOutboxUseCase({ listForAdmin: jest.fn() } as never);
+
+    await expect(useCase.execute({ status: 'BROKEN' })).rejects.toThrow('Invalid outbox status');
+    await expect(useCase.execute({ command: 'BrokenCommand' })).rejects.toThrow(
+      'Invalid outbox command',
+    );
+  });
+
+  it('loads an outbox detail through the outbox service', async () => {
+    const outbox = {
+      getForAdmin: jest.fn().mockResolvedValue({ id: 'outbox-1', payload: { iban: '[masked]' } }),
+    };
+    const useCase = new GetAdminOutboxUseCase(outbox as never);
+
+    await expect(useCase.execute('outbox-1')).resolves.toEqual({
+      id: 'outbox-1',
+      payload: { iban: '[masked]' },
+    });
+  });
+
+  it('requires reason and audits replay', async () => {
+    const outbox = {
+      getForAdmin: jest.fn().mockResolvedValue({
+        id: 'outbox-1',
+        command: 'ProcessWithdrawal',
+        aggregateType: 'withdrawal',
+        aggregateId: 'wd-1',
+        status: 'FAILED',
+        attemptCount: 10,
+        lastError: 'timeout',
+      }),
+      replay: jest.fn().mockResolvedValue(undefined),
+    };
+    const activity = { log: jest.fn().mockResolvedValue(undefined) };
+    const useCase = new ReplayOutboxUseCase(outbox as never, activity as never);
+
+    await expect(
+      useCase.execute('admin-1', 'outbox-1', {
+        reason: ' retry after finance recovery ',
+        ipAddress: '127.0.0.1',
+        userAgent: 'jest',
+      }),
+    ).resolves.toEqual({ replayed: true });
+    expect(outbox.replay).toHaveBeenCalledWith('outbox-1');
+    expect(activity.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'admin-1',
+        action: 'ADMIN_OUTBOX_REPLAY',
+        resource: 'integration_outbox',
+        resourceId: 'outbox-1',
+        details: expect.objectContaining({
+          reason: 'retry after finance recovery',
+          previousStatus: 'FAILED',
+          previousAttemptCount: 10,
+        }),
+      }),
+    );
+
+    await expect(
+      useCase.execute('admin-1', 'outbox-1', { reason: ' ' }),
+    ).rejects.toThrow('Replay reason is required');
   });
 });

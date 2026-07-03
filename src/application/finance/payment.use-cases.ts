@@ -5,6 +5,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import { FinanceGrpcClient } from '../../adapters/grpc-client/finance-grpc.client.js';
 import { PrismaService } from '../../adapters/persistence/prisma.service.js';
 import { APP_CONFIG } from '../../bootstrap/config/index.js';
+import {
+  ACTIVITY_LOG_REPOSITORY,
+  type ActivityLogRepositoryPort,
+} from '../../domain/auth/ports/activity-log.repository.port.js';
+import { isOutboxCommand, type OutboxCommand } from '../../domain/finance/outbox.command.js';
 import { ShipmentStatus } from '../../domain/marketplace/shipment-state-machine.js';
 import {
   SHIPMENT_REPOSITORY,
@@ -18,6 +23,7 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../shared/errors/index.js';
+import { buildPaginationMeta, normalizePagination } from '../../shared/pagination/pagination.js';
 import { KycAccessService } from '../kyc/kyc-access.service.js';
 
 import { financeKycRequirement } from './finance-kyc-gates.js';
@@ -25,8 +31,10 @@ import { FINANCE_ORCHESTRATOR, type FinanceOrchestratorPort } from './finance-or
 import { IntegrationOutboxService } from './integration-outbox.service.js';
 
 import type { AppConfig } from '../../bootstrap/config/index.js';
+import type { OutboxRowStatus } from '../../domain/finance/outbox.repository.port.js';
 
 export type PaymentMethod = 'ZIBAL' | 'WALLET';
+const OUTBOX_STATUSES = new Set<OutboxRowStatus>(['PENDING', 'PROCESSING', 'DONE', 'FAILED']);
 
 @Injectable()
 export class CreateShipmentPaymentUseCase {
@@ -193,11 +201,88 @@ export class GetAdminReconciliationRunUseCase {
 
 @Injectable()
 export class ReplayOutboxUseCase {
+  constructor(
+    private readonly outbox: IntegrationOutboxService,
+    @Inject(ACTIVITY_LOG_REPOSITORY) private readonly activity: ActivityLogRepositoryPort,
+  ) {}
+
+  async execute(
+    adminId: string,
+    outboxId: string,
+    input: { reason: string; ipAddress?: string; userAgent?: string },
+  ) {
+    const reason = input.reason.trim();
+    if (!reason) throw new ValidationError('Replay reason is required');
+    const before = await this.outbox.getForAdmin(outboxId);
+    await this.outbox.replay(outboxId);
+    await this.activity.log({
+      userId: adminId,
+      action: 'ADMIN_OUTBOX_REPLAY',
+      resource: 'integration_outbox',
+      resourceId: outboxId,
+      details: {
+        reason,
+        command: before.command,
+        aggregateType: before.aggregateType,
+        aggregateId: before.aggregateId,
+        previousStatus: before.status,
+        previousAttemptCount: before.attemptCount,
+        previousLastError: before.lastError,
+      },
+      ipAddress: input.ipAddress,
+      userAgent: input.userAgent,
+    });
+    return { replayed: true };
+  }
+}
+
+@Injectable()
+export class ListAdminOutboxUseCase {
+  constructor(private readonly outbox: IntegrationOutboxService) {}
+
+  async execute(filter: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    command?: string;
+    aggregateType?: string;
+    aggregateId?: string;
+  }) {
+    const { page, limit } = normalizePagination({ page: filter.page, limit: filter.limit ?? 50 });
+    const status = this.parseStatus(filter.status);
+    const command = this.parseCommand(filter.command);
+    const { data, total } = await this.outbox.listForAdmin({
+      page,
+      limit,
+      status,
+      command,
+      aggregateType: filter.aggregateType,
+      aggregateId: filter.aggregateId,
+    });
+    return { data, pagination: buildPaginationMeta(total, page, limit) };
+  }
+
+  private parseStatus(status?: string): OutboxRowStatus | undefined {
+    if (!status) return undefined;
+    if (!OUTBOX_STATUSES.has(status as OutboxRowStatus)) {
+      throw new ValidationError('Invalid outbox status');
+    }
+    return status as OutboxRowStatus;
+  }
+
+  private parseCommand(command?: string): OutboxCommand | undefined {
+    if (!command) return undefined;
+    if (!isOutboxCommand(command)) throw new ValidationError('Invalid outbox command');
+    return command;
+  }
+}
+
+@Injectable()
+export class GetAdminOutboxUseCase {
   constructor(private readonly outbox: IntegrationOutboxService) {}
 
   async execute(outboxId: string) {
-    await this.outbox.replay(outboxId);
-    return { replayed: true };
+    return this.outbox.getForAdmin(outboxId);
   }
 }
 

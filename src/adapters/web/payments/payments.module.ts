@@ -4,9 +4,11 @@ import { EscrowJobsService } from '../../../application/finance/escrow-jobs.serv
 import {
   CreateShipmentPaymentUseCase,
   GetAdminReconciliationRunUseCase,
+  GetAdminOutboxUseCase,
   GetAdminTreasurySummaryUseCase,
   GetWalletUseCase,
   ListAdminReconciliationRunsUseCase,
+  ListAdminOutboxUseCase,
   ListWalletTransactionsUseCase,
   ListWithdrawalsUseCase,
   ProcessAdminWithdrawalUseCase,
@@ -16,6 +18,7 @@ import {
   ResolveDisputeUseCase,
   RunAdminReconciliationUseCase,
 } from '../../../application/finance/payment.use-cases.js';
+import { AuthPersistenceModule } from '../../persistence/auth/auth-persistence.module.js';
 import { MarketplacePersistenceModule } from '../../persistence/marketplace/marketplace-persistence.module.js';
 import { FinanceOutboxModule } from '../../queue/finance-outbox/finance-outbox.module.js';
 import { KycModule } from '../kyc/kyc.module.js';
@@ -23,7 +26,7 @@ import { KycModule } from '../kyc/kyc.module.js';
 import { PaymentsController } from './payments.controller.js';
 
 @Module({
-  imports: [FinanceOutboxModule, MarketplacePersistenceModule, KycModule],
+  imports: [FinanceOutboxModule, AuthPersistenceModule, MarketplacePersistenceModule, KycModule],
   controllers: [PaymentsController],
   providers: [
     CreateShipmentPaymentUseCase,
@@ -35,6 +38,8 @@ import { PaymentsController } from './payments.controller.js';
     RunAdminReconciliationUseCase,
     ListAdminReconciliationRunsUseCase,
     GetAdminReconciliationRunUseCase,
+    ListAdminOutboxUseCase,
+    GetAdminOutboxUseCase,
     ReplayOutboxUseCase,
     ResolveDisputeUseCase,
     ProcessAdminWithdrawalUseCase,
@@ -49,6 +54,8 @@ import { PaymentsController } from './payments.controller.js';
     RunAdminReconciliationUseCase,
     ListAdminReconciliationRunsUseCase,
     GetAdminReconciliationRunUseCase,
+    ListAdminOutboxUseCase,
+    GetAdminOutboxUseCase,
     ReplayOutboxUseCase,
     ResolveDisputeUseCase,
     ProcessAdminWithdrawalUseCase,

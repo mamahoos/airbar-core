@@ -5,6 +5,7 @@ import { isOutboxCommand } from '../../../domain/finance/outbox.command.js';
 import {
   OUTBOX_REPOSITORY,
   type InsertOutboxInput,
+  type ListOutboxFilter,
   type OutboxRepositoryPort,
   type OutboxRow,
   type OutboxRowStatus,
@@ -116,6 +117,26 @@ export class PrismaOutboxRepository implements OutboxRepositoryPort {
       },
     });
     return toRow(row);
+  }
+
+  async list(filter: ListOutboxFilter): Promise<{ data: OutboxRow[]; total: number }> {
+    const where: Prisma.IntegrationOutboxWhereInput = {};
+    if (filter.status) where.status = filter.status;
+    if (filter.command) where.command = filter.command;
+    if (filter.aggregateType) where.aggregateType = filter.aggregateType;
+    if (filter.aggregateId) where.aggregateId = filter.aggregateId;
+
+    const skip = (filter.page - 1) * filter.limit;
+    const [data, total] = await Promise.all([
+      this.prisma.integrationOutbox.findMany({
+        where,
+        orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+        skip,
+        take: filter.limit,
+      }),
+      this.prisma.integrationOutbox.count({ where }),
+    ]);
+    return { data: data.map(toRow), total };
   }
 
   async listFailed(page: number, limit: number): Promise<{ data: OutboxRow[]; total: number }> {
