@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ShipmentStatus } from '@prisma/client';
 
 import { PrismaService } from '../../adapters/persistence/prisma.service.js';
 
@@ -48,9 +49,43 @@ export class ShipmentFinanceBridgeService {
         });
         return;
       }
+      case 'ReleaseEscrow':
+      case 'RefundEscrow':
+      case 'PartialRefundEscrow':
+        await this.applyDisputeResolution(payload);
+        return;
       default:
         return;
     }
+  }
+
+  private async applyDisputeResolution(payload: Record<string, unknown>): Promise<void> {
+    const resolution = typeof payload.disputeResolution === 'string' ? payload.disputeResolution : null;
+    const targetStatus = this.parseDisputeTargetStatus(payload.disputeTargetStatus);
+    if (!resolution || !targetStatus) return;
+
+    await this.prisma.shipment.update({
+      where: { id: String(payload.shipmentId) },
+      data: {
+        status: targetStatus,
+        disputeResolvedAt: new Date(),
+        disputeResolution: resolution,
+        trackingHistory: {
+          push: {
+            status: targetStatus,
+            timestamp: new Date().toISOString(),
+            description: `Dispute resolved: ${resolution}`,
+          },
+        },
+      },
+    });
+  }
+
+  private parseDisputeTargetStatus(value: unknown): ShipmentStatus | null {
+    if (value === ShipmentStatus.CONFIRMED || value === ShipmentStatus.REFUNDED) {
+      return value;
+    }
+    return null;
   }
 
   async markShipmentPaid(shipmentId: string): Promise<boolean> {

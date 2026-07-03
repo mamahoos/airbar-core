@@ -10,10 +10,74 @@ import {
   MarkAdminWithdrawalSentUseCase,
   ProcessAdminWithdrawalUseCase,
   ReplayOutboxUseCase,
+  ResolveDisputeUseCase,
   SettleAdminWithdrawalUseCase,
 } from './payment.use-cases.js';
 
 import type { FinanceOrchestratorPort } from './finance-orchestrator.port.js';
+
+describe('ResolveDisputeUseCase', () => {
+  function prismaMock(status = 'DISPUTED') {
+    return {
+      shipment: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'ship-1', status }),
+        update: jest.fn().mockResolvedValue({}),
+      },
+    };
+  }
+
+  it('releases escrow and resolves the shipment only after finance succeeds', async () => {
+    const finance = {
+      tryReleaseEscrow: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
+      tryRefundEscrow: jest.fn(),
+    };
+    const prisma = prismaMock();
+    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never);
+
+    await expect(useCase.execute('ship-1', 'RELEASE', 'carrier delivered')).resolves.toEqual({
+      shipmentId: 'ship-1',
+      resolution: 'RELEASE',
+      note: 'carrier delivered',
+      queued: false,
+    });
+    expect(finance.tryReleaseEscrow).toHaveBeenCalledWith({
+      shipmentId: 'ship-1',
+      disputeResolution: 'RELEASE: carrier delivered',
+      disputeTargetStatus: 'CONFIRMED',
+    });
+    expect(prisma.shipment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'ship-1' },
+        data: expect.objectContaining({
+          status: 'CONFIRMED',
+          disputeResolution: 'RELEASE: carrier delivered',
+        }),
+      }),
+    );
+  });
+
+  it('keeps the shipment disputed when finance command is queued', async () => {
+    const finance = {
+      tryReleaseEscrow: jest.fn(),
+      tryRefundEscrow: jest.fn().mockResolvedValue({ ok: false }),
+    };
+    const prisma = prismaMock();
+    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never);
+
+    await expect(useCase.execute('ship-1', 'REFUND')).resolves.toEqual({
+      shipmentId: 'ship-1',
+      resolution: 'REFUND',
+      note: null,
+      queued: true,
+    });
+    expect(finance.tryRefundEscrow).toHaveBeenCalledWith({
+      shipmentId: 'ship-1',
+      disputeResolution: 'REFUND',
+      disputeTargetStatus: 'REFUNDED',
+    });
+    expect(prisma.shipment.update).not.toHaveBeenCalled();
+  });
+});
 
 describe('ProcessAdminWithdrawalUseCase', () => {
   function financeMock(): jest.Mocked<Pick<FinanceOrchestratorPort, 'tryProcessWithdrawal'>> {

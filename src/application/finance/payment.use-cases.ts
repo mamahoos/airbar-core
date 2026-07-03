@@ -343,22 +343,53 @@ export class ResolveDisputeUseCase {
       throw new ValidationError('Only disputed shipments can be resolved');
     }
 
-    if (resolution === 'RELEASE') {
-      await this.finance.tryReleaseEscrow({ shipmentId });
-    } else {
-      await this.finance.tryRefundEscrow({ shipmentId });
+    const disputeResolution = this.formatDisputeResolution(resolution, note);
+    const disputeTargetStatus = resolution === 'RELEASE' ? 'CONFIRMED' : 'REFUNDED';
+    const financeInput = { shipmentId, disputeResolution, disputeTargetStatus };
+    const result =
+      resolution === 'RELEASE'
+        ? await this.finance.tryReleaseEscrow(financeInput)
+        : await this.finance.tryRefundEscrow(financeInput);
+
+    if (!result.ok) {
+      return {
+        shipmentId,
+        resolution,
+        note: note ?? null,
+        queued: true,
+      };
     }
 
+    await this.resolveShipmentDispute(shipmentId, disputeTargetStatus, disputeResolution);
+
+    return { shipmentId, resolution, note: note ?? null, queued: false };
+  }
+
+  private async resolveShipmentDispute(
+    shipmentId: string,
+    status: 'CONFIRMED' | 'REFUNDED',
+    resolution: string,
+  ) {
     await this.prisma.shipment.update({
       where: { id: shipmentId },
       data: {
-        status: resolution === 'RELEASE' ? 'CONFIRMED' : 'REFUNDED',
+        status,
         disputeResolvedAt: new Date(),
-        disputeResolution: note ?? resolution,
+        disputeResolution: resolution,
+        trackingHistory: {
+          push: {
+            status,
+            timestamp: new Date().toISOString(),
+            description: `Dispute resolved: ${resolution}`,
+          },
+        },
       },
     });
+  }
 
-    return { shipmentId, resolution, note: note ?? null };
+  private formatDisputeResolution(resolution: 'RELEASE' | 'REFUND', note?: string): string {
+    const trimmedNote = note?.trim();
+    return trimmedNote ? `${resolution}: ${trimmedNote}` : resolution;
   }
 }
 

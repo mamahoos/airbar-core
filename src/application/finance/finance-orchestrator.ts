@@ -164,7 +164,7 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
   async tryMarkDelivered(input: ShipmentFinanceCommandInput): Promise<FinanceSyncResult<void>> {
     return this.shipmentCommand(
       'MarkDelivered',
-      input.shipmentId,
+      input,
       markDeliveredKey(input.shipmentId),
     );
   }
@@ -172,7 +172,7 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
   async tryFreezeEscrow(input: ShipmentFinanceCommandInput): Promise<FinanceSyncResult<void>> {
     return this.shipmentCommand(
       'FreezeEscrow',
-      input.shipmentId,
+      input,
       freezeEscrowKey(input.shipmentId),
     );
   }
@@ -180,7 +180,7 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
   async tryReleaseEscrow(input: ShipmentFinanceCommandInput): Promise<FinanceSyncResult<void>> {
     return this.shipmentCommand(
       'ReleaseEscrow',
-      input.shipmentId,
+      input,
       releaseEscrowKey(input.shipmentId),
     );
   }
@@ -188,7 +188,7 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
   async tryRefundEscrow(input: ShipmentFinanceCommandInput): Promise<FinanceSyncResult<void>> {
     return this.shipmentCommand(
       'RefundEscrow',
-      input.shipmentId,
+      input,
       refundEscrowKey(input.shipmentId),
     );
   }
@@ -201,6 +201,8 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     const payload = {
       shipmentId: input.shipmentId,
       refundAmount: String(input.refundAmountRials),
+      ...(input.disputeResolution ? { disputeResolution: input.disputeResolution } : {}),
+      ...(input.disputeTargetStatus ? { disputeTargetStatus: input.disputeTargetStatus } : {}),
     };
     return this.trySync(
       () =>
@@ -374,10 +376,15 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
       OutboxCommand,
       'MarkDelivered' | 'FreezeEscrow' | 'ReleaseEscrow' | 'RefundEscrow'
     >,
-    shipmentId: string,
+    input: ShipmentFinanceCommandInput,
     idempotencyKey: string,
   ): Promise<FinanceSyncResult<void>> {
-    const payload = { shipmentId };
+    const { shipmentId } = input;
+    const payload = {
+      shipmentId,
+      ...(input.disputeResolution ? { disputeResolution: input.disputeResolution } : {}),
+      ...(input.disputeTargetStatus ? { disputeTargetStatus: input.disputeTargetStatus } : {}),
+    };
     const call = () => {
       switch (command) {
         case 'MarkDelivered':

@@ -28,6 +28,8 @@ export interface PayFromWalletInput {
 
 export interface ShipmentFinanceCommandInput {
   readonly shipmentId: string;
+  readonly disputeResolution?: string | undefined;
+  readonly disputeTargetStatus?: string | undefined;
 }
 
 export interface PartialRefundInput extends ShipmentFinanceCommandInput {

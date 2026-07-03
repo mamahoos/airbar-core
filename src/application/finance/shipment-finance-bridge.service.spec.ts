@@ -46,4 +46,41 @@ describe('ShipmentFinanceBridgeService', () => {
       data: { paymentMethod: 'PROMO_CREDIT' },
     });
   });
+
+  it('applies dispute resolution metadata after a replayed refund succeeds', async () => {
+    const update = jest.fn(async () => ({}));
+    const bridge = new ShipmentFinanceBridgeService({ shipment: { update } } as never);
+
+    await bridge.apply(
+      'RefundEscrow',
+      {
+        shipmentId: 'ship-4',
+        disputeResolution: 'package damaged',
+        disputeTargetStatus: 'REFUNDED',
+      },
+      {},
+    );
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'ship-4' },
+        data: expect.objectContaining({
+          status: 'REFUNDED',
+          disputeResolution: 'package damaged',
+          trackingHistory: expect.objectContaining({
+            push: expect.objectContaining({ status: 'REFUNDED' }),
+          }),
+        }),
+      }),
+    );
+  });
+
+  it('ignores release/refund commands that are not dispute resolutions', async () => {
+    const update = jest.fn(async () => ({}));
+    const bridge = new ShipmentFinanceBridgeService({ shipment: { update } } as never);
+
+    await bridge.apply('ReleaseEscrow', { shipmentId: 'ship-5' }, {});
+
+    expect(update).not.toHaveBeenCalled();
+  });
 });
