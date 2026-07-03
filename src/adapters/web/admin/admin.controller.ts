@@ -37,6 +37,11 @@ import {
   ResolveDisputeUseCase,
 } from '../../../application/finance/payment.use-cases.js';
 import { UserRole as DomainUserRole } from '../../../domain/auth/user-role.js';
+import {
+  MIN_BASE_PRICE,
+  MIN_PLATFORM_FEE,
+  MIN_PRICE_PER_KG,
+} from '../../../domain/marketplace/pricing-calculator.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
@@ -127,11 +132,11 @@ class PricingRuleDto {
   cargoType?: CargoType;
 
   @IsNumber()
-  @Min(0)
+  @Min(MIN_BASE_PRICE)
   basePrice!: number;
 
   @IsNumber()
-  @Min(0)
+  @Min(MIN_PRICE_PER_KG)
   pricePerKg!: number;
 
   @IsOptional()
@@ -148,6 +153,7 @@ class PricingRuleDto {
 
   @IsOptional()
   @IsNumber()
+  @Min(MIN_PLATFORM_FEE)
   minPlatformFee?: number;
 
   @IsOptional()

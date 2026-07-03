@@ -23,6 +23,10 @@ const DEFAULT_PRICE_PER_KG = 50_000;
 const DEFAULT_PLATFORM_FEE_PERCENT = 10;
 const DEFAULT_MIN_PLATFORM_FEE = 10_000;
 
+export const MIN_BASE_PRICE = 10_000;
+export const MIN_PRICE_PER_KG = 10_000;
+export const MIN_PLATFORM_FEE = 10_000;
+
 const RISK_MULTIPLIERS: Record<CargoType, number> = {
   [CargoType.DOCUMENTS]: 1.0,
   [CargoType.CLOTHING]: 1.0,
@@ -73,4 +77,20 @@ export function getQuote(input: PriceQuoteInput) {
       routeMultiplier: isInternational ? 1.5 : 1,
     },
   };
+}
+
+export function calculatePriceFloor(input: PriceQuoteInput): number {
+  return calculateBasePrice(input);
+}
+
+export function assertPricingRuleFloor(input: Partial<PricingRuleInput>): void {
+  if (input.basePrice !== undefined && input.basePrice < MIN_BASE_PRICE) {
+    throw new Error(`basePrice must be at least ${MIN_BASE_PRICE}`);
+  }
+  if (input.pricePerKg !== undefined && input.pricePerKg < MIN_PRICE_PER_KG) {
+    throw new Error(`pricePerKg must be at least ${MIN_PRICE_PER_KG}`);
+  }
+  if (input.minPlatformFee !== undefined && input.minPlatformFee < MIN_PLATFORM_FEE) {
+    throw new Error(`minPlatformFee must be at least ${MIN_PLATFORM_FEE}`);
+  }
 }

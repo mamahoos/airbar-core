@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { getQuote } from '../../domain/marketplace/pricing-calculator.js';
+import { calculatePriceFloor, getQuote } from '../../domain/marketplace/pricing-calculator.js';
 import {
   PRICING_RULE_REPOSITORY,
   type PricingRuleRepositoryPort,
@@ -27,5 +27,10 @@ export class PricingQuoteService {
   async calculatePrice(input: QuoteInput): Promise<number> {
     const quote = await this.getQuote(input);
     return quote.basePrice;
+  }
+
+  async calculateFloor(input: QuoteInput): Promise<number> {
+    const rule = await this.rules.findBestMatch(input);
+    return calculatePriceFloor({ ...input, rule: rule ?? undefined });
   }
 }

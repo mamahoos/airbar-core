@@ -8,7 +8,8 @@ import {
   type AdminRepositoryPort,
   type PricingRuleInput,
 } from '../../domain/admin/admin.repository.port.js';
-import { NotFoundError } from '../../shared/errors/index.js';
+import { assertPricingRuleFloor } from '../../domain/marketplace/pricing-calculator.js';
+import { NotFoundError, ValidationError } from '../../shared/errors/index.js';
 import { buildPaginationMeta, normalizePagination } from '../../shared/pagination/pagination.js';
 
 import type { UserRole } from '@prisma/client';
@@ -147,6 +148,7 @@ export class CreateAdminPricingRuleUseCase {
   constructor(@Inject(ADMIN_REPOSITORY) private readonly admin: AdminRepositoryPort) {}
 
   execute(input: PricingRuleInput) {
+    assertPricingRuleInput(input);
     return this.admin.createPricingRule(input);
   }
 }
@@ -156,6 +158,15 @@ export class UpdateAdminPricingRuleUseCase {
   constructor(@Inject(ADMIN_REPOSITORY) private readonly admin: AdminRepositoryPort) {}
 
   execute(id: string, input: Partial<PricingRuleInput>) {
+    assertPricingRuleInput(input);
     return this.admin.updatePricingRule(id, input);
+  }
+}
+
+function assertPricingRuleInput(input: Partial<PricingRuleInput>): void {
+  try {
+    assertPricingRuleFloor(input);
+  } catch (error) {
+    throw new ValidationError(error instanceof Error ? error.message : 'Invalid pricing rule');
   }
 }

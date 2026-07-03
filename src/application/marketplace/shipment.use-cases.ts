@@ -167,6 +167,7 @@ export class AcceptShipmentOfferUseCase {
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     private readonly kyc: KycAccessService,
     private readonly notifications: NotificationService,
+    private readonly pricing: PricingQuoteService,
     @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
   ) {}
 
@@ -182,10 +183,23 @@ export class AcceptShipmentOfferUseCase {
       throw new ValidationError('Shipment is not in MATCHED status');
     }
 
-    const updated = await this.shipments.acceptOffer(
-      shipmentId,
-      agreedPrice ?? shipment.systemPrice,
-    );
+    const acceptedPrice = agreedPrice ?? shipment.systemPrice;
+    if (agreedPrice !== undefined) {
+      const priceFloor = Math.max(
+        shipment.systemPrice,
+        await this.pricing.calculateFloor({
+          originCountry: shipment.originCountry,
+          destinationCountry: shipment.destinationCountry,
+          cargoType: shipment.cargoType,
+          weight: shipment.weight,
+        }),
+      );
+      if (acceptedPrice < priceFloor) {
+        throw new ValidationError('Agreed price is below the system price floor');
+      }
+    }
+
+    const updated = await this.shipments.acceptOffer(shipmentId, acceptedPrice);
     if (updated.carrierId) {
       await this.notifications.notifyShipmentAccepted(updated.carrierId, shipmentId);
       await this.finance.tryCreateEscrow({
