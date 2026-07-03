@@ -27,6 +27,7 @@ import { buildPaginationMeta, normalizePagination } from '../../shared/paginatio
 import { KycAccessService } from '../kyc/kyc-access.service.js';
 
 import { financeKycRequirement } from './finance-kyc-gates.js';
+import { FinanceLimitsService } from './finance-limits.service.js';
 import { FINANCE_ORCHESTRATOR, type FinanceOrchestratorPort } from './finance-orchestrator.port.js';
 import { IntegrationOutboxService } from './integration-outbox.service.js';
 
@@ -43,6 +44,7 @@ export class CreateShipmentPaymentUseCase {
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
     private readonly kyc: KycAccessService,
+    private readonly limits: FinanceLimitsService,
   ) {}
 
   async execute(
@@ -61,6 +63,7 @@ export class CreateShipmentPaymentUseCase {
 
     const amount = shipment.agreedPrice ?? shipment.systemPrice;
     if (!shipment.carrierId) throw new ValidationError('Shipment has no carrier');
+    await this.limits.assertAllowed(senderId, 'CREATE_PAYMENT', amount);
 
     if (method === 'WALLET') {
       const result = await this.finance.tryPayFromWallet({
@@ -119,12 +122,14 @@ export class RequestWithdrawalUseCase {
     @Inject(APP_CONFIG) config: AppConfig,
     private readonly prisma: PrismaService,
     private readonly kyc: KycAccessService,
+    private readonly limits: FinanceLimitsService,
   ) {
     this.piiKey = parsePiiKeyHex(config.piiEncryptionKey);
   }
 
   async execute(userId: string, amountRials: number) {
     await this.kyc.assertRequirement(userId, financeKycRequirement('REQUEST_PAYOUT'));
+    await this.limits.assertAllowed(userId, 'REQUEST_PAYOUT', amountRials);
 
     const [user, profile] = await Promise.all([
       this.prisma.user.findUnique({ where: { id: userId }, select: { isActive: true } }),

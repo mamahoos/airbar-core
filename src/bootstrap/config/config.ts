@@ -62,6 +62,12 @@ export const AppConfigSchema = z.object({
   financeGrpcTls: envBoolean(false),
   frontendUrl: z.string().url().default('http://localhost:3000'),
   outboxMaxAttempts: z.coerce.number().int().positive().default(10),
+  financePaymentIdentityLimitRials: z.coerce.number().int().positive().default(50_000_000),
+  financePaymentDocumentLimitRials: z.coerce.number().int().positive().default(250_000_000),
+  financePaymentFullLimitRials: z.coerce.number().int().positive().default(1_000_000_000),
+  financePayoutIdentityLimitRials: z.coerce.number().int().positive().default(20_000_000),
+  financePayoutDocumentLimitRials: z.coerce.number().int().positive().default(150_000_000),
+  financePayoutFullLimitRials: z.coerce.number().int().positive().default(500_000_000),
 
   intakeApiKey: z.string().optional(),
   internalApiKey: z.string().optional(),
