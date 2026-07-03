@@ -12,7 +12,13 @@ import { loadConfig, type AppConfig } from './config/index.js';
 import { APP_LOGGER, LoggingModule } from './logging/index.js';
 import { createBootstrapLogger, type NestWinstonLogger } from './logging/nest-winston.logger.js';
 
-import type { INestApplication, Type } from '@nestjs/common';
+import type { CanActivate, ExecutionContext, INestApplication, Type } from '@nestjs/common';
+
+class NoopThrottlerGuard implements CanActivate {
+  canActivate(_context: ExecutionContext): boolean {
+    return true;
+  }
+}
 
 export interface CreateAppOptions {
   readonly env?: Record<string, string | undefined>;
@@ -24,16 +30,20 @@ function testEnv(overrides: Record<string, string | undefined> = {}): Record<str
   const databaseUrl =
     overrides.DATABASE_URL ??
     process.env.DATABASE_URL ??
-    'postgresql://airbar:airbar@localhost:5433/airbar_core';
+    'postgresql://airbar:airbar_secret@localhost:5435/airbar_api?schema=public';
 
   return {
     NODE_ENV: 'test',
     DATABASE_URL: databaseUrl,
     REDIS_HOST: process.env.REDIS_HOST ?? 'localhost',
-    REDIS_PORT: process.env.REDIS_PORT ?? '6379',
+    REDIS_PORT: process.env.REDIS_PORT ?? '6382',
     API_IR_DEV_MOCK: 'true',
     SMS_PROVIDER: 'dev',
     FINANCE_GRPC_URL: 'localhost:50051',
+    THROTTLE_LIMIT: '10000',
+    THROTTLE_TTL: '60',
+    OTP_COOLDOWN_SECONDS: '1',
+    OTP_MAX_PER_HOUR: '10000',
     ...overrides,
   };
 }
@@ -43,14 +53,18 @@ function testEnv(overrides: Record<string, string | undefined> = {}): Record<str
  */
 export async function createApp(options: CreateAppOptions = {}): Promise<INestApplication> {
   const env = testEnv(options.env);
+  for (const [key, value] of Object.entries(env)) {
+    process.env[key] = value;
+  }
+
   const config: AppConfig = loadConfig(env);
   const logger = createBootstrapLogger(config);
 
   let builder = Test.createTestingModule({
     imports: [AppModule],
   })
-    .overrideProvider(ThrottlerGuard)
-    .useValue({ canActivate: () => true });
+    .overrideGuard(ThrottlerGuard)
+    .useClass(NoopThrottlerGuard);
 
   if (options.financeStub) {
     builder = builder.overrideProvider(FinanceGrpcClient).useValue(options.financeStub);

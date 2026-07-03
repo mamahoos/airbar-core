@@ -7,10 +7,12 @@ import {
   advanceCarrierDelivery,
   authHeader,
   countNotifications,
+  createAdminUser,
+  enableFinanceKyc,
   matchAndAccept,
   payWalletAndMarkPaid,
-  promoteAdmin,
   registerUser,
+  seedPayoutProfile,
   uniquePhone,
   verifyIdentity,
 } from '../support/e2e-helpers.js';
@@ -72,19 +74,8 @@ describe('Marketplace lifecycle E2E (flow.e2e)', () => {
     await verifyIdentity(app, sender.accessToken);
     await verifyIdentity(app, carrier.accessToken);
 
-    const adminPhone = uniquePhone('0916');
-    const adminUser = await registerUser(app, prisma, adminPhone);
-    await promoteAdmin(prisma, adminUser.userId);
-    await request(app.getHttpServer()).post('/api/v1/auth/otp/send').send({ phone: adminPhone }).expect(200);
-    const adminOtp = await prisma.otp.findFirst({
-      where: { phone: adminPhone, verified: false },
-      orderBy: { createdAt: 'desc' },
-    });
-    const adminLogin = await request(app.getHttpServer())
-      .post('/api/v1/auth/otp/verify')
-      .send({ phone: adminPhone, code: adminOtp!.code })
-      .expect(200);
-    const adminToken = adminLogin.body.data.accessToken as string;
+    const admin = await createAdminUser(app, prisma, uniquePhone('0916'));
+    const adminToken = admin.accessToken;
 
     const { shipmentId } = await matchAndAccept(app, prisma, financeStub, sender, carrier);
     await payWalletAndMarkPaid(app, sender.accessToken, shipmentId);
@@ -166,18 +157,8 @@ describe('Marketplace lifecycle E2E (flow.e2e)', () => {
   it('withdrawal lifecycle sends status notifications', async () => {
     const user = await registerUser(app, prisma, uniquePhone('0920'));
     await verifyIdentity(app, user.accessToken);
-
-    await prisma.user.update({
-      where: { id: user.userId },
-      data: { financialVerifiedAt: new Date() },
-    });
-    await prisma.userPayoutProfile.create({
-      data: {
-        userId: user.userId,
-        ibanCiphertext: 'test-cipher',
-        ibanHash: `hash-${user.userId}`,
-      },
-    });
+    await enableFinanceKyc(prisma, user.userId);
+    await seedPayoutProfile(prisma, user.userId);
 
     financeStub.seedWallet(user.userId, 5_000_000n);
 
@@ -281,22 +262,3 @@ describe('Marketplace lifecycle E2E (flow.e2e)', () => {
       .expect(201);
   });
 });
-
-async function createAdminUser(
-  app: INestApplication,
-  prismaClient: typeof prisma,
-  phone: string,
-): Promise<{ accessToken: string; userId: string }> {
-  const user = await registerUser(app, prismaClient, phone);
-  await promoteAdmin(prismaClient, user.userId);
-  await request(app.getHttpServer()).post('/api/v1/auth/otp/send').send({ phone }).expect(200);
-  const otpRow = await prismaClient.otp.findFirst({
-    where: { phone, verified: false },
-    orderBy: { createdAt: 'desc' },
-  });
-  const login = await request(app.getHttpServer())
-    .post('/api/v1/auth/otp/verify')
-    .send({ phone, code: otpRow!.code })
-    .expect(200);
-  return { accessToken: login.body.data.accessToken as string, userId: user.userId };
-}

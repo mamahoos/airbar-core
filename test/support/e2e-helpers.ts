@@ -2,22 +2,43 @@ import { randomInt } from 'node:crypto';
 
 import request from 'supertest';
 
+import { SendOtpUseCase } from '../../src/application/auth/send-otp.use-case.js';
 import { EscrowJobsService } from '../../src/application/finance/escrow-jobs.service.js';
+import { ShipmentFinanceBridgeService } from '../../src/application/finance/shipment-finance-bridge.service.js';
+import { encryptPii, hashPii, parsePiiKeyHex } from '../../src/shared/crypto/index.js';
 
 import type { FinanceGrpcStubClient } from './finance-grpc.stub.js';
 import type { INestApplication } from '@nestjs/common';
 import type { PrismaClient } from '@prisma/client';
 
+const TEST_PII_KEY = parsePiiKeyHex(
+  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+);
+
+function testIbanForUser(userId: string): string {
+  const digits = userId.replace(/\D/g, '').padEnd(24, '0').slice(0, 24);
+  return `IR${digits}`;
+}
+
 export function uniquePhone(prefix = '0912'): string {
   return `${prefix}${String(randomInt(1_000_000, 9_999_999))}`;
+}
+
+export function uniqueNationalId(): string {
+  return String(randomInt(100_000_000, 999_999_999)).padStart(10, '0');
 }
 
 export function authHeader(token: string): { Authorization: string } {
   return { Authorization: `Bearer ${token}` };
 }
 
+/** Bypass HTTP throttling on /auth/otp/send while still exercising OTP persistence. */
+export async function sendOtp(app: INestApplication, phone: string): Promise<void> {
+  await app.get(SendOtpUseCase).execute(phone);
+}
+
 export async function registerUser(app: INestApplication, prisma: PrismaClient, phone: string) {
-  await request(app.getHttpServer()).post('/api/v1/auth/otp/send').send({ phone }).expect(200);
+  await sendOtp(app, phone);
 
   const otpRow = await prisma.otp.findFirst({
     where: { phone, verified: false },
@@ -47,16 +68,57 @@ export async function registerUser(app: INestApplication, prisma: PrismaClient, 
 
 export async function verifyIdentity(app: INestApplication, accessToken: string) {
   await request(app.getHttpServer())
-    .post('/api/v1/kyc/identity/verify')
+    .post('/api/v1/kyc/verify-identity')
     .set(authHeader(accessToken))
-    .send({ nationalId: '0012345678', birthDate: '1370/01/01' })
-    .expect(200);
+    .send({ nationalId: uniqueNationalId(), birthDate: '1370/01/01' })
+    .expect(201);
 }
 
 export async function promoteAdmin(prisma: PrismaClient, userId: string) {
   await prisma.user.update({
     where: { id: userId },
     data: { role: 'SUPER_ADMIN' },
+  });
+}
+
+export async function loginUser(
+  app: INestApplication,
+  phone: string,
+  password = 'Test1234!',
+): Promise<string> {
+  const res = await request(app.getHttpServer())
+    .post('/api/v1/auth/login')
+    .send({ phone, password })
+    .expect(200);
+  return res.body.data.accessToken as string;
+}
+
+export async function createAdminUser(
+  app: INestApplication,
+  prisma: PrismaClient,
+  phone: string,
+): Promise<{ accessToken: string; userId: string }> {
+  const user = await registerUser(app, prisma, phone);
+  await promoteAdmin(prisma, user.userId);
+  const accessToken = await loginUser(app, phone);
+  return { accessToken, userId: user.userId };
+}
+
+export async function enableFinanceKyc(prisma: PrismaClient, userId: string): Promise<void> {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { financialVerifiedAt: new Date() },
+  });
+}
+
+export async function seedPayoutProfile(prisma: PrismaClient, userId: string): Promise<void> {
+  const iban = testIbanForUser(userId);
+  await prisma.userPayoutProfile.create({
+    data: {
+      userId,
+      ibanCiphertext: encryptPii(iban, TEST_PII_KEY),
+      ibanHash: hashPii(iban),
+    },
   });
 }
 
@@ -74,8 +136,8 @@ export async function createTrip(app: INestApplication, accessToken: string) {
       availableWeight: 20,
       maxWeight: 20,
       acceptedCargoTypes: ['DOCUMENTS'],
-      pricePerKg: 500_000,
-      currency: 'IRT',
+      basePricePerKg: 500_000,
+      currency: 'IRR',
     })
     .expect(201);
   return res.body.data.id as string;
@@ -123,6 +185,7 @@ export async function matchAndAccept(
     .send({ agreedPrice })
     .expect(201);
 
+  await enableFinanceKyc(prisma, sender.userId);
   financeStub.seedWallet(sender.userId, BigInt(agreedPrice) * 2n);
   return { shipmentId, agreedPrice };
 }
@@ -138,8 +201,12 @@ export async function payWalletAndMarkPaid(
     .send({ shipmentId, method: 'WALLET' })
     .expect(201);
 
-  const jobs = app.get(EscrowJobsService);
-  await jobs.pollFundedEscrows();
+  const bridge = app.get(ShipmentFinanceBridgeService);
+  const marked = await bridge.markShipmentPaid(shipmentId);
+  if (!marked) {
+    const jobs = app.get(EscrowJobsService);
+    await jobs.pollFundedEscrows();
+  }
 }
 
 export async function advanceCarrierDelivery(
