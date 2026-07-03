@@ -14,6 +14,7 @@ import { KycAccessService } from '../kyc/kyc-access.service.js';
 import { MarketStatsService } from '../stats/market-stats.service.js';
 
 import { marketplaceKycRequirement } from './marketplace-kyc-gates.js';
+import { MatchingEventsService } from './matching-events.service.js';
 
 @Injectable()
 export class CreateTripUseCase {
@@ -87,6 +88,7 @@ export class PublishTripUseCase {
   constructor(
     @Inject(TRIP_REPOSITORY) private readonly trips: TripRepositoryPort,
     private readonly marketStats: MarketStatsService,
+    private readonly matchingEvents: MatchingEventsService,
   ) {}
 
   async execute(userId: string, tripId: string) {
@@ -101,6 +103,7 @@ export class PublishTripUseCase {
       originCity: published.originCity,
       destinationCity: published.destinationCity,
     });
+    await this.matchingEvents.tripPublished(published.id);
     return published;
   }
 }

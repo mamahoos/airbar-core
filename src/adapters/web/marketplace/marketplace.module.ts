@@ -1,9 +1,11 @@
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 
 import {
   ListAirportsUseCase,
   ListCitiesUseCase,
 } from '../../../application/marketplace/lookup.use-cases.js';
+import { MatchingEventsService } from '../../../application/marketplace/matching-events.service.js';
 import { MatchingService } from '../../../application/marketplace/matching.service.js';
 import { PricingQuoteService } from '../../../application/marketplace/pricing-quote.service.js';
 import {
@@ -32,6 +34,8 @@ import {
 } from '../../../application/marketplace/trip.use-cases.js';
 import { MarketplacePersistenceModule } from '../../persistence/marketplace/marketplace-persistence.module.js';
 import { FinanceOutboxModule } from '../../queue/finance-outbox/finance-outbox.module.js';
+import { MARKETPLACE_MATCHING_QUEUE } from '../../queue/marketplace-matching/marketplace-matching.constants.js';
+import { MarketplaceMatchingProcessor } from '../../queue/marketplace-matching/marketplace-matching.processor.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { ChatModule } from '../chat/chat.module.js';
 import { KycModule } from '../kyc/kyc.module.js';
@@ -46,6 +50,7 @@ import { TripsController } from './trips.controller.js';
 @Module({
   imports: [
     MarketplacePersistenceModule,
+    BullModule.registerQueue({ name: MARKETPLACE_MATCHING_QUEUE }),
     KycModule,
     AuthModule,
     ChatModule,
@@ -77,6 +82,8 @@ import { TripsController } from './trips.controller.js';
     ListMyShipmentsUseCase,
     AssignShipmentToTripUseCase,
     MatchingService,
+    MatchingEventsService,
+    MarketplaceMatchingProcessor,
     ListCitiesUseCase,
     ListAirportsUseCase,
   ],

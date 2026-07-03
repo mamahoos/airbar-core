@@ -32,6 +32,7 @@ import { NotificationService } from '../notifications/notification.use-cases.js'
 import { MarketStatsService } from '../stats/market-stats.service.js';
 
 import { marketplaceKycRequirement } from './marketplace-kyc-gates.js';
+import { MatchingEventsService } from './matching-events.service.js';
 import { PricingQuoteService } from './pricing-quote.service.js';
 
 import type { ShipmentStatus as PrismaShipmentStatus } from '../../domain/marketplace/shipment-state-machine.js';
@@ -47,6 +48,7 @@ export class CreateShipmentUseCase {
     private readonly pricing: PricingQuoteService,
     private readonly kyc: KycAccessService,
     private readonly marketStats: MarketStatsService,
+    private readonly matchingEvents: MatchingEventsService,
   ) {}
 
   async execute(senderId: string, input: Omit<CreateShipmentInput, 'systemPrice'>) {
@@ -70,6 +72,7 @@ export class CreateShipmentUseCase {
       cargoType: input.cargoType,
       weight: input.weight,
     });
+    await this.matchingEvents.shipmentCreated(shipment.id);
     return shipment;
   }
 }

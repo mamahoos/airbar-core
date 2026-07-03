@@ -88,11 +88,44 @@ export class MatchingService {
     return { matched: matchedCount };
   }
 
-  private async storeMatchSuggestion(shipmentId: string, tripId: string): Promise<void> {
+  async processShipmentCreated(shipmentId: string): Promise<{ suggested: number }> {
+    const matches = await this.findMatchingTrips(shipmentId);
+    let suggested = 0;
+
+    for (const trip of matches) {
+      await this.storeMatchSuggestion(shipmentId, trip.id, {
+        source: 'shipment_created',
+        score: trip.matchScore.score,
+      });
+      suggested++;
+    }
+
+    return { suggested };
+  }
+
+  async processTripPublished(tripId: string): Promise<{ suggested: number }> {
+    const matches = await this.findMatchingShipments(tripId);
+    let suggested = 0;
+
+    for (const shipment of matches) {
+      await this.storeMatchSuggestion(shipment.id, tripId, {
+        source: 'trip_published',
+      });
+      suggested++;
+    }
+
+    return { suggested };
+  }
+
+  private async storeMatchSuggestion(
+    shipmentId: string,
+    tripId: string,
+    metadata: Record<string, unknown> = {},
+  ): Promise<void> {
     const key = `match:${shipmentId}:${tripId}`;
     await this.redis.set(
       key,
-      JSON.stringify({ shipmentId, tripId, suggestedAt: new Date().toISOString() }),
+      JSON.stringify({ shipmentId, tripId, suggestedAt: new Date().toISOString(), ...metadata }),
       86_400,
     );
   }
