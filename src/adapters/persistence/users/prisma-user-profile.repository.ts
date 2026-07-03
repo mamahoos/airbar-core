@@ -71,6 +71,14 @@ export class PrismaUserProfileRepository implements UserProfileRepositoryPort {
         id: true,
         firstName: true,
         lastName: true,
+        identityProfile: {
+          select: {
+            shahkarVerifiedAt: true,
+            identityPendingPersonInfo: true,
+            firstNameOfficial: true,
+            lastNameOfficial: true,
+          },
+        },
         avatarUrl: true,
         rating: true,
         totalTrips: true,
@@ -79,7 +87,20 @@ export class PrismaUserProfileRepository implements UserProfileRepositoryPort {
         createdAt: true,
       },
     });
-    return user;
+    if (!user) return null;
+    const identityLocked =
+      !!user.identityProfile?.shahkarVerifiedAt && !user.identityProfile.identityPendingPersonInfo;
+    return {
+      id: user.id,
+      firstName: identityLocked ? (user.identityProfile?.firstNameOfficial ?? null) : user.firstName,
+      lastName: identityLocked ? (user.identityProfile?.lastNameOfficial ?? null) : user.lastName,
+      avatarUrl: user.avatarUrl,
+      rating: user.rating,
+      totalTrips: user.totalTrips,
+      totalShipments: user.totalShipments,
+      kycLevel: user.kycLevel,
+      createdAt: user.createdAt,
+    };
   }
 
   async updatePasswordHash(userId: string, passwordHash: string): Promise<void> {
@@ -118,8 +139,12 @@ export class PrismaUserProfileRepository implements UserProfileRepositoryPort {
       }
     }
 
-    const firstName = user.firstName ?? user.identityProfile?.firstNameOfficial ?? null;
-    const lastName = user.lastName ?? user.identityProfile?.lastNameOfficial ?? null;
+    const firstName = identityLocked
+      ? (user.identityProfile?.firstNameOfficial ?? null)
+      : (user.firstName ?? user.identityProfile?.firstNameOfficial ?? null);
+    const lastName = identityLocked
+      ? (user.identityProfile?.lastNameOfficial ?? null)
+      : (user.lastName ?? user.identityProfile?.lastNameOfficial ?? null);
 
     return {
       id: user.id,
