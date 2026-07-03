@@ -8,6 +8,7 @@ import {
   GetChatUseCase,
   ListChatMessagesUseCase,
   ListMyChatsUseCase,
+  RevealChatContactUseCase,
   SendChatMessageUseCase,
 } from '../../../application/chat/chat.use-cases.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
@@ -44,6 +45,7 @@ export class ChatController {
     private readonly listMyChats: ListMyChatsUseCase,
     private readonly getChatByShipment: GetChatByShipmentUseCase,
     private readonly getChat: GetChatUseCase,
+    private readonly revealContact: RevealChatContactUseCase,
     private readonly listMessages: ListChatMessagesUseCase,
     private readonly sendMessage: SendChatMessageUseCase,
   ) {}
@@ -68,6 +70,12 @@ export class ChatController {
     @Query() query: MessagesQueryDto,
   ) {
     return this.listMessages.execute(user.id, chatId, query.page, query.limit);
+  }
+
+  @Get(':chatId/contact')
+  @ApiOperation({ summary: 'Reveal counterpart contact after payment is secured' })
+  async contact(@CurrentUser() user: AuthUser, @Param('chatId') chatId: string) {
+    return this.revealContact.execute(user.id, chatId);
   }
 
   @Get(':chatId')

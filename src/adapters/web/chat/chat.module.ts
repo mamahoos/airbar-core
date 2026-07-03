@@ -9,6 +9,7 @@ import {
   GetChatUseCase,
   ListChatMessagesUseCase,
   ListMyChatsUseCase,
+  RevealChatContactUseCase,
   SendChatMessageUseCase,
 } from '../../../application/chat/chat.use-cases.js';
 import { ChatPersistenceModule } from '../../persistence/chat/chat-persistence.module.js';
@@ -24,6 +25,7 @@ import { ChatController } from './chat.controller.js';
     ListMyChatsUseCase,
     GetChatUseCase,
     GetChatByShipmentUseCase,
+    RevealChatContactUseCase,
     ListChatMessagesUseCase,
     SendChatMessageUseCase,
     CreateChatForShipmentUseCase,

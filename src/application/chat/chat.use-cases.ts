@@ -6,10 +6,19 @@ import {
   type ChatRecord,
   type ChatRepositoryPort,
 } from '../../domain/chat/chat.repository.port.js';
+import { ShipmentStatus } from '../../domain/marketplace/shipment-state-machine.js';
 import { ForbiddenError, NotFoundError } from '../../shared/errors/index.js';
 import { buildPaginationMeta, normalizePagination } from '../../shared/pagination/pagination.js';
 
 import { ChatFirewallService } from './chat-firewall.service.js';
+
+const CONTACT_REVEAL_STATUSES = new Set<string>([
+  ShipmentStatus.PAID,
+  ShipmentStatus.PICKED_UP,
+  ShipmentStatus.IN_TRANSIT,
+  ShipmentStatus.DELIVERED,
+  ShipmentStatus.CONFIRMED,
+]);
 
 @Injectable()
 export class ChatAccessService {
@@ -54,6 +63,46 @@ export class GetChatUseCase {
 
   async execute(userId: string, chatId: string) {
     return this.access.assertParticipant(userId, chatId);
+  }
+}
+
+@Injectable()
+export class RevealChatContactUseCase {
+  constructor(
+    @Inject(CHAT_REPOSITORY) private readonly chats: ChatRepositoryPort,
+    private readonly access: ChatAccessService,
+  ) {}
+
+  async execute(userId: string, chatId: string) {
+    const chat = await this.access.assertParticipant(userId, chatId);
+    if (!chat.isActive) throw new ForbiddenError('Chat is no longer active');
+
+    const shipment = chat.shipment;
+    if (!shipment) throw new NotFoundError('Chat', chatId);
+    if (!CONTACT_REVEAL_STATUSES.has(shipment.status)) {
+      throw new ForbiddenError('Contact reveal is available after payment is secured');
+    }
+
+    const role = shipment.senderId === userId ? 'sender' : 'carrier';
+    const counterpartRole = role === 'sender' ? 'carrier' : 'sender';
+    const counterpartId = role === 'sender' ? shipment.carrierId : shipment.senderId;
+    if (!counterpartId) {
+      throw new ForbiddenError('Counterpart contact is not available yet');
+    }
+
+    const contact = await this.chats.findParticipantContact(counterpartId);
+    if (!contact) throw new NotFoundError('User', counterpartId);
+
+    return {
+      role: counterpartRole,
+      userId: contact.id,
+      firstName: contact.firstName,
+      lastName: contact.lastName,
+      phone: contact.phone,
+      shipmentId: shipment.id,
+      shipmentStatus: shipment.status,
+      revealedAt: new Date().toISOString(),
+    };
   }
 }
 

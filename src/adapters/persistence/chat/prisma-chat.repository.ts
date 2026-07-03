@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service.js';
 
 import type {
+  ChatParticipantContact,
   ChatMessageRecord,
   ChatRecord,
   ChatRepositoryPort,
@@ -127,6 +128,18 @@ export class PrismaChatRepository implements ChatRepositoryPort {
     await this.prisma.chatMessage.updateMany({
       where: { chatId, senderId: { not: readerId }, isRead: false },
       data: { isRead: true, readAt: new Date() },
+    });
+  }
+
+  async findParticipantContact(userId: string): Promise<ChatParticipantContact | null> {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+      },
     });
   }
 

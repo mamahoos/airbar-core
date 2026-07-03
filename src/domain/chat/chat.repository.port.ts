@@ -7,6 +7,13 @@ export interface ChatParticipantSummary {
   readonly avatarUrl: string | null;
 }
 
+export interface ChatParticipantContact {
+  readonly id: string;
+  readonly firstName: string | null;
+  readonly lastName: string | null;
+  readonly phone: string;
+}
+
 export interface ChatShipmentSummary {
   readonly id: string;
   readonly trackingCode: string;
@@ -61,6 +68,7 @@ export interface ChatRepositoryPort {
     limit: number,
   ): Promise<{ data: readonly ChatMessageRecord[]; total: number }>;
   markMessagesRead(chatId: string, readerId: string): Promise<void>;
+  findParticipantContact(userId: string): Promise<ChatParticipantContact | null>;
   sendMessage(
     chatId: string,
     senderId: string,

@@ -68,20 +68,18 @@ export class PrismaShipmentRepository implements ShipmentRepositoryPort {
     return this.toRecord(shipment);
   }
 
-  async findById(id: string, viewerId?: string): Promise<ShipmentRecord | null> {
+  async findById(id: string, _viewerId?: string): Promise<ShipmentRecord | null> {
     const shipment = await this.prisma.shipment.findUnique({
       where: { id },
       include: {
         sender: {
           select: {
             ...userSelect,
-            phone: viewerId ? true : false,
           },
         },
         carrier: {
           select: {
             ...userSelect,
-            phone: viewerId ? true : false,
           },
         },
         trip: {

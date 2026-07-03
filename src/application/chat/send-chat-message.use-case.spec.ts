@@ -80,6 +80,7 @@ function chatRepository(_chat: ChatRecord): jest.Mocked<ChatRepositoryPort> {
     countUnread: jest.fn(),
     listMessages: jest.fn(),
     markMessagesRead: jest.fn(),
+    findParticipantContact: jest.fn(),
     sendMessage: jest
       .fn<(chatId: string, senderId: string, content: string) => Promise<ChatMessageRecord>>()
       .mockImplementation(async (chatId, senderId, content) => ({
