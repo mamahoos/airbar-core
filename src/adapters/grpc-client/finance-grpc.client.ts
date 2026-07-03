@@ -11,16 +11,23 @@ import {
   CreatePaymentOrderRequest,
   CreateWalletTopupRequest,
   CreateWithdrawalRequest,
+  CreditBalanceResponse,
+  CreditGrantResponse,
+  CreditGrantsResponse,
+  CreditServiceClient,
   EscrowServiceClient,
   FailWithdrawalRequest,
   FinanceHealthServiceClient,
   FreezeEscrowRequest,
   FundEscrowRequest,
+  GetCreditBalanceRequest,
   GetEscrowRequest,
   GetReconciliationRunRequest,
   GetTreasuryRequest,
   GetPaymentOrderRequest,
   GetWalletRequest,
+  GrantCreditRequest,
+  ListCreditGrantsRequest,
   ListProviderEventsRequest,
   ListWalletTransactionsRequest,
   ListReconciliationRunsRequest,
@@ -36,6 +43,7 @@ import {
   RefundEscrowRequest,
   RejectWithdrawalRequest,
   ReleaseEscrowRequest,
+  ReverseCreditGrantRequest,
   RunReconciliationRequest,
   SettleWithdrawalRequest,
   TreasuryServiceClient,
@@ -73,6 +81,7 @@ export class FinanceGrpcClient implements OnModuleDestroy {
   private readonly treasuryClient: TreasuryServiceClient;
   private readonly reconciliationClient: ReconciliationServiceClient;
   private readonly providerEventClient: ProviderEventServiceClient;
+  private readonly creditClient: CreditServiceClient;
 
   constructor(@Inject(APP_CONFIG) config: AppConfig) {
     const creds = config.financeGrpcTls ? credentials.createSsl() : credentials.createInsecure();
@@ -85,6 +94,7 @@ export class FinanceGrpcClient implements OnModuleDestroy {
     this.treasuryClient = new TreasuryServiceClient(url, creds);
     this.reconciliationClient = new ReconciliationServiceClient(url, creds);
     this.providerEventClient = new ProviderEventServiceClient(url, creds);
+    this.creditClient = new CreditServiceClient(url, creds);
   }
 
   checkReady(metadata?: GrpcCallMetadata): Promise<HealthCheckResponse> {
@@ -625,6 +635,88 @@ export class FinanceGrpcClient implements OnModuleDestroy {
     );
   }
 
+  grantCredit(input: {
+    userId: string;
+    amount: string;
+    reason: string;
+    campaignRef?: string;
+    expiresAt?: Date;
+    grantedBy: string;
+    idempotencyKey: string;
+  }): Promise<CreditGrantResponse> {
+    const request = GrantCreditRequest.create({
+      context: buildProtoContext(input.idempotencyKey),
+      userId: input.userId,
+      amount: input.amount,
+      reason: input.reason,
+      campaignRef: input.campaignRef ?? '',
+      grantedBy: input.grantedBy,
+      expiresAt: input.expiresAt,
+    });
+    return this.unary((cb) =>
+      this.creditClient.grantCredit(
+        request,
+        buildGrpcMetadata({ idempotencyKey: input.idempotencyKey }),
+        { deadline: this.deadline() },
+        cb,
+      ),
+    );
+  }
+
+  reverseCreditGrant(input: {
+    grantId: string;
+    reverseReason: string;
+    reversedBy: string;
+    idempotencyKey: string;
+  }): Promise<CreditGrantResponse> {
+    const request = ReverseCreditGrantRequest.create({
+      context: buildProtoContext(input.idempotencyKey),
+      grantId: input.grantId,
+      reverseReason: input.reverseReason,
+      reversedBy: input.reversedBy,
+    });
+    return this.unary((cb) =>
+      this.creditClient.reverseCreditGrant(
+        request,
+        buildGrpcMetadata({ idempotencyKey: input.idempotencyKey }),
+        { deadline: this.deadline() },
+        cb,
+      ),
+    );
+  }
+
+  getCreditBalance(userId: string): Promise<CreditBalanceResponse> {
+    const request = GetCreditBalanceRequest.create({ userId });
+    return this.unary((cb) =>
+      this.creditClient.getCreditBalance(
+        request,
+        buildGrpcMetadata(),
+        { deadline: this.deadline() },
+        cb,
+      ),
+    );
+  }
+
+  listCreditGrants(input: {
+    userId: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<CreditGrantsResponse> {
+    const request = ListCreditGrantsRequest.create({
+      userId: input.userId,
+      limit: input.limit ?? 50,
+      offset: input.offset ?? 0,
+    });
+    return this.unary((cb) =>
+      this.creditClient.listCreditGrants(
+        request,
+        buildGrpcMetadata(),
+        { deadline: this.deadline() },
+        cb,
+      ),
+    );
+  }
+
   private deadline(): Date {
     return new Date(Date.now() + FINANCE_GRPC_DEADLINE_MS);
   }
@@ -659,5 +751,6 @@ export class FinanceGrpcClient implements OnModuleDestroy {
     this.treasuryClient.close();
     this.reconciliationClient.close();
     this.providerEventClient.close();
+    this.creditClient.close();
   }
 }

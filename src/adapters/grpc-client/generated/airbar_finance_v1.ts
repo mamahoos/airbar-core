@@ -300,6 +300,60 @@ export interface ProviderEventsResponse {
   total: number;
 }
 
+export interface GrantCreditRequest {
+  context?: RequestContext | undefined;
+  userId: string;
+  amount: string;
+  reason: string;
+  campaignRef: string;
+  expiresAt?: Date | undefined;
+  grantedBy: string;
+}
+
+export interface ReverseCreditGrantRequest {
+  context?: RequestContext | undefined;
+  grantId: string;
+  reverseReason: string;
+  reversedBy: string;
+}
+
+export interface GetCreditBalanceRequest {
+  userId: string;
+}
+
+export interface CreditBalanceResponse {
+  userId: string;
+  currency: string;
+  balance: string;
+  accountCode: string;
+}
+
+export interface ListCreditGrantsRequest {
+  userId: string;
+  limit: number;
+  offset: number;
+}
+
+export interface CreditGrantResponse {
+  id: string;
+  userId: string;
+  amount: string;
+  reason: string;
+  campaignRef: string;
+  status: string;
+  grantedBy: string;
+  expiresAt?: Date | undefined;
+  createdAt?: Date | undefined;
+  reversedAt?: Date | undefined;
+  reverseReason: string;
+  reversedBy: string;
+}
+
+export interface CreditGrantsResponse {
+  items: CreditGrantResponse[];
+  balance: string;
+}
+
 function createBaseRequestContext(): RequestContext {
   return { requestId: "", idempotencyKey: "", callerService: "" };
 }
@@ -5040,6 +5094,945 @@ export const ProviderEventsResponse: MessageFns<ProviderEventsResponse> = {
   },
 };
 
+function createBaseGrantCreditRequest(): GrantCreditRequest {
+  return {
+    context: undefined,
+    userId: "",
+    amount: "",
+    reason: "",
+    campaignRef: "",
+    expiresAt: undefined,
+    grantedBy: "",
+  };
+}
+
+export const GrantCreditRequest: MessageFns<GrantCreditRequest> = {
+  encode(message: GrantCreditRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.context !== undefined) {
+      RequestContext.encode(message.context, writer.uint32(10).fork()).join();
+    }
+    if (message.userId !== "") {
+      writer.uint32(18).string(message.userId);
+    }
+    if (message.amount !== "") {
+      writer.uint32(26).string(message.amount);
+    }
+    if (message.reason !== "") {
+      writer.uint32(34).string(message.reason);
+    }
+    if (message.campaignRef !== "") {
+      writer.uint32(42).string(message.campaignRef);
+    }
+    if (message.expiresAt !== undefined) {
+      Timestamp.encode(toTimestamp(message.expiresAt), writer.uint32(50).fork()).join();
+    }
+    if (message.grantedBy !== "") {
+      writer.uint32(58).string(message.grantedBy);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GrantCreditRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGrantCreditRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.context = RequestContext.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.amount = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.campaignRef = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.expiresAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.grantedBy = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GrantCreditRequest {
+    return {
+      context: isSet(object.context) ? RequestContext.fromJSON(object.context) : undefined,
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+      amount: isSet(object.amount) ? globalThis.String(object.amount) : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+      campaignRef: isSet(object.campaignRef)
+        ? globalThis.String(object.campaignRef)
+        : isSet(object.campaign_ref)
+        ? globalThis.String(object.campaign_ref)
+        : "",
+      expiresAt: isSet(object.expiresAt)
+        ? fromJsonTimestamp(object.expiresAt)
+        : isSet(object.expires_at)
+        ? fromJsonTimestamp(object.expires_at)
+        : undefined,
+      grantedBy: isSet(object.grantedBy)
+        ? globalThis.String(object.grantedBy)
+        : isSet(object.granted_by)
+        ? globalThis.String(object.granted_by)
+        : "",
+    };
+  },
+
+  toJSON(message: GrantCreditRequest): unknown {
+    const obj: any = {};
+    if (message.context !== undefined) {
+      obj.context = RequestContext.toJSON(message.context);
+    }
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    if (message.amount !== "") {
+      obj.amount = message.amount;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    if (message.campaignRef !== "") {
+      obj.campaignRef = message.campaignRef;
+    }
+    if (message.expiresAt !== undefined) {
+      obj.expiresAt = message.expiresAt.toISOString();
+    }
+    if (message.grantedBy !== "") {
+      obj.grantedBy = message.grantedBy;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GrantCreditRequest>, I>>(base?: I): GrantCreditRequest {
+    return GrantCreditRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GrantCreditRequest>, I>>(object: I): GrantCreditRequest {
+    const message = createBaseGrantCreditRequest();
+    message.context = (object.context !== undefined && object.context !== null)
+      ? RequestContext.fromPartial(object.context)
+      : undefined;
+    message.userId = object.userId ?? "";
+    message.amount = object.amount ?? "";
+    message.reason = object.reason ?? "";
+    message.campaignRef = object.campaignRef ?? "";
+    message.expiresAt = object.expiresAt ?? undefined;
+    message.grantedBy = object.grantedBy ?? "";
+    return message;
+  },
+};
+
+function createBaseReverseCreditGrantRequest(): ReverseCreditGrantRequest {
+  return { context: undefined, grantId: "", reverseReason: "", reversedBy: "" };
+}
+
+export const ReverseCreditGrantRequest: MessageFns<ReverseCreditGrantRequest> = {
+  encode(message: ReverseCreditGrantRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.context !== undefined) {
+      RequestContext.encode(message.context, writer.uint32(10).fork()).join();
+    }
+    if (message.grantId !== "") {
+      writer.uint32(18).string(message.grantId);
+    }
+    if (message.reverseReason !== "") {
+      writer.uint32(26).string(message.reverseReason);
+    }
+    if (message.reversedBy !== "") {
+      writer.uint32(34).string(message.reversedBy);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ReverseCreditGrantRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseReverseCreditGrantRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.context = RequestContext.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.grantId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.reverseReason = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.reversedBy = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ReverseCreditGrantRequest {
+    return {
+      context: isSet(object.context) ? RequestContext.fromJSON(object.context) : undefined,
+      grantId: isSet(object.grantId)
+        ? globalThis.String(object.grantId)
+        : isSet(object.grant_id)
+        ? globalThis.String(object.grant_id)
+        : "",
+      reverseReason: isSet(object.reverseReason)
+        ? globalThis.String(object.reverseReason)
+        : isSet(object.reverse_reason)
+        ? globalThis.String(object.reverse_reason)
+        : "",
+      reversedBy: isSet(object.reversedBy)
+        ? globalThis.String(object.reversedBy)
+        : isSet(object.reversed_by)
+        ? globalThis.String(object.reversed_by)
+        : "",
+    };
+  },
+
+  toJSON(message: ReverseCreditGrantRequest): unknown {
+    const obj: any = {};
+    if (message.context !== undefined) {
+      obj.context = RequestContext.toJSON(message.context);
+    }
+    if (message.grantId !== "") {
+      obj.grantId = message.grantId;
+    }
+    if (message.reverseReason !== "") {
+      obj.reverseReason = message.reverseReason;
+    }
+    if (message.reversedBy !== "") {
+      obj.reversedBy = message.reversedBy;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ReverseCreditGrantRequest>, I>>(base?: I): ReverseCreditGrantRequest {
+    return ReverseCreditGrantRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ReverseCreditGrantRequest>, I>>(object: I): ReverseCreditGrantRequest {
+    const message = createBaseReverseCreditGrantRequest();
+    message.context = (object.context !== undefined && object.context !== null)
+      ? RequestContext.fromPartial(object.context)
+      : undefined;
+    message.grantId = object.grantId ?? "";
+    message.reverseReason = object.reverseReason ?? "";
+    message.reversedBy = object.reversedBy ?? "";
+    return message;
+  },
+};
+
+function createBaseGetCreditBalanceRequest(): GetCreditBalanceRequest {
+  return { userId: "" };
+}
+
+export const GetCreditBalanceRequest: MessageFns<GetCreditBalanceRequest> = {
+  encode(message: GetCreditBalanceRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): GetCreditBalanceRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetCreditBalanceRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetCreditBalanceRequest {
+    return {
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+    };
+  },
+
+  toJSON(message: GetCreditBalanceRequest): unknown {
+    const obj: any = {};
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetCreditBalanceRequest>, I>>(base?: I): GetCreditBalanceRequest {
+    return GetCreditBalanceRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<GetCreditBalanceRequest>, I>>(object: I): GetCreditBalanceRequest {
+    const message = createBaseGetCreditBalanceRequest();
+    message.userId = object.userId ?? "";
+    return message;
+  },
+};
+
+function createBaseCreditBalanceResponse(): CreditBalanceResponse {
+  return { userId: "", currency: "", balance: "", accountCode: "" };
+}
+
+export const CreditBalanceResponse: MessageFns<CreditBalanceResponse> = {
+  encode(message: CreditBalanceResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    if (message.currency !== "") {
+      writer.uint32(18).string(message.currency);
+    }
+    if (message.balance !== "") {
+      writer.uint32(26).string(message.balance);
+    }
+    if (message.accountCode !== "") {
+      writer.uint32(34).string(message.accountCode);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreditBalanceResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreditBalanceResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.currency = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.balance = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.accountCode = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreditBalanceResponse {
+    return {
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+      currency: isSet(object.currency) ? globalThis.String(object.currency) : "",
+      balance: isSet(object.balance) ? globalThis.String(object.balance) : "",
+      accountCode: isSet(object.accountCode)
+        ? globalThis.String(object.accountCode)
+        : isSet(object.account_code)
+        ? globalThis.String(object.account_code)
+        : "",
+    };
+  },
+
+  toJSON(message: CreditBalanceResponse): unknown {
+    const obj: any = {};
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    if (message.currency !== "") {
+      obj.currency = message.currency;
+    }
+    if (message.balance !== "") {
+      obj.balance = message.balance;
+    }
+    if (message.accountCode !== "") {
+      obj.accountCode = message.accountCode;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreditBalanceResponse>, I>>(base?: I): CreditBalanceResponse {
+    return CreditBalanceResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreditBalanceResponse>, I>>(object: I): CreditBalanceResponse {
+    const message = createBaseCreditBalanceResponse();
+    message.userId = object.userId ?? "";
+    message.currency = object.currency ?? "";
+    message.balance = object.balance ?? "";
+    message.accountCode = object.accountCode ?? "";
+    return message;
+  },
+};
+
+function createBaseListCreditGrantsRequest(): ListCreditGrantsRequest {
+  return { userId: "", limit: 0, offset: 0 };
+}
+
+export const ListCreditGrantsRequest: MessageFns<ListCreditGrantsRequest> = {
+  encode(message: ListCreditGrantsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    if (message.limit !== 0) {
+      writer.uint32(16).int32(message.limit);
+    }
+    if (message.offset !== 0) {
+      writer.uint32(24).int32(message.offset);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListCreditGrantsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListCreditGrantsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.limit = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.offset = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListCreditGrantsRequest {
+    return {
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+      limit: isSet(object.limit) ? globalThis.Number(object.limit) : 0,
+      offset: isSet(object.offset) ? globalThis.Number(object.offset) : 0,
+    };
+  },
+
+  toJSON(message: ListCreditGrantsRequest): unknown {
+    const obj: any = {};
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    if (message.limit !== 0) {
+      obj.limit = Math.round(message.limit);
+    }
+    if (message.offset !== 0) {
+      obj.offset = Math.round(message.offset);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListCreditGrantsRequest>, I>>(base?: I): ListCreditGrantsRequest {
+    return ListCreditGrantsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListCreditGrantsRequest>, I>>(object: I): ListCreditGrantsRequest {
+    const message = createBaseListCreditGrantsRequest();
+    message.userId = object.userId ?? "";
+    message.limit = object.limit ?? 0;
+    message.offset = object.offset ?? 0;
+    return message;
+  },
+};
+
+function createBaseCreditGrantResponse(): CreditGrantResponse {
+  return {
+    id: "",
+    userId: "",
+    amount: "",
+    reason: "",
+    campaignRef: "",
+    status: "",
+    grantedBy: "",
+    expiresAt: undefined,
+    createdAt: undefined,
+    reversedAt: undefined,
+    reverseReason: "",
+    reversedBy: "",
+  };
+}
+
+export const CreditGrantResponse: MessageFns<CreditGrantResponse> = {
+  encode(message: CreditGrantResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.userId !== "") {
+      writer.uint32(18).string(message.userId);
+    }
+    if (message.amount !== "") {
+      writer.uint32(26).string(message.amount);
+    }
+    if (message.reason !== "") {
+      writer.uint32(34).string(message.reason);
+    }
+    if (message.campaignRef !== "") {
+      writer.uint32(42).string(message.campaignRef);
+    }
+    if (message.status !== "") {
+      writer.uint32(50).string(message.status);
+    }
+    if (message.grantedBy !== "") {
+      writer.uint32(58).string(message.grantedBy);
+    }
+    if (message.expiresAt !== undefined) {
+      Timestamp.encode(toTimestamp(message.expiresAt), writer.uint32(66).fork()).join();
+    }
+    if (message.createdAt !== undefined) {
+      Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(74).fork()).join();
+    }
+    if (message.reversedAt !== undefined) {
+      Timestamp.encode(toTimestamp(message.reversedAt), writer.uint32(82).fork()).join();
+    }
+    if (message.reverseReason !== "") {
+      writer.uint32(90).string(message.reverseReason);
+    }
+    if (message.reversedBy !== "") {
+      writer.uint32(98).string(message.reversedBy);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreditGrantResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreditGrantResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.amount = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.campaignRef = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.status = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.grantedBy = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.expiresAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.reversedAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.reverseReason = reader.string();
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.reversedBy = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreditGrantResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      userId: isSet(object.userId)
+        ? globalThis.String(object.userId)
+        : isSet(object.user_id)
+        ? globalThis.String(object.user_id)
+        : "",
+      amount: isSet(object.amount) ? globalThis.String(object.amount) : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+      campaignRef: isSet(object.campaignRef)
+        ? globalThis.String(object.campaignRef)
+        : isSet(object.campaign_ref)
+        ? globalThis.String(object.campaign_ref)
+        : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      grantedBy: isSet(object.grantedBy)
+        ? globalThis.String(object.grantedBy)
+        : isSet(object.granted_by)
+        ? globalThis.String(object.granted_by)
+        : "",
+      expiresAt: isSet(object.expiresAt)
+        ? fromJsonTimestamp(object.expiresAt)
+        : isSet(object.expires_at)
+        ? fromJsonTimestamp(object.expires_at)
+        : undefined,
+      createdAt: isSet(object.createdAt)
+        ? fromJsonTimestamp(object.createdAt)
+        : isSet(object.created_at)
+        ? fromJsonTimestamp(object.created_at)
+        : undefined,
+      reversedAt: isSet(object.reversedAt)
+        ? fromJsonTimestamp(object.reversedAt)
+        : isSet(object.reversed_at)
+        ? fromJsonTimestamp(object.reversed_at)
+        : undefined,
+      reverseReason: isSet(object.reverseReason)
+        ? globalThis.String(object.reverseReason)
+        : isSet(object.reverse_reason)
+        ? globalThis.String(object.reverse_reason)
+        : "",
+      reversedBy: isSet(object.reversedBy)
+        ? globalThis.String(object.reversedBy)
+        : isSet(object.reversed_by)
+        ? globalThis.String(object.reversed_by)
+        : "",
+    };
+  },
+
+  toJSON(message: CreditGrantResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.userId !== "") {
+      obj.userId = message.userId;
+    }
+    if (message.amount !== "") {
+      obj.amount = message.amount;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    if (message.campaignRef !== "") {
+      obj.campaignRef = message.campaignRef;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
+    }
+    if (message.grantedBy !== "") {
+      obj.grantedBy = message.grantedBy;
+    }
+    if (message.expiresAt !== undefined) {
+      obj.expiresAt = message.expiresAt.toISOString();
+    }
+    if (message.createdAt !== undefined) {
+      obj.createdAt = message.createdAt.toISOString();
+    }
+    if (message.reversedAt !== undefined) {
+      obj.reversedAt = message.reversedAt.toISOString();
+    }
+    if (message.reverseReason !== "") {
+      obj.reverseReason = message.reverseReason;
+    }
+    if (message.reversedBy !== "") {
+      obj.reversedBy = message.reversedBy;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreditGrantResponse>, I>>(base?: I): CreditGrantResponse {
+    return CreditGrantResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreditGrantResponse>, I>>(object: I): CreditGrantResponse {
+    const message = createBaseCreditGrantResponse();
+    message.id = object.id ?? "";
+    message.userId = object.userId ?? "";
+    message.amount = object.amount ?? "";
+    message.reason = object.reason ?? "";
+    message.campaignRef = object.campaignRef ?? "";
+    message.status = object.status ?? "";
+    message.grantedBy = object.grantedBy ?? "";
+    message.expiresAt = object.expiresAt ?? undefined;
+    message.createdAt = object.createdAt ?? undefined;
+    message.reversedAt = object.reversedAt ?? undefined;
+    message.reverseReason = object.reverseReason ?? "";
+    message.reversedBy = object.reversedBy ?? "";
+    return message;
+  },
+};
+
+function createBaseCreditGrantsResponse(): CreditGrantsResponse {
+  return { items: [], balance: "" };
+}
+
+export const CreditGrantsResponse: MessageFns<CreditGrantsResponse> = {
+  encode(message: CreditGrantsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.items) {
+      CreditGrantResponse.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.balance !== "") {
+      writer.uint32(18).string(message.balance);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreditGrantsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreditGrantsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.items.push(CreditGrantResponse.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.balance = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreditGrantsResponse {
+    return {
+      items: globalThis.Array.isArray(object?.items)
+        ? object.items.map((e: any) => CreditGrantResponse.fromJSON(e))
+        : [],
+      balance: isSet(object.balance) ? globalThis.String(object.balance) : "",
+    };
+  },
+
+  toJSON(message: CreditGrantsResponse): unknown {
+    const obj: any = {};
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => CreditGrantResponse.toJSON(e));
+    }
+    if (message.balance !== "") {
+      obj.balance = message.balance;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreditGrantsResponse>, I>>(base?: I): CreditGrantsResponse {
+    return CreditGrantsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreditGrantsResponse>, I>>(object: I): CreditGrantsResponse {
+    const message = createBaseCreditGrantsResponse();
+    message.items = object.items?.map((e) => CreditGrantResponse.fromPartial(e)) || [];
+    message.balance = object.balance ?? "";
+    return message;
+  },
+};
+
 export type FinanceHealthServiceService = typeof FinanceHealthServiceService;
 export const FinanceHealthServiceService = {
   checkReady: {
@@ -5969,6 +6962,130 @@ export const ProviderEventServiceClient = makeGenericClientConstructor(
 ) as unknown as {
   new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): ProviderEventServiceClient;
   service: typeof ProviderEventServiceService;
+  serviceName: string;
+};
+
+export type CreditServiceService = typeof CreditServiceService;
+export const CreditServiceService = {
+  grantCredit: {
+    path: "/airbar.finance.v1.CreditService/GrantCredit" as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: GrantCreditRequest): Buffer => Buffer.from(GrantCreditRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GrantCreditRequest => GrantCreditRequest.decode(value),
+    responseSerialize: (value: CreditGrantResponse): Buffer => Buffer.from(CreditGrantResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreditGrantResponse => CreditGrantResponse.decode(value),
+  },
+  reverseCreditGrant: {
+    path: "/airbar.finance.v1.CreditService/ReverseCreditGrant" as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: ReverseCreditGrantRequest): Buffer =>
+      Buffer.from(ReverseCreditGrantRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ReverseCreditGrantRequest => ReverseCreditGrantRequest.decode(value),
+    responseSerialize: (value: CreditGrantResponse): Buffer => Buffer.from(CreditGrantResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreditGrantResponse => CreditGrantResponse.decode(value),
+  },
+  getCreditBalance: {
+    path: "/airbar.finance.v1.CreditService/GetCreditBalance" as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: GetCreditBalanceRequest): Buffer =>
+      Buffer.from(GetCreditBalanceRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetCreditBalanceRequest => GetCreditBalanceRequest.decode(value),
+    responseSerialize: (value: CreditBalanceResponse): Buffer =>
+      Buffer.from(CreditBalanceResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreditBalanceResponse => CreditBalanceResponse.decode(value),
+  },
+  listCreditGrants: {
+    path: "/airbar.finance.v1.CreditService/ListCreditGrants" as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: ListCreditGrantsRequest): Buffer =>
+      Buffer.from(ListCreditGrantsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListCreditGrantsRequest => ListCreditGrantsRequest.decode(value),
+    responseSerialize: (value: CreditGrantsResponse): Buffer =>
+      Buffer.from(CreditGrantsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): CreditGrantsResponse => CreditGrantsResponse.decode(value),
+  },
+} as const;
+
+export interface CreditServiceServer extends UntypedServiceImplementation {
+  grantCredit: handleUnaryCall<GrantCreditRequest, CreditGrantResponse>;
+  reverseCreditGrant: handleUnaryCall<ReverseCreditGrantRequest, CreditGrantResponse>;
+  getCreditBalance: handleUnaryCall<GetCreditBalanceRequest, CreditBalanceResponse>;
+  listCreditGrants: handleUnaryCall<ListCreditGrantsRequest, CreditGrantsResponse>;
+}
+
+export interface CreditServiceClient extends Client {
+  grantCredit(
+    request: GrantCreditRequest,
+    callback: (error: ServiceError | null, response: CreditGrantResponse) => void,
+  ): ClientUnaryCall;
+  grantCredit(
+    request: GrantCreditRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreditGrantResponse) => void,
+  ): ClientUnaryCall;
+  grantCredit(
+    request: GrantCreditRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreditGrantResponse) => void,
+  ): ClientUnaryCall;
+  reverseCreditGrant(
+    request: ReverseCreditGrantRequest,
+    callback: (error: ServiceError | null, response: CreditGrantResponse) => void,
+  ): ClientUnaryCall;
+  reverseCreditGrant(
+    request: ReverseCreditGrantRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreditGrantResponse) => void,
+  ): ClientUnaryCall;
+  reverseCreditGrant(
+    request: ReverseCreditGrantRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreditGrantResponse) => void,
+  ): ClientUnaryCall;
+  getCreditBalance(
+    request: GetCreditBalanceRequest,
+    callback: (error: ServiceError | null, response: CreditBalanceResponse) => void,
+  ): ClientUnaryCall;
+  getCreditBalance(
+    request: GetCreditBalanceRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreditBalanceResponse) => void,
+  ): ClientUnaryCall;
+  getCreditBalance(
+    request: GetCreditBalanceRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreditBalanceResponse) => void,
+  ): ClientUnaryCall;
+  listCreditGrants(
+    request: ListCreditGrantsRequest,
+    callback: (error: ServiceError | null, response: CreditGrantsResponse) => void,
+  ): ClientUnaryCall;
+  listCreditGrants(
+    request: ListCreditGrantsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: CreditGrantsResponse) => void,
+  ): ClientUnaryCall;
+  listCreditGrants(
+    request: ListCreditGrantsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: CreditGrantsResponse) => void,
+  ): ClientUnaryCall;
+}
+
+export const CreditServiceClient = makeGenericClientConstructor(
+  CreditServiceService,
+  "airbar.finance.v1.CreditService",
+) as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): CreditServiceClient;
+  service: typeof CreditServiceService;
   serviceName: string;
 };
 

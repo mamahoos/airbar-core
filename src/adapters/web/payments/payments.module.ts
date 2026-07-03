@@ -1,5 +1,10 @@
 import { Module } from '@nestjs/common';
 
+import {
+  GetAdminUserCreditUseCase,
+  GrantAdminCreditUseCase,
+  ReverseAdminCreditGrantUseCase,
+} from '../../../application/finance/credit.use-cases.js';
 import { EscrowJobsService } from '../../../application/finance/escrow-jobs.service.js';
 import { FinanceLimitsService } from '../../../application/finance/finance-limits.service.js';
 import {
@@ -64,6 +69,9 @@ import { PaymentsController } from './payments.controller.js';
     ProcessAdminWithdrawalUseCase,
     RejectAdminWithdrawalUseCase,
     EscrowJobsService,
+    GrantAdminCreditUseCase,
+    ReverseAdminCreditGrantUseCase,
+    GetAdminUserCreditUseCase,
   ],
   exports: [
     FinanceOutboxModule,
@@ -86,6 +94,9 @@ import { PaymentsController } from './payments.controller.js';
     ProcessAdminWithdrawalUseCase,
     RejectAdminWithdrawalUseCase,
     EscrowJobsService,
+    GrantAdminCreditUseCase,
+    ReverseAdminCreditGrantUseCase,
+    GetAdminUserCreditUseCase,
   ],
 })
 export class PaymentsModule {}

@@ -16,6 +16,7 @@ import { Type } from 'class-transformer';
 import {
   Allow,
   IsBoolean,
+  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -44,6 +45,11 @@ import {
   UpdateAdminSystemConfigUseCase,
   UpdateAdminUserRoleUseCase,
 } from '../../../application/admin/admin.use-cases.js';
+import {
+  GetAdminUserCreditUseCase,
+  GrantAdminCreditUseCase,
+  ReverseAdminCreditGrantUseCase,
+} from '../../../application/finance/credit.use-cases.js';
 import {
   ApproveAdminWithdrawalUseCase,
   FailAdminWithdrawalUseCase,
@@ -263,6 +269,35 @@ class FailWithdrawalDto {
   reason!: string;
 }
 
+class GrantCreditDto {
+  @IsString()
+  @IsNotEmpty()
+  userId!: string;
+
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  amount!: number;
+
+  @IsString()
+  @IsNotEmpty()
+  reason!: string;
+
+  @IsOptional()
+  @IsString()
+  campaignRef?: string;
+
+  @IsOptional()
+  @IsDateString()
+  expiresAt?: string;
+}
+
+class ReverseCreditGrantDto {
+  @IsString()
+  @IsNotEmpty()
+  reverseReason!: string;
+}
+
 class AdminOutboxQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
@@ -341,6 +376,9 @@ export class AdminController {
     private readonly listOutbox: ListAdminOutboxUseCase,
     private readonly getOutbox: GetAdminOutboxUseCase,
     private readonly listProviderEvents: ListAdminProviderEventsUseCase,
+    private readonly grantCredit: GrantAdminCreditUseCase,
+    private readonly reverseCreditGrant: ReverseAdminCreditGrantUseCase,
+    private readonly getUserCredit: GetAdminUserCreditUseCase,
   ) {}
 
   @Get('dashboard')
@@ -563,5 +601,28 @@ export class AdminController {
   @ApiOperation({ summary: 'Reject withdrawal via finance gRPC' })
   rejectWithdrawalRoute(@Param('id') id: string, @Body() dto: RejectWithdrawalDto) {
     return this.rejectWithdrawal.execute(id, dto.reason);
+  }
+
+  @Post('credit/grant')
+  @ApiOperation({ summary: 'Grant non-withdrawable promo credit to a user' })
+  grantCreditRoute(@CurrentUser() admin: AuthUser, @Body() dto: GrantCreditDto) {
+    return this.grantCredit.execute(admin.id, dto);
+  }
+
+  @Post('credit/grants/:id/reverse')
+  @Roles(DomainUserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Reverse an active promo credit grant (super admin)' })
+  reverseCreditGrantRoute(
+    @CurrentUser() admin: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: ReverseCreditGrantDto,
+  ) {
+    return this.reverseCreditGrant.execute(admin.id, id, dto.reverseReason);
+  }
+
+  @Get('credit/users/:id')
+  @ApiOperation({ summary: 'Get user promo credit balance and grants' })
+  userCredit(@Param('id') id: string) {
+    return this.getUserCredit.execute(id);
   }
 }
