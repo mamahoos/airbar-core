@@ -31,10 +31,14 @@ import {
   UpdateAdminUserRoleUseCase,
 } from '../../../application/admin/admin.use-cases.js';
 import {
+  GetAdminReconciliationRunUseCase,
+  GetAdminTreasurySummaryUseCase,
+  ListAdminReconciliationRunsUseCase,
   ProcessAdminWithdrawalUseCase,
   RejectAdminWithdrawalUseCase,
   ReplayOutboxUseCase,
   ResolveDisputeUseCase,
+  RunAdminReconciliationUseCase,
 } from '../../../application/finance/payment.use-cases.js';
 import { UserRole as DomainUserRole } from '../../../domain/auth/user-role.js';
 import {
@@ -220,6 +224,10 @@ export class AdminController {
     private readonly replayOutbox: ReplayOutboxUseCase,
     private readonly processWithdrawal: ProcessAdminWithdrawalUseCase,
     private readonly rejectWithdrawal: RejectAdminWithdrawalUseCase,
+    private readonly getTreasurySummary: GetAdminTreasurySummaryUseCase,
+    private readonly runReconciliation: RunAdminReconciliationUseCase,
+    private readonly listReconciliationRuns: ListAdminReconciliationRunsUseCase,
+    private readonly getReconciliationRun: GetAdminReconciliationRunUseCase,
   ) {}
 
   @Get('dashboard')
@@ -329,6 +337,31 @@ export class AdminController {
   @ApiOperation({ summary: 'Replay failed outbox row (super admin)' })
   replayOutboxRoute(@Param('id') id: string) {
     return this.replayOutbox.execute(id);
+  }
+
+  @Get('finance/treasury')
+  @ApiOperation({ summary: 'Finance treasury exposure summary' })
+  treasurySummary(@Query('currency') currency?: string) {
+    return this.getTreasurySummary.execute(currency ?? 'IRT');
+  }
+
+  @Get('finance/reconciliation-runs')
+  @ApiOperation({ summary: 'List finance reconciliation runs' })
+  reconciliationRuns() {
+    return this.listReconciliationRuns.execute();
+  }
+
+  @Get('finance/reconciliation-runs/:id')
+  @ApiOperation({ summary: 'Get finance reconciliation run detail' })
+  reconciliationRun(@Param('id') id: string) {
+    return this.getReconciliationRun.execute(id);
+  }
+
+  @Post('finance/reconciliation-runs')
+  @Roles(DomainUserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Run finance reconciliation manually (super admin)' })
+  runReconciliationRoute() {
+    return this.runReconciliation.execute();
   }
 
   @Post('withdrawals/:id/process')

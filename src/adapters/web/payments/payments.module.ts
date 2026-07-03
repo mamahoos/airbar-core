@@ -3,7 +3,10 @@ import { Module } from '@nestjs/common';
 import { EscrowJobsService } from '../../../application/finance/escrow-jobs.service.js';
 import {
   CreateShipmentPaymentUseCase,
+  GetAdminReconciliationRunUseCase,
+  GetAdminTreasurySummaryUseCase,
   GetWalletUseCase,
+  ListAdminReconciliationRunsUseCase,
   ListWalletTransactionsUseCase,
   ListWithdrawalsUseCase,
   ProcessAdminWithdrawalUseCase,
@@ -11,6 +14,7 @@ import {
   ReplayOutboxUseCase,
   RequestWithdrawalUseCase,
   ResolveDisputeUseCase,
+  RunAdminReconciliationUseCase,
 } from '../../../application/finance/payment.use-cases.js';
 import { MarketplacePersistenceModule } from '../../persistence/marketplace/marketplace-persistence.module.js';
 import { FinanceOutboxModule } from '../../queue/finance-outbox/finance-outbox.module.js';
@@ -27,6 +31,10 @@ import { PaymentsController } from './payments.controller.js';
     ListWalletTransactionsUseCase,
     RequestWithdrawalUseCase,
     ListWithdrawalsUseCase,
+    GetAdminTreasurySummaryUseCase,
+    RunAdminReconciliationUseCase,
+    ListAdminReconciliationRunsUseCase,
+    GetAdminReconciliationRunUseCase,
     ReplayOutboxUseCase,
     ResolveDisputeUseCase,
     ProcessAdminWithdrawalUseCase,
@@ -37,6 +45,10 @@ import { PaymentsController } from './payments.controller.js';
     FinanceOutboxModule,
     GetWalletUseCase,
     ListWalletTransactionsUseCase,
+    GetAdminTreasurySummaryUseCase,
+    RunAdminReconciliationUseCase,
+    ListAdminReconciliationRunsUseCase,
+    GetAdminReconciliationRunUseCase,
     ReplayOutboxUseCase,
     ResolveDisputeUseCase,
     ProcessAdminWithdrawalUseCase,

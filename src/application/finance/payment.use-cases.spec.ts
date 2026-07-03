@@ -1,4 +1,8 @@
-import { ProcessAdminWithdrawalUseCase } from './payment.use-cases.js';
+import {
+  GetAdminTreasurySummaryUseCase,
+  ListAdminReconciliationRunsUseCase,
+  ProcessAdminWithdrawalUseCase,
+} from './payment.use-cases.js';
 
 import type { FinanceOrchestratorPort } from './finance-orchestrator.port.js';
 
@@ -46,5 +50,43 @@ describe('ProcessAdminWithdrawalUseCase', () => {
       payoutChannel: 'PAYA',
       receiptUrl: 'https://pay.example/receipt/1',
     });
+  });
+});
+
+describe('Admin finance ops use cases', () => {
+  it('returns treasury accounts from finance gRPC', async () => {
+    const finance = {
+      getTreasurySummary: jest.fn().mockResolvedValue({
+        currency: 'IRT',
+        accounts: {
+          walletLiability: '150000',
+          escrowLiability: '420000',
+        },
+      }),
+    };
+    const useCase = new GetAdminTreasurySummaryUseCase(finance as never);
+
+    await expect(useCase.execute()).resolves.toEqual({
+      currency: 'IRT',
+      accounts: {
+        walletLiability: '150000',
+        escrowLiability: '420000',
+      },
+    });
+    expect(finance.getTreasurySummary).toHaveBeenCalledWith('IRT');
+  });
+
+  it('proxies reconciliation run history from finance gRPC', async () => {
+    const finance = {
+      listReconciliationRuns: jest.fn().mockResolvedValue({
+        items: [{ id: 'run-1', status: 'PASSED', findings: { debitEqualsCredit: true } }],
+      }),
+    };
+    const useCase = new ListAdminReconciliationRunsUseCase(finance as never);
+
+    await expect(useCase.execute()).resolves.toEqual({
+      items: [{ id: 'run-1', status: 'PASSED', findings: { debitEqualsCredit: true } }],
+    });
+    expect(finance.listReconciliationRuns).toHaveBeenCalledTimes(1);
   });
 });

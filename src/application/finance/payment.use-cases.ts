@@ -151,6 +151,47 @@ export class ListWithdrawalsUseCase {
 }
 
 @Injectable()
+export class GetAdminTreasurySummaryUseCase {
+  constructor(private readonly finance: FinanceGrpcClient) {}
+
+  async execute(currency = 'IRT') {
+    const summary = await this.finance.getTreasurySummary(currency);
+    return {
+      currency: summary.currency,
+      accounts: summary.accounts ?? {},
+    };
+  }
+}
+
+@Injectable()
+export class RunAdminReconciliationUseCase {
+  constructor(private readonly finance: FinanceGrpcClient) {}
+
+  async execute() {
+    return this.finance.runReconciliation();
+  }
+}
+
+@Injectable()
+export class ListAdminReconciliationRunsUseCase {
+  constructor(private readonly finance: FinanceGrpcClient) {}
+
+  async execute() {
+    const response = await this.finance.listReconciliationRuns();
+    return { items: response.items };
+  }
+}
+
+@Injectable()
+export class GetAdminReconciliationRunUseCase {
+  constructor(private readonly finance: FinanceGrpcClient) {}
+
+  async execute(runId: string) {
+    return this.finance.getReconciliationRun(runId);
+  }
+}
+
+@Injectable()
 export class ReplayOutboxUseCase {
   constructor(private readonly outbox: IntegrationOutboxService) {}
 

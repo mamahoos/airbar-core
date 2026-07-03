@@ -15,18 +15,24 @@ import {
   FreezeEscrowRequest,
   FundEscrowRequest,
   GetEscrowRequest,
+  GetReconciliationRunRequest,
+  GetTreasuryRequest,
   GetPaymentOrderRequest,
   GetWalletRequest,
   ListWalletTransactionsRequest,
+  ListReconciliationRunsRequest,
   ListWithdrawalsRequest,
   MarkDeliveredRequest,
   PartialRefundEscrowRequest,
   PayFromWalletRequest,
   PaymentOrderServiceClient,
   ProcessWithdrawalRequest,
+  ReconciliationServiceClient,
   RefundEscrowRequest,
   RejectWithdrawalRequest,
   ReleaseEscrowRequest,
+  RunReconciliationRequest,
+  TreasuryServiceClient,
   VerifyPaymentOrderRequest,
   WalletServiceClient,
   WithdrawalServiceClient,
@@ -34,6 +40,9 @@ import {
   type HealthCheckRequest,
   type HealthCheckResponse,
   type PaymentOrderResponse,
+  type ReconciliationRunResponse,
+  type ReconciliationRunsResponse,
+  type TreasurySummaryResponse,
   type WalletResponse,
   type WalletTransactionsResponse,
   type WithdrawalResponse,
@@ -54,6 +63,8 @@ export class FinanceGrpcClient implements OnModuleDestroy {
   private readonly paymentClient: PaymentOrderServiceClient;
   private readonly walletClient: WalletServiceClient;
   private readonly withdrawalClient: WithdrawalServiceClient;
+  private readonly treasuryClient: TreasuryServiceClient;
+  private readonly reconciliationClient: ReconciliationServiceClient;
 
   constructor(@Inject(APP_CONFIG) config: AppConfig) {
     const creds = config.financeGrpcTls ? credentials.createSsl() : credentials.createInsecure();
@@ -63,6 +74,8 @@ export class FinanceGrpcClient implements OnModuleDestroy {
     this.paymentClient = new PaymentOrderServiceClient(url, creds);
     this.walletClient = new WalletServiceClient(url, creds);
     this.withdrawalClient = new WithdrawalServiceClient(url, creds);
+    this.treasuryClient = new TreasuryServiceClient(url, creds);
+    this.reconciliationClient = new ReconciliationServiceClient(url, creds);
   }
 
   checkReady(metadata?: GrpcCallMetadata): Promise<HealthCheckResponse> {
@@ -449,6 +462,54 @@ export class FinanceGrpcClient implements OnModuleDestroy {
     );
   }
 
+  getTreasurySummary(currency = 'IRT'): Promise<TreasurySummaryResponse> {
+    const request = GetTreasuryRequest.create({ currency });
+    return this.unary((cb) =>
+      this.treasuryClient.getTreasurySummary(
+        request,
+        buildGrpcMetadata(),
+        { deadline: this.deadline() },
+        cb,
+      ),
+    );
+  }
+
+  runReconciliation(): Promise<ReconciliationRunResponse> {
+    const request = RunReconciliationRequest.create();
+    return this.unary((cb) =>
+      this.reconciliationClient.runReconciliation(
+        request,
+        buildGrpcMetadata(),
+        { deadline: this.deadline() },
+        cb,
+      ),
+    );
+  }
+
+  listReconciliationRuns(): Promise<ReconciliationRunsResponse> {
+    const request = ListReconciliationRunsRequest.create();
+    return this.unary((cb) =>
+      this.reconciliationClient.listReconciliationRuns(
+        request,
+        buildGrpcMetadata(),
+        { deadline: this.deadline() },
+        cb,
+      ),
+    );
+  }
+
+  getReconciliationRun(runId: string): Promise<ReconciliationRunResponse> {
+    const request = GetReconciliationRunRequest.create({ runId });
+    return this.unary((cb) =>
+      this.reconciliationClient.getReconciliationRun(
+        request,
+        buildGrpcMetadata(),
+        { deadline: this.deadline() },
+        cb,
+      ),
+    );
+  }
+
   private deadline(): Date {
     return new Date(Date.now() + FINANCE_GRPC_DEADLINE_MS);
   }
@@ -480,5 +541,7 @@ export class FinanceGrpcClient implements OnModuleDestroy {
     this.paymentClient.close();
     this.walletClient.close();
     this.withdrawalClient.close();
+    this.treasuryClient.close();
+    this.reconciliationClient.close();
   }
 }
