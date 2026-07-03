@@ -52,6 +52,17 @@ export interface AdminListLogsFilter {
   readonly limit?: number | undefined;
 }
 
+export interface AdminListTrustEventsFilter {
+  readonly page?: number | undefined;
+  readonly limit?: number | undefined;
+  readonly reviewStatus?: string | undefined;
+  readonly type?: string | undefined;
+  readonly severity?: string | undefined;
+  readonly userId?: string | undefined;
+  readonly shipmentId?: string | undefined;
+  readonly chatId?: string | undefined;
+}
+
 export interface PricingRuleInput {
   readonly name: string;
   readonly description?: string | undefined;
@@ -85,6 +96,11 @@ export interface AdminRepositoryPort {
   listActivityLogs(
     filter: AdminListLogsFilter,
   ): Promise<{ data: readonly unknown[]; total: number }>;
+  listTrustEvents(
+    filter: AdminListTrustEventsFilter,
+  ): Promise<{ data: readonly unknown[]; total: number }>;
+  getTrustEvent(id: string): Promise<unknown>;
+  reviewTrustEvent(id: string, adminId: string, status: string, note?: string): Promise<unknown>;
   getSystemConfig(key: string): Promise<unknown>;
   upsertSystemConfig(key: string, value: unknown, adminId: string): Promise<unknown>;
   listPricingRules(): Promise<readonly unknown[]>;

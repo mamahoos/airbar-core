@@ -29,13 +29,16 @@ import {
   CreateAdminPricingRuleUseCase,
   GetAdminDashboardUseCase,
   GetAdminSystemConfigUseCase,
+  GetAdminTrustEventUseCase,
   GetAdminUserDetailUseCase,
   ListAdminActivityLogsUseCase,
   ListAdminDisputesUseCase,
   ListAdminPendingKycUseCase,
   ListAdminPricingRulesUseCase,
   ListAdminShipmentsUseCase,
+  ListAdminTrustEventsUseCase,
   ListAdminUsersUseCase,
+  ReviewAdminTrustEventUseCase,
   UnbanAdminUserUseCase,
   UpdateAdminPricingRuleUseCase,
   UpdateAdminSystemConfigUseCase,
@@ -115,6 +118,42 @@ class AdminLogsQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   action?: string;
+}
+
+class AdminTrustEventsQueryDto extends PaginationQueryDto {
+  @IsOptional()
+  @IsString()
+  reviewStatus?: string;
+
+  @IsOptional()
+  @IsString()
+  type?: string;
+
+  @IsOptional()
+  @IsString()
+  severity?: string;
+
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
+  @IsOptional()
+  @IsString()
+  shipmentId?: string;
+
+  @IsOptional()
+  @IsString()
+  chatId?: string;
+}
+
+class ReviewTrustEventDto {
+  @IsString()
+  @IsNotEmpty()
+  status!: string;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
 }
 
 class BanUserDto {
@@ -279,6 +318,9 @@ export class AdminController {
     private readonly listDisputes: ListAdminDisputesUseCase,
     private readonly listPendingKyc: ListAdminPendingKycUseCase,
     private readonly listLogs: ListAdminActivityLogsUseCase,
+    private readonly listTrustEvents: ListAdminTrustEventsUseCase,
+    private readonly getTrustEvent: GetAdminTrustEventUseCase,
+    private readonly reviewTrustEvent: ReviewAdminTrustEventUseCase,
     private readonly getConfig: GetAdminSystemConfigUseCase,
     private readonly updateConfig: UpdateAdminSystemConfigUseCase,
     private readonly listPricingRules: ListAdminPricingRulesUseCase,
@@ -360,6 +402,28 @@ export class AdminController {
   @ApiOperation({ summary: 'Activity logs' })
   logs(@Query() query: AdminLogsQueryDto) {
     return this.listLogs.execute(query);
+  }
+
+  @Get('trust-events')
+  @ApiOperation({ summary: 'List trust events for admin review' })
+  trustEvents(@Query() query: AdminTrustEventsQueryDto) {
+    return this.listTrustEvents.execute(query);
+  }
+
+  @Get('trust-events/:id')
+  @ApiOperation({ summary: 'Get trust event detail' })
+  trustEventDetail(@Param('id') id: string) {
+    return this.getTrustEvent.execute(id);
+  }
+
+  @Post('trust-events/:id/review')
+  @ApiOperation({ summary: 'Review trust event' })
+  trustEventReview(
+    @CurrentUser() admin: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: ReviewTrustEventDto,
+  ) {
+    return this.reviewTrustEvent.execute(id, admin.id, dto.status, dto.note);
   }
 
   @Get('config/:key')

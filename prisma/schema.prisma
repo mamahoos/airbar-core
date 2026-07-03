@@ -467,6 +467,10 @@ model TrustEvent {
   type       String
   severity   String
   action     String
+  reviewStatus String @default("PENDING") @map("review_status")
+  reviewedBy String? @map("reviewed_by")
+  reviewedAt DateTime? @map("reviewed_at")
+  reviewNote String? @map("review_note")
   metadata   Json?
   createdAt  DateTime @default(now()) @map("created_at")
 
@@ -476,6 +480,7 @@ model TrustEvent {
   @@index([shipmentId])
   @@index([chatId])
   @@index([type, createdAt])
+  @@index([reviewStatus, createdAt])
   @@map("trust_events")
 }
 

@@ -6,6 +6,7 @@ import type {
   AdminDashboardStats,
   AdminListLogsFilter,
   AdminListShipmentsFilter,
+  AdminListTrustEventsFilter,
   AdminListUsersFilter,
   AdminRepositoryPort,
   PricingRuleInput,
@@ -219,6 +220,56 @@ export class PrismaAdminRepository implements AdminRepositoryPort {
     ]);
 
     return { data, total };
+  }
+
+  async listTrustEvents(filter: AdminListTrustEventsFilter) {
+    const page = Math.max(1, filter.page ?? 1);
+    const limit = Math.min(100, Math.max(1, filter.limit ?? 50));
+    const skip = (page - 1) * limit;
+    const where: Prisma.TrustEventWhereInput = {
+      ...(filter.reviewStatus ? { reviewStatus: filter.reviewStatus } : {}),
+      ...(filter.type ? { type: filter.type } : {}),
+      ...(filter.severity ? { severity: filter.severity } : {}),
+      ...(filter.userId ? { userId: filter.userId } : {}),
+      ...(filter.shipmentId ? { shipmentId: filter.shipmentId } : {}),
+      ...(filter.chatId ? { chatId: filter.chatId } : {}),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.trustEvent.findMany({
+        where,
+        include: {
+          user: { select: { id: true, firstName: true, lastName: true, phone: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.trustEvent.count({ where }),
+    ]);
+
+    return { data, total };
+  }
+
+  async getTrustEvent(id: string) {
+    return this.prisma.trustEvent.findUnique({
+      where: { id },
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, phone: true } },
+      },
+    });
+  }
+
+  async reviewTrustEvent(id: string, adminId: string, status: string, note?: string) {
+    return this.prisma.trustEvent.update({
+      where: { id },
+      data: {
+        reviewStatus: status,
+        reviewedBy: adminId,
+        reviewedAt: new Date(),
+        reviewNote: note ?? null,
+      },
+    });
   }
 
   async getSystemConfig(key: string) {

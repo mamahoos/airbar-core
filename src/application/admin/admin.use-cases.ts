@@ -4,6 +4,7 @@ import {
   ADMIN_REPOSITORY,
   type AdminListLogsFilter,
   type AdminListShipmentsFilter,
+  type AdminListTrustEventsFilter,
   type AdminListUsersFilter,
   type AdminRepositoryPort,
   type PricingRuleInput,
@@ -111,6 +112,58 @@ export class ListAdminActivityLogsUseCase {
     const { page, limit } = normalizePagination({ page: filter.page, limit: filter.limit ?? 50 });
     const { data, total } = await this.admin.listActivityLogs({ ...filter, page, limit });
     return { data, pagination: buildPaginationMeta(total, page, limit) };
+  }
+}
+
+const TRUST_EVENT_REVIEW_STATUSES = new Set(['PENDING', 'RESOLVED', 'DISMISSED']);
+
+@Injectable()
+export class ListAdminTrustEventsUseCase {
+  constructor(@Inject(ADMIN_REPOSITORY) private readonly admin: AdminRepositoryPort) {}
+
+  async execute(filter: AdminListTrustEventsFilter) {
+    const { page, limit } = normalizePagination({ page: filter.page, limit: filter.limit ?? 50 });
+    const reviewStatus = this.parseStatus(filter.reviewStatus);
+    const { data, total } = await this.admin.listTrustEvents({
+      ...filter,
+      page,
+      limit,
+      ...(reviewStatus ? { reviewStatus } : {}),
+    });
+    return { data, pagination: buildPaginationMeta(total, page, limit) };
+  }
+
+  private parseStatus(status?: string): string | undefined {
+    const normalized = status?.trim().toUpperCase();
+    if (!normalized) return undefined;
+    if (!TRUST_EVENT_REVIEW_STATUSES.has(normalized)) {
+      throw new ValidationError('Invalid trust event review status');
+    }
+    return normalized;
+  }
+}
+
+@Injectable()
+export class GetAdminTrustEventUseCase {
+  constructor(@Inject(ADMIN_REPOSITORY) private readonly admin: AdminRepositoryPort) {}
+
+  async execute(id: string) {
+    const event = await this.admin.getTrustEvent(id);
+    if (!event) throw new NotFoundError('TrustEvent', id);
+    return event;
+  }
+}
+
+@Injectable()
+export class ReviewAdminTrustEventUseCase {
+  constructor(@Inject(ADMIN_REPOSITORY) private readonly admin: AdminRepositoryPort) {}
+
+  async execute(id: string, adminId: string, status: string, note?: string) {
+    const normalized = status.trim().toUpperCase();
+    if (!TRUST_EVENT_REVIEW_STATUSES.has(normalized) || normalized === 'PENDING') {
+      throw new ValidationError('Invalid trust event review decision');
+    }
+    return this.admin.reviewTrustEvent(id, adminId, normalized, note?.trim() || undefined);
   }
 }
 
