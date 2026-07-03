@@ -4,6 +4,7 @@ import { KycLevel, KycStatus } from '@prisma/client';
 import { APP_CONFIG } from '../../../bootstrap/config/index.js';
 import { decryptPii, encryptPii, hashPii, parsePiiKeyHex } from '../../../shared/crypto/index.js';
 import { ValidationError } from '../../../shared/errors/index.js';
+import { isIranianPhone } from '../../../shared/phone/index.js';
 import { PrismaService } from '../prisma.service.js';
 
 import type { AppConfig } from '../../../bootstrap/config/index.js';
@@ -41,15 +42,34 @@ export class PrismaKycRepository implements KycRepositoryPort {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
+        phone: true,
         kycLevel: true,
         financialVerifiedAt: true,
-        identityProfile: { select: { nationalIdHash: true } },
+        identityProfile: {
+          select: {
+            nationalIdHash: true,
+            shahkarVerifiedAt: true,
+            personInfoVerifiedAt: true,
+            identityPendingPersonInfo: true,
+          },
+        },
+        kycDocuments: {
+          where: { type: 'national_id', status: KycStatus.APPROVED },
+          select: { id: true },
+          take: 1,
+        },
       },
     });
     if (!user) return null;
     return {
+      phone: user.phone,
       kycLevel: user.kycLevel,
       hasNationalId: !!user.identityProfile?.nationalIdHash,
+      hasApprovedNationalIdDocument: user.kycDocuments.length > 0,
+      identityPersonInfoVerified:
+        !!user.identityProfile?.shahkarVerifiedAt &&
+        !!user.identityProfile.personInfoVerifiedAt &&
+        !user.identityProfile.identityPendingPersonInfo,
       financialVerified: !!user.financialVerifiedAt,
     };
   }
@@ -234,6 +254,10 @@ export class PrismaKycRepository implements KycRepositoryPort {
   }): Promise<void> {
     const now = new Date();
     await this.prisma.$transaction([
+      this.prisma.userBankAccount.updateMany({
+        where: { userId: input.userId, isDefault: true },
+        data: { isDefault: false },
+      }),
       this.prisma.userBankAccount.upsert({
         where: {
           userId_cardNumberHash: {
@@ -262,6 +286,21 @@ export class PrismaKycRepository implements KycRepositoryPort {
           accountHolderName: input.accountHolderName,
           cardMatchVerifiedAt: now,
           isActive: true,
+          isDefault: true,
+        },
+      }),
+      this.prisma.userPayoutProfile.upsert({
+        where: { userId: input.userId },
+        create: {
+          userId: input.userId,
+          ibanHash: input.ibanHash,
+          ibanCiphertext: input.ibanCiphertext,
+          accountName: input.accountHolderName,
+        },
+        update: {
+          ibanHash: input.ibanHash,
+          ibanCiphertext: input.ibanCiphertext,
+          accountName: input.accountHolderName,
         },
       }),
       this.prisma.user.update({
@@ -382,7 +421,11 @@ export class PrismaKycRepository implements KycRepositoryPort {
     });
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { kycLevel: true, identityProfile: { select: { nationalIdHash: true } } },
+      select: {
+        phone: true,
+        kycLevel: true,
+        identityProfile: { select: { nationalIdHash: true } },
+      },
     });
     if (!user) return;
 
@@ -395,7 +438,8 @@ export class PrismaKycRepository implements KycRepositoryPort {
     if (user.identityProfile?.nationalIdHash) {
       newLevel = KycLevel.IDENTITY_VERIFIED;
     }
-    if ((hasNationalId || hasPassport) && newLevel === KycLevel.IDENTITY_VERIFIED) {
+    const identityDocumentAccepted = isIranianPhone(user.phone) ? hasNationalId : hasNationalId || hasPassport;
+    if (identityDocumentAccepted && newLevel === KycLevel.IDENTITY_VERIFIED) {
       newLevel = KycLevel.DOCUMENT_VERIFIED;
     }
     if (hasSelfie && newLevel === KycLevel.DOCUMENT_VERIFIED) {

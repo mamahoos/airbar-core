@@ -2,6 +2,20 @@ import { z } from 'zod';
 
 const NodeEnv = z.enum(['development', 'test', 'production']);
 
+function envBoolean(defaultValue: boolean): z.ZodEffects<z.ZodBoolean, boolean, unknown> {
+  return z.preprocess((value) => {
+    if (value === undefined || value === null || value === '') return defaultValue;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value !== 0;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (['true', '1', 'yes', 'y', 'on'].includes(normalized)) return true;
+      if (['false', '0', 'no', 'n', 'off'].includes(normalized)) return false;
+    }
+    return value;
+  }, z.boolean());
+}
+
 /** Convert `SCREAMING_SNAKE_CASE` env keys to `camelCase`. */
 function camelizeEnv(env: Record<string, string | undefined>): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = {};
@@ -45,14 +59,14 @@ export const AppConfigSchema = z.object({
 
   /** airbar-finance gRPC endpoint — wired in N1, used from N6. */
   financeGrpcUrl: z.string().default('localhost:50051'),
-  financeGrpcTls: z.coerce.boolean().default(false),
+  financeGrpcTls: envBoolean(false),
   frontendUrl: z.string().url().default('http://localhost:3000'),
   outboxMaxAttempts: z.coerce.number().int().positive().default(10),
 
   intakeApiKey: z.string().optional(),
   internalApiKey: z.string().optional(),
   publicWebUrl: z.string().url().optional(),
-  intakeTestMode: z.coerce.boolean().default(true),
+  intakeTestMode: envBoolean(true),
   intakeTestTelegramChatId: z.string().optional(),
 
   jwtSecret: z.string().min(16).default('dev-only-jwt-secret-change-in-production'),
@@ -71,7 +85,7 @@ export const AppConfigSchema = z.object({
   limosmsOtpPattern: z.string().optional(),
   limosmsFooter: z.string().optional(),
   apiIrBearerToken: z.string().optional(),
-  apiIrDevMock: z.coerce.boolean().default(false),
+  apiIrDevMock: envBoolean(false),
   apiIrBaseUrl: z.string().url().default('https://s.api.ir/api/sw1'),
   apiIrTimeoutMs: z.coerce.number().int().positive().default(15_000),
 
@@ -85,7 +99,7 @@ export const AppConfigSchema = z.object({
   minioAccessKey: z.string().default('minioadmin'),
   minioSecretKey: z.string().default('minioadmin'),
   minioBucket: z.string().default('airbar'),
-  minioUseSsl: z.coerce.boolean().default(false),
+  minioUseSsl: envBoolean(false),
 
   logLevel: z.enum(['error', 'warn', 'log', 'debug', 'verbose']).default('log'),
 });

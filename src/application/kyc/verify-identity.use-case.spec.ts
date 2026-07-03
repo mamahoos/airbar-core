@@ -66,4 +66,25 @@ describe('VerifyIdentityUseCase', () => {
     expect(result.verified).toBe(true);
     expect(kyc.upsertIdentity.mock.calls).toHaveLength(1);
   });
+
+  it('rejects Shahkar verification for non-Iranian phones', async () => {
+    await expect(
+      useCase.execute('u1', '+4915112345678', '1234567890', '1370/01/01'),
+    ).rejects.toThrow(ValidationError);
+  });
+
+  it('rejects when official first or last name is missing', async () => {
+    kyc.findIdentityByNationalIdHash.mockResolvedValue(null);
+    kyc.findIdentityByUserId.mockResolvedValue(null);
+    kyc.encryptNationalId.mockReturnValue({ hash: 'h1', ciphertext: 'c1' });
+    apiIr.shahkar.mockResolvedValue({ isMatch: true });
+    apiIr.personInfo.mockResolvedValue({
+      firstName: 'علی',
+      birthDate: '1370/01/01',
+    });
+
+    await expect(
+      useCase.execute('u1', '09120000000', '1234567890', '1370/01/01'),
+    ).rejects.toThrow(ValidationError);
+  });
 });

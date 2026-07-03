@@ -26,4 +26,36 @@ describe('assertKycMinLevel', () => {
       }),
     ).toThrow(ForbiddenError);
   });
+
+  it('requires complete Iranian identity when configured for Iranian users', () => {
+    expect(() =>
+      assertKycMinLevel(KycLevel.IDENTITY_VERIFIED, KycLevel.IDENTITY_VERIFIED, {
+        phone: '09123456789',
+        requireIranianNationalId: true,
+        nationalIdPresent: true,
+        identityPersonInfoVerified: false,
+      }),
+    ).toThrow(ForbiddenError);
+  });
+
+  it('does not apply Iranian national id policy to non-Iranian users', () => {
+    expect(() =>
+      assertKycMinLevel(KycLevel.IDENTITY_VERIFIED, KycLevel.IDENTITY_VERIFIED, {
+        phone: '+4915112345678',
+        requireIranianNationalId: true,
+        nationalIdPresent: false,
+        identityPersonInfoVerified: false,
+      }),
+    ).not.toThrow();
+  });
+
+  it('requires approved national id document when configured for Iranian users', () => {
+    expect(() =>
+      assertKycMinLevel(KycLevel.DOCUMENT_VERIFIED, KycLevel.IDENTITY_VERIFIED, {
+        phone: '09123456789',
+        requireIranianNationalIdDocument: true,
+        approvedNationalIdDocumentPresent: false,
+      }),
+    ).toThrow(ForbiddenError);
+  });
 });

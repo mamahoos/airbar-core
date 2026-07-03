@@ -18,7 +18,10 @@ export class KycAccessService {
 
     assertKycMinLevel(snapshot.kycLevel as KycLevel, requirement.minLevel, {
       ...requirement,
+      phone: snapshot.phone,
       nationalIdPresent: snapshot.hasNationalId,
+      identityPersonInfoVerified: snapshot.identityPersonInfoVerified,
+      approvedNationalIdDocumentPresent: snapshot.hasApprovedNationalIdDocument,
       financialVerified: snapshot.financialVerified,
     });
   }

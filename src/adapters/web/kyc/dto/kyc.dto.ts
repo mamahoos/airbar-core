@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString, Length } from 'class-validator';
+import { IsIn, IsOptional, IsString, Length, Matches } from 'class-validator';
 
 export class VerifyIdentityDto {
   @IsString()
@@ -6,6 +6,9 @@ export class VerifyIdentityDto {
   nationalId!: string;
 
   @IsString()
+  @Matches(/^(13|14)\d{2}[/-]?(0[1-9]|1[0-2])[/-]?(0[1-9]|[12]\d|3[01])$/, {
+    message: 'تاریخ تولد باید شمسی و در قالب 1370/01/01 یا 13700101 باشد',
+  })
   birthDate!: string;
 }
 

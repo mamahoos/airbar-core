@@ -7,11 +7,13 @@ export type FinanceKycAction = 'CREATE_PAYMENT' | 'REQUEST_PAYOUT';
 const ACTION_REQUIREMENTS: Record<FinanceKycAction, KycRequirementOptions> = {
   CREATE_PAYMENT: {
     minLevel: KycLevel.IDENTITY_VERIFIED,
+    requireIranianNationalId: true,
     requireFinancial: true,
     code: 'CREATE_PAYMENT',
   },
   REQUEST_PAYOUT: {
-    minLevel: KycLevel.FULLY_VERIFIED,
+    minLevel: KycLevel.IDENTITY_VERIFIED,
+    requireIranianNationalId: true,
     requireFinancial: true,
     code: 'REQUEST_PAYOUT',
   },

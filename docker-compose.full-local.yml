@@ -1,0 +1,209 @@
+# Full local AirBar backend stack: airbar-core + airbar-finance + all runtime dependencies.
+#
+# This file lives in airbar-core but expects the sibling repo layout used in staging:
+#   ../airbar-finance
+#
+# Usage:
+#   docker compose -f docker-compose.full-local.yml up -d --build
+#   curl -sf http://localhost:4000/api/v1/health
+#   curl -sf http://localhost:8080/health/ready
+
+services:
+  core-postgres:
+    image: postgres:16-alpine
+    container_name: airbar-local-core-postgres
+    environment:
+      POSTGRES_DB: airbar_api
+      POSTGRES_USER: airbar
+      POSTGRES_PASSWORD: airbar_secret
+    ports:
+      - '5435:5432'
+    volumes:
+      - airbar-local-core-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U airbar -d airbar_api']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  core-redis:
+    image: redis:7-alpine
+    container_name: airbar-local-core-redis
+    ports:
+      - '6382:6379'
+    volumes:
+      - airbar-local-core-redis:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    container_name: airbar-local-minio
+    command: server /data --console-address ':9001'
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - airbar-local-minio:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  finance-postgres:
+    image: postgres:16-alpine
+    container_name: airbar-local-finance-postgres
+    environment:
+      POSTGRES_DB: airbar_finance
+      POSTGRES_USER: airbar
+      POSTGRES_PASSWORD: airbar
+    ports:
+      - '5434:5432'
+    volumes:
+      - airbar-local-finance-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U airbar -d airbar_finance']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  finance-redis:
+    image: redis:7-alpine
+    container_name: airbar-local-finance-redis
+    ports:
+      - '6381:6379'
+    volumes:
+      - airbar-local-finance-redis:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  finance-migrate:
+    image: postgres:16-alpine
+    container_name: airbar-local-finance-migrate
+    depends_on:
+      finance-postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: finance-postgres
+      PGPORT: 5432
+      PGDATABASE: airbar_finance
+      PGUSER: airbar
+      PGPASSWORD: airbar
+      MIGRATIONS_DIR: /migrations
+    volumes:
+      - ../airbar-finance/internal/infrastructure/postgres/migrations:/migrations:ro
+      - ./scripts/finance-migrate.sh:/usr/local/bin/finance-migrate.sh:ro
+    command: ['sh', '/usr/local/bin/finance-migrate.sh']
+    restart: 'no'
+
+  core-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: build
+    container_name: airbar-local-core-migrate
+    depends_on:
+      core-postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://airbar:airbar_secret@core-postgres:5432/airbar_api?schema=public
+    command: ['npx', 'prisma', 'migrate', 'deploy']
+    restart: 'no'
+
+  finance:
+    build:
+      context: ../airbar-finance
+      dockerfile: Dockerfile
+    container_name: airbar-local-finance
+    depends_on:
+      finance-postgres:
+        condition: service_healthy
+      finance-redis:
+        condition: service_healthy
+      finance-migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://airbar:airbar@finance-postgres:5432/airbar_finance?sslmode=disable
+      REDIS_URL: redis://finance-redis:6379/1
+      GRPC_PORT: 50051
+      HTTP_PORT: 8080
+      ZIBAL_SANDBOX: 'true'
+      ZIBAL_MERCHANT: zibal
+      FINANCE_PUBLIC_BASE_URL: http://localhost:8080
+      PLATFORM_FEE_PERCENT: 10
+    ports:
+      - '8080:8080'
+      - '50051:50051'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:8080/health/ready | grep -q ok']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: airbar-local-core
+    depends_on:
+      core-postgres:
+        condition: service_healthy
+      core-redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      core-migrate:
+        condition: service_completed_successfully
+      finance:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://airbar:airbar_secret@core-postgres:5432/airbar_api?schema=public
+      REDIS_HOST: core-redis
+      REDIS_PORT: 6379
+      FINANCE_GRPC_URL: finance:50051
+      FINANCE_GRPC_TLS: 'false'
+      FRONTEND_URL: http://localhost:3000
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173,https://airbar.app,https://www.airbar.app
+      LOG_LEVEL: debug
+      JWT_SECRET: dev-only-jwt-secret-change-in-production
+      JWT_REFRESH_SECRET: dev-only-jwt-refresh-secret-change-in-production
+      SMS_PROVIDER: dev
+      API_IR_DEV_MOCK: 'true'
+      PII_ENCRYPTION_KEY: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: airbar
+      MINIO_USE_SSL: 'false'
+      INTAKE_TEST_MODE: 'true'
+    ports:
+      - '4000:4000'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "node -e \"require('http').get('http://127.0.0.1:4000/api/v1/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\"",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  airbar-local-core-pg:
+  airbar-local-core-redis:
+  airbar-local-finance-pg:
+  airbar-local-finance-redis:
+  airbar-local-minio:

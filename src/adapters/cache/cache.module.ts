@@ -1,18 +1,11 @@
-import { Module, Global, type Provider } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 
-import { HEALTH_INDICATORS } from '../../application/health/index.js';
 import { APP_CONFIG } from '../../bootstrap/config/index.js';
 import { RedisHealthIndicator } from '../health/redis.health.js';
 
 import { RedisService } from './redis.service.js';
 
 import type { AppConfig } from '../../bootstrap/config/index.js';
-
-const redisHealthMultiProvider = {
-  provide: HEALTH_INDICATORS,
-  useExisting: RedisHealthIndicator,
-  multi: true,
-} as Provider;
 
 @Global()
 @Module({
@@ -25,8 +18,7 @@ const redisHealthMultiProvider = {
       },
     },
     RedisHealthIndicator,
-    redisHealthMultiProvider,
   ],
-  exports: [RedisService],
+  exports: [RedisService, RedisHealthIndicator],
 })
 export class CacheModule {}

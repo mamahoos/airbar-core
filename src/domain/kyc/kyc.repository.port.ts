@@ -14,8 +14,11 @@ export interface IdentityProfileRecord {
 }
 
 export interface KycSnapshot {
+  readonly phone: string;
   readonly kycLevel: string;
   readonly hasNationalId: boolean;
+  readonly hasApprovedNationalIdDocument: boolean;
+  readonly identityPersonInfoVerified: boolean;
   readonly financialVerified: boolean;
 }
 

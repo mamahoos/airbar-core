@@ -3,6 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { API_IR, type ApiIrPort } from '../../domain/kyc/api-ir.port.js';
 import { KYC_REPOSITORY, type KycRepositoryPort } from '../../domain/kyc/kyc.repository.port.js';
 import { ConflictError, ValidationError } from '../../shared/errors/index.js';
+import { isIranianPhone } from '../../shared/phone/index.js';
 
 @Injectable()
 export class VerifyIdentityUseCase {
@@ -26,6 +27,9 @@ export class VerifyIdentityUseCase {
     }
     if (!resolvedPhone) {
       throw new ValidationError('شماره موبایل کاربر یافت نشد');
+    }
+    if (!isIranianPhone(resolvedPhone)) {
+      throw new ValidationError('تأیید هویت شاهکار فقط برای شماره موبایل ایران فعال است');
     }
 
     const nationalIdHash = this.kyc.encryptNationalId(normalizedNationalId).hash;
@@ -59,7 +63,10 @@ export class VerifyIdentityUseCase {
     }
 
     const personInfo = await this.apiIr.personInfo(normalizedNationalId, birthDate);
-    const identityPendingPersonInfo = !personInfo.firstName && !personInfo.lastName;
+    if (!personInfo.firstName || !personInfo.lastName) {
+      throw new ValidationError('دریافت نام و نام خانوادگی رسمی از کد ملی ناموفق بود');
+    }
+    const identityPendingPersonInfo = false;
     const encrypted = this.kyc.encryptNationalId(normalizedNationalId);
     const now = new Date();
 

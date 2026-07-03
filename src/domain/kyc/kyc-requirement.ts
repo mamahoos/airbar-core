@@ -3,6 +3,8 @@ import type { KycLevel } from '../auth/kyc-level.js';
 export interface KycRequirementOptions {
   readonly minLevel: KycLevel;
   readonly requireNationalId?: boolean | undefined;
+  readonly requireIranianNationalId?: boolean | undefined;
+  readonly requireIranianNationalIdDocument?: boolean | undefined;
   readonly requireFinancial?: boolean | undefined;
   readonly code?: string | undefined;
   readonly redirect?: string | undefined;

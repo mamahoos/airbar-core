@@ -39,6 +39,21 @@ describe('loadConfig', () => {
     expect(cfg.corsOrigins).toContain('https://airbar.app');
   });
 
+  it('parses boolean-like env strings explicitly', () => {
+    const cfg = loadConfig({
+      DATABASE_URL: 'postgresql://u:p@localhost:5432/airbar_api',
+      FINANCE_GRPC_TLS: 'false',
+      API_IR_DEV_MOCK: 'false',
+      MINIO_USE_SSL: 'false',
+      INTAKE_TEST_MODE: '0',
+    });
+
+    expect(cfg.financeGrpcTls).toBe(false);
+    expect(cfg.apiIrDevMock).toBe(false);
+    expect(cfg.minioUseSsl).toBe(false);
+    expect(cfg.intakeTestMode).toBe(false);
+  });
+
   it('splits CORS_ORIGINS into a trimmed array', () => {
     const cfg = loadConfig({
       DATABASE_URL: 'postgresql://u:p@localhost:5432/airbar_api',

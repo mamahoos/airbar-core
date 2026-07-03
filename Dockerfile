@@ -5,6 +5,9 @@ FROM node:22-bookworm-slim AS build
 WORKDIR /app
 
 ENV CI=1
+RUN apt-get update -y \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json* ./
 RUN npm ci
 
@@ -20,6 +23,9 @@ FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
+RUN apt-get update -y \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev && npm cache clean --force
 
@@ -29,4 +35,4 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 
 EXPOSE 4000
-CMD ["node", "dist/bootstrap/main.js"]
+CMD ["node", "dist/src/bootstrap/main.js"]

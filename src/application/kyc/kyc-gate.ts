@@ -1,5 +1,6 @@
 import { KycLevel } from '../../domain/auth/kyc-level.js';
 import { ForbiddenError } from '../../shared/errors/index.js';
+import { isIranianPhone } from '../../shared/phone/index.js';
 
 import type { KycRequirementOptions } from '../../domain/kyc/kyc-requirement.js';
 
@@ -21,10 +22,15 @@ export function assertKycMinLevel(
   current: KycLevel,
   required: KycLevel,
   options?: KycRequirementOptions & {
+    readonly phone?: string;
     readonly nationalIdPresent?: boolean;
+    readonly identityPersonInfoVerified?: boolean;
+    readonly approvedNationalIdDocumentPresent?: boolean;
     readonly financialVerified?: boolean;
   },
 ): void {
+  const isIranianUser = options?.phone ? isIranianPhone(options.phone) : false;
+
   if (levelIndex(current) < levelIndex(required)) {
     throw new ForbiddenError(options?.message ?? 'احراز هویت الزامی است', {
       code: options?.code ?? 'KYC_REQUIRED',
@@ -33,11 +39,20 @@ export function assertKycMinLevel(
     });
   }
 
-  if (options?.requireNationalId && !options.nationalIdPresent) {
+  const mustHaveNationalId = options?.requireNationalId || (isIranianUser && options?.requireIranianNationalId);
+  if (mustHaveNationalId && (!options.nationalIdPresent || !options.identityPersonInfoVerified)) {
     throw new ForbiddenError('ابتدا تأیید هویت را تکمیل کنید', {
       code: 'IDENTITY_VERIFICATION_REQUIRED',
       requiredLevel: KycLevel.IDENTITY_VERIFIED,
       redirect: options.redirect ?? '/dashboard/kyc?step=identity',
+    });
+  }
+
+  if (isIranianUser && options?.requireIranianNationalIdDocument && !options.approvedNationalIdDocumentPresent) {
+    throw new ForbiddenError('ابتدا تصویر کارت ملی را بارگذاری و تأیید کنید', {
+      code: 'NATIONAL_ID_DOCUMENT_REQUIRED',
+      requiredLevel: KycLevel.DOCUMENT_VERIFIED,
+      redirect: options.redirect ?? '/dashboard/kyc?step=document',
     });
   }
 
