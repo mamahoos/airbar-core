@@ -157,6 +157,7 @@ export class PrismaKycRepository implements KycRepositoryPort {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
+        phone: true,
         kycLevel: true,
         financialVerifiedAt: true,
         identityPendingPersonInfo: true,
@@ -197,10 +198,13 @@ export class PrismaKycRepository implements KycRepositoryPort {
     });
     if (!user) return null;
 
+    const documentStep = isIranianPhone(user.phone)
+      ? 'national_id_document_upload'
+      : 'identity_document_upload';
     const requirements: Record<string, string[]> = {
       NONE: ['mobile_verification'],
       MOBILE_VERIFIED: ['identity_verification'],
-      IDENTITY_VERIFIED: ['document_upload'],
+      IDENTITY_VERIFIED: [documentStep],
       DOCUMENT_VERIFIED: ['selfie_verification'],
       FACE_VERIFIED: ['address_verification'],
       FULLY_VERIFIED: [],

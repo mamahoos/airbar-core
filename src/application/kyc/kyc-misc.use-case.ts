@@ -7,6 +7,7 @@ import {
   type ObjectStoragePort,
 } from '../../domain/storage/object-storage.port.js';
 import { NotFoundError, ValidationError } from '../../shared/errors/index.js';
+import { isIranianPhone } from '../../shared/phone/index.js';
 
 const VALID_DOCUMENT_TYPES = [
   'national_id',
@@ -15,6 +16,7 @@ const VALID_DOCUMENT_TYPES = [
   'selfie',
   'address_proof',
 ] as const;
+const IDENTITY_DOCUMENT_TYPES = new Set(['national_id', 'passport', 'driver_license']);
 
 @Injectable()
 export class VerifyBankCardUseCase {
@@ -131,6 +133,11 @@ export class UploadKycDocumentUseCase {
   async execute(userId: string, type: string, file: Buffer, fileName: string) {
     if (!VALID_DOCUMENT_TYPES.includes(type as (typeof VALID_DOCUMENT_TYPES)[number])) {
       throw new ValidationError('Invalid document type');
+    }
+    const phone = await this.kyc.getUserPhone(userId);
+    if (!phone) throw new NotFoundError('User', userId);
+    if (isIranianPhone(phone) && IDENTITY_DOCUMENT_TYPES.has(type) && type !== 'national_id') {
+      throw new ValidationError('برای کاربران ایرانی فقط تصویر کارت ملی به عنوان مدرک هویتی پذیرفته می‌شود');
     }
 
     const objectName = await this.storage.upload(file, fileName, `kyc/${userId}`, false);
