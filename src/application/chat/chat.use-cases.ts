@@ -9,6 +9,8 @@ import {
 import { ForbiddenError, NotFoundError } from '../../shared/errors/index.js';
 import { buildPaginationMeta, normalizePagination } from '../../shared/pagination/pagination.js';
 
+import { ChatFirewallService } from './chat-firewall.service.js';
+
 @Injectable()
 export class ChatAccessService {
   constructor(@Inject(CHAT_REPOSITORY) private readonly chats: ChatRepositoryPort) {}
@@ -91,13 +93,33 @@ export class SendChatMessageUseCase {
     @Inject(CHAT_REPOSITORY) private readonly chats: ChatRepositoryPort,
     private readonly access: ChatAccessService,
     private readonly redis: RedisService,
+    private readonly firewall: ChatFirewallService,
   ) {}
 
   async execute(userId: string, chatId: string, content: string, attachments?: readonly string[]) {
     const chat = await this.access.assertParticipant(userId, chatId);
     if (!chat.isActive) throw new ForbiddenError('Chat is no longer active');
 
-    const message = await this.chats.sendMessage(chatId, userId, content, attachments);
+    const decision = this.firewall.evaluate({
+      content,
+      shipmentStatus: chat.shipment?.status,
+    });
+    if (decision.action !== 'ALLOW') {
+      await this.chats.recordTrustEvent({
+        userId,
+        shipmentId: chat.shipmentId,
+        chatId,
+        type: 'CHAT_CONTACT_VIOLATION',
+        severity: decision.action === 'BLOCK' ? 'HIGH' : 'MEDIUM',
+        action: decision.action,
+        metadata: { reasons: decision.reasons },
+      });
+    }
+    if (decision.action === 'BLOCK') {
+      throw new ForbiddenError('پیام شامل اطلاعات تماس یا دعوت به پرداخت خارج از پلتفرم است');
+    }
+
+    const message = await this.chats.sendMessage(chatId, userId, decision.content, attachments);
     await this.chats.touchChat(chatId);
     await this.redis.publish(`chat:${chatId}`, JSON.stringify(message));
     return message;

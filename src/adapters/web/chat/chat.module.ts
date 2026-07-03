@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { ChatFirewallService } from '../../../application/chat/chat-firewall.service.js';
 import {
   ChatAccessService,
   CreateChatForShipmentUseCase,
@@ -19,6 +20,7 @@ import { ChatController } from './chat.controller.js';
   controllers: [ChatController],
   providers: [
     ChatAccessService,
+    ChatFirewallService,
     ListMyChatsUseCase,
     GetChatUseCase,
     GetChatByShipmentUseCase,

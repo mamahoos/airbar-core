@@ -38,6 +38,16 @@ export interface ChatMessageRecord {
   readonly sender?: ChatParticipantSummary;
 }
 
+export interface ChatTrustEventInput {
+  readonly userId: string;
+  readonly shipmentId?: string | null | undefined;
+  readonly chatId?: string | null | undefined;
+  readonly type: string;
+  readonly severity: string;
+  readonly action: string;
+  readonly metadata?: unknown;
+}
+
 export interface ChatRepositoryPort {
   createForShipment(shipmentId: string): Promise<ChatRecord>;
   deactivateByShipment(shipmentId: string): Promise<void>;
@@ -57,5 +67,6 @@ export interface ChatRepositoryPort {
     content: string,
     attachments?: readonly string[],
   ): Promise<ChatMessageRecord>;
+  recordTrustEvent(input: ChatTrustEventInput): Promise<void>;
   touchChat(chatId: string): Promise<void>;
 }

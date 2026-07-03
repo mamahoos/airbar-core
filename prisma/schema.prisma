@@ -68,6 +68,7 @@ model User {
   carriedShipments Shipment[] @relation("CarrierShipments")
   notifications    Notification[]
   chatMessages     ChatMessage[]
+  trustEvents       TrustEvent[]
   reviewsAuthored  Review[]     @relation("ReviewAuthor")
   reviewsReceived  Review[]     @relation("ReviewTarget")
 
@@ -451,6 +452,26 @@ model ChatMessage {
   @@index([chatId])
   @@index([senderId])
   @@map("chat_messages")
+}
+
+model TrustEvent {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  shipmentId String?  @map("shipment_id")
+  chatId     String?  @map("chat_id")
+  type       String
+  severity   String
+  action     String
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([shipmentId])
+  @@index([chatId])
+  @@index([type, createdAt])
+  @@map("trust_events")
 }
 
 model Notification {

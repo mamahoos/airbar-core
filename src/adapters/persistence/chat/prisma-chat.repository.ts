@@ -6,7 +6,9 @@ import type {
   ChatMessageRecord,
   ChatRecord,
   ChatRepositoryPort,
+  ChatTrustEventInput,
 } from '../../../domain/chat/chat.repository.port.js';
+import type { Prisma } from '@prisma/client';
 
 const senderSelect = {
   id: true,
@@ -142,6 +144,22 @@ export class PrismaChatRepository implements ChatRepositoryPort {
         attachments: [...attachments],
       },
       include: { sender: { select: senderSelect } },
+    });
+  }
+
+  async recordTrustEvent(input: ChatTrustEventInput): Promise<void> {
+    await this.prisma.trustEvent.create({
+      data: {
+        userId: input.userId,
+        shipmentId: input.shipmentId ?? null,
+        chatId: input.chatId ?? null,
+        type: input.type,
+        severity: input.severity,
+        action: input.action,
+        ...(input.metadata === undefined
+          ? {}
+          : { metadata: input.metadata as Prisma.InputJsonValue }),
+      },
     });
   }
 
