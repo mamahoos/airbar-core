@@ -3,6 +3,7 @@ import {
   GetAdminOutboxUseCase,
   GetAdminTreasurySummaryUseCase,
   ListAdminOutboxUseCase,
+  ListAdminProviderEventsUseCase,
   ListAdminReconciliationRunsUseCase,
   ProcessAdminWithdrawalUseCase,
   ReplayOutboxUseCase,
@@ -92,6 +93,50 @@ describe('Admin finance ops use cases', () => {
       items: [{ id: 'run-1', status: 'PASSED', findings: { debitEqualsCredit: true } }],
     });
     expect(finance.listReconciliationRuns).toHaveBeenCalledTimes(1);
+  });
+
+  it('proxies provider events from finance with bounded filters', async () => {
+    const finance = {
+      listProviderEvents: jest.fn().mockResolvedValue({
+        items: [
+          {
+            id: 'event-1',
+            provider: 'ZIBAL',
+            eventType: 'VERIFY',
+            payloadHash: 'hash-1',
+          },
+        ],
+        total: 1,
+      }),
+    };
+    const useCase = new ListAdminProviderEventsUseCase(finance as never);
+
+    await expect(
+      useCase.execute({
+        page: 1,
+        limit: 10,
+        eventType: 'verify',
+        paymentOrderId: 'order-1',
+      }),
+    ).resolves.toMatchObject({
+      data: [{ id: 'event-1', provider: 'ZIBAL', eventType: 'VERIFY' }],
+      pagination: { totalItems: 1, page: 1, limit: 10 },
+    });
+    expect(finance.listProviderEvents).toHaveBeenCalledWith({
+      provider: 'ZIBAL',
+      eventType: 'VERIFY',
+      paymentOrderId: 'order-1',
+      page: 1,
+      limit: 10,
+    });
+  });
+
+  it('rejects invalid provider event type filters', async () => {
+    const useCase = new ListAdminProviderEventsUseCase({ listProviderEvents: jest.fn() } as never);
+
+    await expect(useCase.execute({ eventType: 'CAPTURE' })).rejects.toThrow(
+      'Invalid provider event type',
+    );
   });
 });
 

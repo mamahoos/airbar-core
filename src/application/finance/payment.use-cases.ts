@@ -35,6 +35,7 @@ import type { OutboxRowStatus } from '../../domain/finance/outbox.repository.por
 
 export type PaymentMethod = 'ZIBAL' | 'WALLET';
 const OUTBOX_STATUSES = new Set<OutboxRowStatus>(['PENDING', 'PROCESSING', 'DONE', 'FAILED']);
+const PROVIDER_EVENT_TYPES = new Set(['REQUEST', 'VERIFY', 'CALLBACK']);
 
 @Injectable()
 export class CreateShipmentPaymentUseCase {
@@ -196,6 +197,44 @@ export class GetAdminReconciliationRunUseCase {
 
   async execute(runId: string) {
     return this.finance.getReconciliationRun(runId);
+  }
+}
+
+@Injectable()
+export class ListAdminProviderEventsUseCase {
+  constructor(private readonly finance: FinanceGrpcClient) {}
+
+  async execute(filter: {
+    page?: number;
+    limit?: number;
+    provider?: string;
+    eventType?: string;
+    paymentOrderId?: string;
+  }) {
+    const { page, limit } = normalizePagination({ page: filter.page, limit: filter.limit ?? 50 });
+    const provider = filter.provider?.trim() || 'ZIBAL';
+    const eventType = this.parseEventType(filter.eventType);
+    const paymentOrderId = filter.paymentOrderId?.trim() || undefined;
+    const response = await this.finance.listProviderEvents({
+      provider,
+      page,
+      limit,
+      ...(eventType ? { eventType } : {}),
+      ...(paymentOrderId ? { paymentOrderId } : {}),
+    });
+    return {
+      data: response.items,
+      pagination: buildPaginationMeta(Number(response.total), page, limit),
+    };
+  }
+
+  private parseEventType(eventType?: string): string | undefined {
+    const normalized = eventType?.trim().toUpperCase();
+    if (!normalized) return undefined;
+    if (!PROVIDER_EVENT_TYPES.has(normalized)) {
+      throw new ValidationError('Invalid provider event type');
+    }
+    return normalized;
   }
 }
 

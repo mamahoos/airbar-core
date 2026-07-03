@@ -19,6 +19,7 @@ import {
   GetTreasuryRequest,
   GetPaymentOrderRequest,
   GetWalletRequest,
+  ListProviderEventsRequest,
   ListWalletTransactionsRequest,
   ListReconciliationRunsRequest,
   ListWithdrawalsRequest,
@@ -27,6 +28,7 @@ import {
   PayFromWalletRequest,
   PaymentOrderServiceClient,
   ProcessWithdrawalRequest,
+  ProviderEventServiceClient,
   ReconciliationServiceClient,
   RefundEscrowRequest,
   RejectWithdrawalRequest,
@@ -40,6 +42,7 @@ import {
   type HealthCheckRequest,
   type HealthCheckResponse,
   type PaymentOrderResponse,
+  type ProviderEventsResponse,
   type ReconciliationRunResponse,
   type ReconciliationRunsResponse,
   type TreasurySummaryResponse,
@@ -65,6 +68,7 @@ export class FinanceGrpcClient implements OnModuleDestroy {
   private readonly withdrawalClient: WithdrawalServiceClient;
   private readonly treasuryClient: TreasuryServiceClient;
   private readonly reconciliationClient: ReconciliationServiceClient;
+  private readonly providerEventClient: ProviderEventServiceClient;
 
   constructor(@Inject(APP_CONFIG) config: AppConfig) {
     const creds = config.financeGrpcTls ? credentials.createSsl() : credentials.createInsecure();
@@ -76,6 +80,7 @@ export class FinanceGrpcClient implements OnModuleDestroy {
     this.withdrawalClient = new WithdrawalServiceClient(url, creds);
     this.treasuryClient = new TreasuryServiceClient(url, creds);
     this.reconciliationClient = new ReconciliationServiceClient(url, creds);
+    this.providerEventClient = new ProviderEventServiceClient(url, creds);
   }
 
   checkReady(metadata?: GrpcCallMetadata): Promise<HealthCheckResponse> {
@@ -510,6 +515,30 @@ export class FinanceGrpcClient implements OnModuleDestroy {
     );
   }
 
+  listProviderEvents(input: {
+    provider?: string;
+    eventType?: string;
+    paymentOrderId?: string;
+    page: number;
+    limit: number;
+  }): Promise<ProviderEventsResponse> {
+    const request = ListProviderEventsRequest.create({
+      provider: input.provider ?? '',
+      eventType: input.eventType ?? '',
+      paymentOrderId: input.paymentOrderId ?? '',
+      page: input.page,
+      limit: input.limit,
+    });
+    return this.unary((cb) =>
+      this.providerEventClient.listProviderEvents(
+        request,
+        buildGrpcMetadata(),
+        { deadline: this.deadline() },
+        cb,
+      ),
+    );
+  }
+
   private deadline(): Date {
     return new Date(Date.now() + FINANCE_GRPC_DEADLINE_MS);
   }
@@ -543,5 +572,6 @@ export class FinanceGrpcClient implements OnModuleDestroy {
     this.withdrawalClient.close();
     this.treasuryClient.close();
     this.reconciliationClient.close();
+    this.providerEventClient.close();
   }
 }

@@ -47,6 +47,7 @@ import {
   GetAdminOutboxUseCase,
   ListAdminReconciliationRunsUseCase,
   ListAdminOutboxUseCase,
+  ListAdminProviderEventsUseCase,
   ProcessAdminWithdrawalUseCase,
   RejectAdminWithdrawalUseCase,
   ReplayOutboxUseCase,
@@ -235,6 +236,20 @@ class ReplayOutboxDto {
   reason!: string;
 }
 
+class ProviderEventsQueryDto extends PaginationQueryDto {
+  @IsOptional()
+  @IsString()
+  provider?: string;
+
+  @IsOptional()
+  @IsString()
+  eventType?: string;
+
+  @IsOptional()
+  @IsString()
+  paymentOrderId?: string;
+}
+
 @ApiTags('admin')
 @Controller('admin')
 @UseGuards(RolesGuard)
@@ -267,6 +282,7 @@ export class AdminController {
     private readonly getReconciliationRun: GetAdminReconciliationRunUseCase,
     private readonly listOutbox: ListAdminOutboxUseCase,
     private readonly getOutbox: GetAdminOutboxUseCase,
+    private readonly listProviderEvents: ListAdminProviderEventsUseCase,
   ) {}
 
   @Get('dashboard')
@@ -406,6 +422,12 @@ export class AdminController {
   @ApiOperation({ summary: 'Finance treasury exposure summary' })
   treasurySummary(@Query('currency') currency?: string) {
     return this.getTreasurySummary.execute(currency ?? 'IRT');
+  }
+
+  @Get('finance/provider-events')
+  @ApiOperation({ summary: 'List finance provider events for PSP operations' })
+  providerEvents(@Query() query: ProviderEventsQueryDto) {
+    return this.listProviderEvents.execute(query);
   }
 
   @Get('finance/reconciliation-runs')

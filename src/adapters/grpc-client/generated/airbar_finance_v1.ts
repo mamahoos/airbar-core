@@ -252,6 +252,30 @@ export interface ReconciliationRunsResponse {
   items: ReconciliationRunResponse[];
 }
 
+export interface ListProviderEventsRequest {
+  provider: string;
+  eventType: string;
+  paymentOrderId: string;
+  page: number;
+  limit: number;
+}
+
+export interface ProviderEventResponse {
+  id: string;
+  provider: string;
+  eventType: string;
+  paymentOrderId: string;
+  payloadHash: string;
+  idempotencyKey: string;
+  processed: boolean;
+  createdAt?: Date | undefined;
+}
+
+export interface ProviderEventsResponse {
+  items: ProviderEventResponse[];
+  total: number;
+}
+
 function createBaseRequestContext(): RequestContext {
   return { requestId: "", idempotencyKey: "", callerService: "" };
 }
@@ -4177,6 +4201,417 @@ export const ReconciliationRunsResponse: MessageFns<ReconciliationRunsResponse> 
   },
 };
 
+function createBaseListProviderEventsRequest(): ListProviderEventsRequest {
+  return { provider: "", eventType: "", paymentOrderId: "", page: 0, limit: 0 };
+}
+
+export const ListProviderEventsRequest: MessageFns<ListProviderEventsRequest> = {
+  encode(message: ListProviderEventsRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.provider !== "") {
+      writer.uint32(10).string(message.provider);
+    }
+    if (message.eventType !== "") {
+      writer.uint32(18).string(message.eventType);
+    }
+    if (message.paymentOrderId !== "") {
+      writer.uint32(26).string(message.paymentOrderId);
+    }
+    if (message.page !== 0) {
+      writer.uint32(32).int32(message.page);
+    }
+    if (message.limit !== 0) {
+      writer.uint32(40).int32(message.limit);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ListProviderEventsRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListProviderEventsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.provider = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.eventType = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.paymentOrderId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.page = reader.int32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.limit = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListProviderEventsRequest {
+    return {
+      provider: isSet(object.provider) ? globalThis.String(object.provider) : "",
+      eventType: isSet(object.eventType)
+        ? globalThis.String(object.eventType)
+        : isSet(object.event_type)
+        ? globalThis.String(object.event_type)
+        : "",
+      paymentOrderId: isSet(object.paymentOrderId)
+        ? globalThis.String(object.paymentOrderId)
+        : isSet(object.payment_order_id)
+        ? globalThis.String(object.payment_order_id)
+        : "",
+      page: isSet(object.page) ? globalThis.Number(object.page) : 0,
+      limit: isSet(object.limit) ? globalThis.Number(object.limit) : 0,
+    };
+  },
+
+  toJSON(message: ListProviderEventsRequest): unknown {
+    const obj: any = {};
+    if (message.provider !== "") {
+      obj.provider = message.provider;
+    }
+    if (message.eventType !== "") {
+      obj.eventType = message.eventType;
+    }
+    if (message.paymentOrderId !== "") {
+      obj.paymentOrderId = message.paymentOrderId;
+    }
+    if (message.page !== 0) {
+      obj.page = Math.round(message.page);
+    }
+    if (message.limit !== 0) {
+      obj.limit = Math.round(message.limit);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListProviderEventsRequest>, I>>(base?: I): ListProviderEventsRequest {
+    return ListProviderEventsRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ListProviderEventsRequest>, I>>(object: I): ListProviderEventsRequest {
+    const message = createBaseListProviderEventsRequest();
+    message.provider = object.provider ?? "";
+    message.eventType = object.eventType ?? "";
+    message.paymentOrderId = object.paymentOrderId ?? "";
+    message.page = object.page ?? 0;
+    message.limit = object.limit ?? 0;
+    return message;
+  },
+};
+
+function createBaseProviderEventResponse(): ProviderEventResponse {
+  return {
+    id: "",
+    provider: "",
+    eventType: "",
+    paymentOrderId: "",
+    payloadHash: "",
+    idempotencyKey: "",
+    processed: false,
+    createdAt: undefined,
+  };
+}
+
+export const ProviderEventResponse: MessageFns<ProviderEventResponse> = {
+  encode(message: ProviderEventResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.provider !== "") {
+      writer.uint32(18).string(message.provider);
+    }
+    if (message.eventType !== "") {
+      writer.uint32(26).string(message.eventType);
+    }
+    if (message.paymentOrderId !== "") {
+      writer.uint32(34).string(message.paymentOrderId);
+    }
+    if (message.payloadHash !== "") {
+      writer.uint32(42).string(message.payloadHash);
+    }
+    if (message.idempotencyKey !== "") {
+      writer.uint32(50).string(message.idempotencyKey);
+    }
+    if (message.processed !== false) {
+      writer.uint32(56).bool(message.processed);
+    }
+    if (message.createdAt !== undefined) {
+      Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(66).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ProviderEventResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseProviderEventResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.provider = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.eventType = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.paymentOrderId = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.payloadHash = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.idempotencyKey = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.processed = reader.bool();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ProviderEventResponse {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      provider: isSet(object.provider) ? globalThis.String(object.provider) : "",
+      eventType: isSet(object.eventType)
+        ? globalThis.String(object.eventType)
+        : isSet(object.event_type)
+        ? globalThis.String(object.event_type)
+        : "",
+      paymentOrderId: isSet(object.paymentOrderId)
+        ? globalThis.String(object.paymentOrderId)
+        : isSet(object.payment_order_id)
+        ? globalThis.String(object.payment_order_id)
+        : "",
+      payloadHash: isSet(object.payloadHash)
+        ? globalThis.String(object.payloadHash)
+        : isSet(object.payload_hash)
+        ? globalThis.String(object.payload_hash)
+        : "",
+      idempotencyKey: isSet(object.idempotencyKey)
+        ? globalThis.String(object.idempotencyKey)
+        : isSet(object.idempotency_key)
+        ? globalThis.String(object.idempotency_key)
+        : "",
+      processed: isSet(object.processed) ? globalThis.Boolean(object.processed) : false,
+      createdAt: isSet(object.createdAt)
+        ? fromJsonTimestamp(object.createdAt)
+        : isSet(object.created_at)
+        ? fromJsonTimestamp(object.created_at)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ProviderEventResponse): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.provider !== "") {
+      obj.provider = message.provider;
+    }
+    if (message.eventType !== "") {
+      obj.eventType = message.eventType;
+    }
+    if (message.paymentOrderId !== "") {
+      obj.paymentOrderId = message.paymentOrderId;
+    }
+    if (message.payloadHash !== "") {
+      obj.payloadHash = message.payloadHash;
+    }
+    if (message.idempotencyKey !== "") {
+      obj.idempotencyKey = message.idempotencyKey;
+    }
+    if (message.processed !== false) {
+      obj.processed = message.processed;
+    }
+    if (message.createdAt !== undefined) {
+      obj.createdAt = message.createdAt.toISOString();
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ProviderEventResponse>, I>>(base?: I): ProviderEventResponse {
+    return ProviderEventResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ProviderEventResponse>, I>>(object: I): ProviderEventResponse {
+    const message = createBaseProviderEventResponse();
+    message.id = object.id ?? "";
+    message.provider = object.provider ?? "";
+    message.eventType = object.eventType ?? "";
+    message.paymentOrderId = object.paymentOrderId ?? "";
+    message.payloadHash = object.payloadHash ?? "";
+    message.idempotencyKey = object.idempotencyKey ?? "";
+    message.processed = object.processed ?? false;
+    message.createdAt = object.createdAt ?? undefined;
+    return message;
+  },
+};
+
+function createBaseProviderEventsResponse(): ProviderEventsResponse {
+  return { items: [], total: 0 };
+}
+
+export const ProviderEventsResponse: MessageFns<ProviderEventsResponse> = {
+  encode(message: ProviderEventsResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.items) {
+      ProviderEventResponse.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(16).int64(message.total);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ProviderEventsResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseProviderEventsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.items.push(ProviderEventResponse.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.total = longToNumber(reader.int64());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ProviderEventsResponse {
+    return {
+      items: globalThis.Array.isArray(object?.items)
+        ? object.items.map((e: any) => ProviderEventResponse.fromJSON(e))
+        : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+    };
+  },
+
+  toJSON(message: ProviderEventsResponse): unknown {
+    const obj: any = {};
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => ProviderEventResponse.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ProviderEventsResponse>, I>>(base?: I): ProviderEventsResponse {
+    return ProviderEventsResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ProviderEventsResponse>, I>>(object: I): ProviderEventsResponse {
+    const message = createBaseProviderEventsResponse();
+    message.items = object.items?.map((e) => ProviderEventResponse.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
+    return message;
+  },
+};
+
 export type FinanceHealthServiceService = typeof FinanceHealthServiceService;
 export const FinanceHealthServiceService = {
   checkReady: {
@@ -4959,6 +5394,52 @@ export const ReconciliationServiceClient = makeGenericClientConstructor(
   serviceName: string;
 };
 
+export type ProviderEventServiceService = typeof ProviderEventServiceService;
+export const ProviderEventServiceService = {
+  listProviderEvents: {
+    path: "/airbar.finance.v1.ProviderEventService/ListProviderEvents" as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: ListProviderEventsRequest): Buffer =>
+      Buffer.from(ListProviderEventsRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ListProviderEventsRequest => ListProviderEventsRequest.decode(value),
+    responseSerialize: (value: ProviderEventsResponse): Buffer =>
+      Buffer.from(ProviderEventsResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): ProviderEventsResponse => ProviderEventsResponse.decode(value),
+  },
+} as const;
+
+export interface ProviderEventServiceServer extends UntypedServiceImplementation {
+  listProviderEvents: handleUnaryCall<ListProviderEventsRequest, ProviderEventsResponse>;
+}
+
+export interface ProviderEventServiceClient extends Client {
+  listProviderEvents(
+    request: ListProviderEventsRequest,
+    callback: (error: ServiceError | null, response: ProviderEventsResponse) => void,
+  ): ClientUnaryCall;
+  listProviderEvents(
+    request: ListProviderEventsRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: ProviderEventsResponse) => void,
+  ): ClientUnaryCall;
+  listProviderEvents(
+    request: ListProviderEventsRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: ProviderEventsResponse) => void,
+  ): ClientUnaryCall;
+}
+
+export const ProviderEventServiceClient = makeGenericClientConstructor(
+  ProviderEventServiceService,
+  "airbar.finance.v1.ProviderEventService",
+) as unknown as {
+  new (address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): ProviderEventServiceClient;
+  service: typeof ProviderEventServiceService;
+  serviceName: string;
+};
+
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
 type DeepPartial<T> = T extends Builtin ? T
@@ -4991,6 +5472,17 @@ function fromJsonTimestamp(o: any): Date {
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));
   }
+}
+
+function longToNumber(int64: { toString(): string }): number {
+  const num = globalThis.Number(int64.toString());
+  if (num > globalThis.Number.MAX_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  if (num < globalThis.Number.MIN_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
+  }
+  return num;
 }
 
 function isObject(value: any): boolean {
