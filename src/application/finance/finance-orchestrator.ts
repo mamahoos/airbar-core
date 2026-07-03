@@ -146,7 +146,11 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
       () => this.finance.payFromWallet({ ...payload, idempotencyKey }, { idempotencyKey }),
       async (response) => {
         const escrowId = response.id ?? '';
-        await this.bridge.apply('PayFromWallet', payload, { escrowId });
+        await this.bridge.apply('PayFromWallet', payload, {
+          escrowId,
+          ...(response.fundingSource ? { fundingSource: response.fundingSource } : {}),
+          ...(response.promoCreditFunded ? { promoCreditFunded: response.promoCreditFunded } : {}),
+        });
         return { escrowId };
       },
       'PayFromWallet',
@@ -407,8 +411,8 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
   }
 
   private async trySync<T>(
-    call: () => Promise<{ id?: string; redirectUrl?: string } | void>,
-    onSuccess: (response: { id?: string; redirectUrl?: string }) => Promise<T>,
+    call: () => Promise<FinanceSyncResponse | void>,
+    onSuccess: (response: FinanceSyncResponse) => Promise<T>,
     command: OutboxCommand,
     aggregateType: string,
     aggregateId: string,
@@ -433,6 +437,13 @@ function isRetryableFinanceError(error: unknown): boolean {
   if (!(error instanceof DomainError)) return false;
   return error.code === ErrorCode.SERVICE_UNAVAILABLE || error.code === ErrorCode.INTERNAL;
 }
+
+type FinanceSyncResponse = {
+  id?: string;
+  redirectUrl?: string;
+  fundingSource?: string;
+  promoCreditFunded?: string;
+};
 
 export const financeOrchestratorProvider = {
   provide: FINANCE_ORCHESTRATOR,

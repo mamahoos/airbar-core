@@ -5,13 +5,14 @@ import {
   Headers,
   Ip,
   Param,
+  Patch,
   Post,
   Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CargoType, ShipmentStatus, UserRole } from '@prisma/client';
+import { CampaignType, CargoType, ShipmentStatus, UserRole } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   Allow,
@@ -45,6 +46,13 @@ import {
   UpdateAdminSystemConfigUseCase,
   UpdateAdminUserRoleUseCase,
 } from '../../../application/admin/admin.use-cases.js';
+import {
+  CreateCampaignUseCase,
+  GetCampaignUseCase,
+  GrantCampaignCreditUseCase,
+  ListCampaignsUseCase,
+  UpdateCampaignUseCase,
+} from '../../../application/finance/campaign.use-cases.js';
 import {
   GetAdminUserCreditUseCase,
   GrantAdminCreditUseCase,
@@ -298,6 +306,98 @@ class ReverseCreditGrantDto {
   reverseReason!: string;
 }
 
+class CreateCampaignDto {
+  @IsString()
+  @IsNotEmpty()
+  slug!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsEnum(CampaignType)
+  type?: CampaignType;
+
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  amountRials!: number;
+
+  @IsOptional()
+  @IsDateString()
+  expiresAt?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  maxGrants?: number;
+}
+
+class UpdateCampaignDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsEnum(CampaignType)
+  type?: CampaignType;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  amountRials?: number;
+
+  @IsOptional()
+  @IsDateString()
+  expiresAt?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  active?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  maxGrants?: number;
+}
+
+class CampaignListQueryDto {
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  active?: boolean;
+}
+
+class GrantCampaignCreditDto {
+  @IsString()
+  @IsNotEmpty()
+  userId!: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  amountRials?: number;
+
+  @IsOptional()
+  @IsString()
+  nonce?: string;
+}
+
 class AdminOutboxQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
@@ -379,6 +479,11 @@ export class AdminController {
     private readonly grantCredit: GrantAdminCreditUseCase,
     private readonly reverseCreditGrant: ReverseAdminCreditGrantUseCase,
     private readonly getUserCredit: GetAdminUserCreditUseCase,
+    private readonly createCampaign: CreateCampaignUseCase,
+    private readonly listCampaigns: ListCampaignsUseCase,
+    private readonly getCampaign: GetCampaignUseCase,
+    private readonly updateCampaign: UpdateCampaignUseCase,
+    private readonly grantCampaignCredit: GrantCampaignCreditUseCase,
   ) {}
 
   @Get('dashboard')
@@ -624,5 +729,41 @@ export class AdminController {
   @ApiOperation({ summary: 'Get user promo credit balance and grants' })
   userCredit(@Param('id') id: string) {
     return this.getUserCredit.execute(id);
+  }
+
+  @Post('campaigns')
+  @ApiOperation({ summary: 'Create a promo credit campaign' })
+  createCampaignRoute(@CurrentUser() admin: AuthUser, @Body() dto: CreateCampaignDto) {
+    return this.createCampaign.execute(admin.id, dto);
+  }
+
+  @Get('campaigns')
+  @ApiOperation({ summary: 'List promo credit campaigns' })
+  listCampaignsRoute(@Query() query: CampaignListQueryDto) {
+    return this.listCampaigns.execute(
+      query.active === undefined ? undefined : { active: query.active },
+    );
+  }
+
+  @Get('campaigns/:id')
+  @ApiOperation({ summary: 'Get campaign detail' })
+  getCampaignRoute(@Param('id') id: string) {
+    return this.getCampaign.execute(id);
+  }
+
+  @Patch('campaigns/:id')
+  @ApiOperation({ summary: 'Update campaign settings' })
+  updateCampaignRoute(@Param('id') id: string, @Body() dto: UpdateCampaignDto) {
+    return this.updateCampaign.execute(id, dto);
+  }
+
+  @Post('campaigns/:id/grant')
+  @ApiOperation({ summary: 'Grant promo credit to a user from a campaign' })
+  grantCampaignCreditRoute(
+    @CurrentUser() admin: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: GrantCampaignCreditDto,
+  ) {
+    return this.grantCampaignCredit.execute(admin.id, id, dto);
   }
 }

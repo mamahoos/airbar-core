@@ -1,6 +1,13 @@
 import { Module } from '@nestjs/common';
 
 import {
+  CreateCampaignUseCase,
+  GetCampaignUseCase,
+  GrantCampaignCreditUseCase,
+  ListCampaignsUseCase,
+  UpdateCampaignUseCase,
+} from '../../../application/finance/campaign.use-cases.js';
+import {
   GetAdminUserCreditUseCase,
   GrantAdminCreditUseCase,
   ReverseAdminCreditGrantUseCase,
@@ -72,6 +79,11 @@ import { PaymentsController } from './payments.controller.js';
     GrantAdminCreditUseCase,
     ReverseAdminCreditGrantUseCase,
     GetAdminUserCreditUseCase,
+    CreateCampaignUseCase,
+    ListCampaignsUseCase,
+    GetCampaignUseCase,
+    UpdateCampaignUseCase,
+    GrantCampaignCreditUseCase,
   ],
   exports: [
     FinanceOutboxModule,
@@ -97,6 +109,11 @@ import { PaymentsController } from './payments.controller.js';
     GrantAdminCreditUseCase,
     ReverseAdminCreditGrantUseCase,
     GetAdminUserCreditUseCase,
+    CreateCampaignUseCase,
+    ListCampaignsUseCase,
+    GetCampaignUseCase,
+    UpdateCampaignUseCase,
+    GrantCampaignCreditUseCase,
   ],
 })
 export class PaymentsModule {}

@@ -71,3 +71,7 @@ export function failWithdrawalKey(withdrawalId: string): string {
 export function rejectWithdrawalKey(withdrawalId: string): string {
   return `wd-reject:${withdrawalId}`;
 }
+
+export function grantCreditKey(campaignId: string, userId: string, nonce: string): string {
+  return `credit-grant:${campaignId}:${userId}:${nonce}`;
+}

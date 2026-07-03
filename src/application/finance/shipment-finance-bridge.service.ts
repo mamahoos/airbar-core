@@ -34,12 +34,20 @@ export class ShipmentFinanceBridgeService {
           });
         }
         return;
-      case 'PayFromWallet':
+      case 'PayFromWallet': {
+        const fundingSource = result.fundingSource ?? 'WALLET';
+        const paymentMethod =
+          fundingSource === 'PROMO_CREDIT'
+            ? 'PROMO_CREDIT'
+            : fundingSource === 'MIXED'
+              ? 'MIXED'
+              : 'WALLET';
         await this.prisma.shipment.update({
           where: { id: String(payload.shipmentId) },
-          data: { paymentMethod: 'WALLET' },
+          data: { paymentMethod },
         });
         return;
+      }
       default:
         return;
     }

@@ -562,6 +562,31 @@ model SystemConfig {
   @@map("system_configs")
 }
 
+enum CampaignType {
+  PROMO_CREDIT
+  REFERRAL
+  CAMPAIGN_BONUS
+  DISCOUNT_SUBSIDY
+}
+
+model Campaign {
+  id          String       @id @default(uuid())
+  slug        String       @unique
+  name        String
+  description String?
+  type        CampaignType @default(PROMO_CREDIT)
+  amountRials Int          @map("amount_rials")
+  expiresAt   DateTime?    @map("expires_at")
+  active      Boolean      @default(true)
+  maxGrants   Int?         @map("max_grants")
+  grantCount  Int          @default(0) @map("grant_count")
+  createdBy   String       @map("created_by")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@map("campaigns")
+}
+
 enum OutboxStatus {
   PENDING
   PROCESSING

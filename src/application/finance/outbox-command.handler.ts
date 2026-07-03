@@ -26,6 +26,8 @@ export interface OutboxCommandResult {
   readonly orderId?: string;
   readonly redirectUrl?: string;
   readonly withdrawalId?: string;
+  readonly fundingSource?: string;
+  readonly promoCreditFunded?: string;
 }
 
 @Injectable()
@@ -78,7 +80,11 @@ export class OutboxCommandHandler {
           },
           { idempotencyKey },
         );
-        return { escrowId: response.id };
+        return {
+          escrowId: response.id,
+          ...(response.fundingSource ? { fundingSource: response.fundingSource } : {}),
+          ...(response.promoCreditFunded ? { promoCreditFunded: response.promoCreditFunded } : {}),
+        };
       }
       case 'MarkDelivered':
         await this.finance.markDelivered(

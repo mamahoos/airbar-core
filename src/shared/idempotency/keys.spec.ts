@@ -11,6 +11,7 @@ import {
   partialRefundEscrowKey,
   paymentOrderKey,
   settleWithdrawalKey,
+  grantCreditKey,
   releaseEscrowKey,
   withdrawalKey,
 } from './keys.js';
@@ -45,5 +46,9 @@ describe('idempotency key builders', () => {
     expect(markWithdrawalSentKey('wd-1')).toBe('wd-sent:wd-1');
     expect(settleWithdrawalKey('wd-1')).toBe('wd-settle:wd-1');
     expect(failWithdrawalKey('wd-1')).toBe('wd-fail:wd-1');
+  });
+
+  it('builds campaign grant credit key', () => {
+    expect(grantCreditKey('camp-1', uid, 'first')).toBe('credit-grant:camp-1:user-uuid:first');
   });
 });
