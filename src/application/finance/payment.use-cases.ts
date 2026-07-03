@@ -196,10 +196,25 @@ export class ResolveDisputeUseCase {
 export class ProcessAdminWithdrawalUseCase {
   constructor(@Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort) {}
 
-  async execute(withdrawalId: string) {
-    const result = await this.finance.tryProcessWithdrawal({ withdrawalId });
+  async execute(
+    withdrawalId: string,
+    input: { providerRef: string; payoutChannel: string; receiptUrl: string },
+  ) {
+    const providerRef = input.providerRef.trim();
+    const payoutChannel = input.payoutChannel.trim();
+    const receiptUrl = input.receiptUrl.trim();
+    if (!providerRef || !payoutChannel || !receiptUrl) {
+      throw new ValidationError('providerRef, payoutChannel and receiptUrl are required');
+    }
+
+    const result = await this.finance.tryProcessWithdrawal({
+      withdrawalId,
+      providerRef,
+      payoutChannel,
+      receiptUrl,
+    });
     if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal queued');
-    return { withdrawalId, processed: true };
+    return { withdrawalId, providerRef, payoutChannel, receiptUrl, processed: true };
   }
 }
 

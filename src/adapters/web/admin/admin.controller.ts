@@ -180,6 +180,20 @@ class RejectWithdrawalDto {
   reason!: string;
 }
 
+class ProcessWithdrawalDto {
+  @IsString()
+  @IsNotEmpty()
+  providerRef!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  payoutChannel!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  receiptUrl!: string;
+}
+
 @ApiTags('admin')
 @Controller('admin')
 @UseGuards(RolesGuard)
@@ -319,8 +333,8 @@ export class AdminController {
 
   @Post('withdrawals/:id/process')
   @ApiOperation({ summary: 'Process withdrawal via finance gRPC' })
-  processWithdrawalRoute(@Param('id') id: string) {
-    return this.processWithdrawal.execute(id);
+  processWithdrawalRoute(@Param('id') id: string, @Body() dto: ProcessWithdrawalDto) {
+    return this.processWithdrawal.execute(id, dto);
   }
 
   @Post('withdrawals/:id/reject')

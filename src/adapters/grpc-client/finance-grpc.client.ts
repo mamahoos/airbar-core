@@ -404,12 +404,21 @@ export class FinanceGrpcClient implements OnModuleDestroy {
   }
 
   processWithdrawal(
-    input: { withdrawalId: string; idempotencyKey: string },
+    input: {
+      withdrawalId: string;
+      providerRef: string;
+      payoutChannel: string;
+      receiptUrl: string;
+      idempotencyKey: string;
+    },
     metadata?: GrpcCallMetadata,
   ): Promise<WithdrawalResponse> {
     const request = ProcessWithdrawalRequest.create({
       context: buildProtoContext(input.idempotencyKey),
       withdrawalId: input.withdrawalId,
+      providerRef: input.providerRef,
+      payoutChannel: input.payoutChannel,
+      receiptUrl: input.receiptUrl,
     });
     return this.unary((cb) =>
       this.withdrawalClient.processWithdrawal(

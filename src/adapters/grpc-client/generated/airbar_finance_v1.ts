@@ -194,6 +194,9 @@ export interface ListWithdrawalsRequest {
 export interface ProcessWithdrawalRequest {
   context?: RequestContext | undefined;
   withdrawalId: string;
+  providerRef: string;
+  payoutChannel: string;
+  receiptUrl: string;
 }
 
 export interface RejectWithdrawalRequest {
@@ -210,6 +213,8 @@ export interface WithdrawalResponse {
   providerRef: string;
   processedAt?: Date | undefined;
   createdAt?: Date | undefined;
+  payoutChannel: string;
+  receiptUrl: string;
 }
 
 export interface WithdrawalsResponse {
@@ -3171,7 +3176,7 @@ export const ListWithdrawalsRequest: MessageFns<ListWithdrawalsRequest> = {
 };
 
 function createBaseProcessWithdrawalRequest(): ProcessWithdrawalRequest {
-  return { context: undefined, withdrawalId: "" };
+  return { context: undefined, withdrawalId: "", providerRef: "", payoutChannel: "", receiptUrl: "" };
 }
 
 export const ProcessWithdrawalRequest: MessageFns<ProcessWithdrawalRequest> = {
@@ -3181,6 +3186,15 @@ export const ProcessWithdrawalRequest: MessageFns<ProcessWithdrawalRequest> = {
     }
     if (message.withdrawalId !== "") {
       writer.uint32(18).string(message.withdrawalId);
+    }
+    if (message.providerRef !== "") {
+      writer.uint32(26).string(message.providerRef);
+    }
+    if (message.payoutChannel !== "") {
+      writer.uint32(34).string(message.payoutChannel);
+    }
+    if (message.receiptUrl !== "") {
+      writer.uint32(42).string(message.receiptUrl);
     }
     return writer;
   },
@@ -3208,6 +3222,30 @@ export const ProcessWithdrawalRequest: MessageFns<ProcessWithdrawalRequest> = {
           message.withdrawalId = reader.string();
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.providerRef = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.payoutChannel = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.receiptUrl = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -3225,6 +3263,21 @@ export const ProcessWithdrawalRequest: MessageFns<ProcessWithdrawalRequest> = {
         : isSet(object.withdrawal_id)
         ? globalThis.String(object.withdrawal_id)
         : "",
+      providerRef: isSet(object.providerRef)
+        ? globalThis.String(object.providerRef)
+        : isSet(object.provider_ref)
+        ? globalThis.String(object.provider_ref)
+        : "",
+      payoutChannel: isSet(object.payoutChannel)
+        ? globalThis.String(object.payoutChannel)
+        : isSet(object.payout_channel)
+        ? globalThis.String(object.payout_channel)
+        : "",
+      receiptUrl: isSet(object.receiptUrl)
+        ? globalThis.String(object.receiptUrl)
+        : isSet(object.receipt_url)
+        ? globalThis.String(object.receipt_url)
+        : "",
     };
   },
 
@@ -3235,6 +3288,15 @@ export const ProcessWithdrawalRequest: MessageFns<ProcessWithdrawalRequest> = {
     }
     if (message.withdrawalId !== "") {
       obj.withdrawalId = message.withdrawalId;
+    }
+    if (message.providerRef !== "") {
+      obj.providerRef = message.providerRef;
+    }
+    if (message.payoutChannel !== "") {
+      obj.payoutChannel = message.payoutChannel;
+    }
+    if (message.receiptUrl !== "") {
+      obj.receiptUrl = message.receiptUrl;
     }
     return obj;
   },
@@ -3248,6 +3310,9 @@ export const ProcessWithdrawalRequest: MessageFns<ProcessWithdrawalRequest> = {
       ? RequestContext.fromPartial(object.context)
       : undefined;
     message.withdrawalId = object.withdrawalId ?? "";
+    message.providerRef = object.providerRef ?? "";
+    message.payoutChannel = object.payoutChannel ?? "";
+    message.receiptUrl = object.receiptUrl ?? "";
     return message;
   },
 };
@@ -3351,7 +3416,17 @@ export const RejectWithdrawalRequest: MessageFns<RejectWithdrawalRequest> = {
 };
 
 function createBaseWithdrawalResponse(): WithdrawalResponse {
-  return { id: "", userId: "", amount: "", status: "", providerRef: "", processedAt: undefined, createdAt: undefined };
+  return {
+    id: "",
+    userId: "",
+    amount: "",
+    status: "",
+    providerRef: "",
+    processedAt: undefined,
+    createdAt: undefined,
+    payoutChannel: "",
+    receiptUrl: "",
+  };
 }
 
 export const WithdrawalResponse: MessageFns<WithdrawalResponse> = {
@@ -3376,6 +3451,12 @@ export const WithdrawalResponse: MessageFns<WithdrawalResponse> = {
     }
     if (message.createdAt !== undefined) {
       Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(58).fork()).join();
+    }
+    if (message.payoutChannel !== "") {
+      writer.uint32(66).string(message.payoutChannel);
+    }
+    if (message.receiptUrl !== "") {
+      writer.uint32(74).string(message.receiptUrl);
     }
     return writer;
   },
@@ -3443,6 +3524,22 @@ export const WithdrawalResponse: MessageFns<WithdrawalResponse> = {
           message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
           continue;
         }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.payoutChannel = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.receiptUrl = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -3477,6 +3574,16 @@ export const WithdrawalResponse: MessageFns<WithdrawalResponse> = {
         : isSet(object.created_at)
         ? fromJsonTimestamp(object.created_at)
         : undefined,
+      payoutChannel: isSet(object.payoutChannel)
+        ? globalThis.String(object.payoutChannel)
+        : isSet(object.payout_channel)
+        ? globalThis.String(object.payout_channel)
+        : "",
+      receiptUrl: isSet(object.receiptUrl)
+        ? globalThis.String(object.receiptUrl)
+        : isSet(object.receipt_url)
+        ? globalThis.String(object.receipt_url)
+        : "",
     };
   },
 
@@ -3503,6 +3610,12 @@ export const WithdrawalResponse: MessageFns<WithdrawalResponse> = {
     if (message.createdAt !== undefined) {
       obj.createdAt = message.createdAt.toISOString();
     }
+    if (message.payoutChannel !== "") {
+      obj.payoutChannel = message.payoutChannel;
+    }
+    if (message.receiptUrl !== "") {
+      obj.receiptUrl = message.receiptUrl;
+    }
     return obj;
   },
 
@@ -3518,6 +3631,8 @@ export const WithdrawalResponse: MessageFns<WithdrawalResponse> = {
     message.providerRef = object.providerRef ?? "";
     message.processedAt = object.processedAt ?? undefined;
     message.createdAt = object.createdAt ?? undefined;
+    message.payoutChannel = object.payoutChannel ?? "";
+    message.receiptUrl = object.receiptUrl ?? "";
     return message;
   },
 };

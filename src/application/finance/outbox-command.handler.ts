@@ -126,7 +126,13 @@ export class OutboxCommandHandler {
       }
       case 'ProcessWithdrawal':
         await this.finance.processWithdrawal(
-          { withdrawalId: String(payload.withdrawalId), idempotencyKey },
+          {
+            withdrawalId: String(payload.withdrawalId),
+            providerRef: String(payload.providerRef),
+            payoutChannel: String(payload.payoutChannel),
+            receiptUrl: String(payload.receiptUrl),
+            idempotencyKey,
+          },
           { idempotencyKey },
         );
         return {};

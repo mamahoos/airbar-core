@@ -45,9 +45,13 @@ export interface CreateWithdrawalInput {
 
 export interface ProcessWithdrawalInput {
   readonly withdrawalId: string;
+  readonly providerRef: string;
+  readonly payoutChannel: string;
+  readonly receiptUrl: string;
 }
 
-export interface RejectWithdrawalInput extends ProcessWithdrawalInput {
+export interface RejectWithdrawalInput {
+  readonly withdrawalId: string;
   readonly reason: string;
 }
 

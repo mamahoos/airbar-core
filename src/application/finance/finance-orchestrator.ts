@@ -246,11 +246,16 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
 
   async tryProcessWithdrawal(input: ProcessWithdrawalInput): Promise<FinanceSyncResult<void>> {
     const idempotencyKey = processWithdrawalKey(input.withdrawalId);
-    const payload = { withdrawalId: input.withdrawalId };
+    const payload = {
+      withdrawalId: input.withdrawalId,
+      providerRef: input.providerRef,
+      payoutChannel: input.payoutChannel,
+      receiptUrl: input.receiptUrl,
+    };
     return this.trySync(
       () =>
         this.finance.processWithdrawal(
-          { withdrawalId: input.withdrawalId, idempotencyKey },
+          { ...payload, idempotencyKey },
           {
             idempotencyKey,
           },
