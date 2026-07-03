@@ -99,6 +99,7 @@ export interface EscrowResponse {
   refundedAt?: Date | undefined;
   createdAt?: Date | undefined;
   updatedAt?: Date | undefined;
+  promoCreditFunded: string;
 }
 
 export interface CreatePaymentOrderRequest {
@@ -1426,6 +1427,7 @@ function createBaseEscrowResponse(): EscrowResponse {
     refundedAt: undefined,
     createdAt: undefined,
     updatedAt: undefined,
+    promoCreditFunded: "",
   };
 }
 
@@ -1469,6 +1471,9 @@ export const EscrowResponse: MessageFns<EscrowResponse> = {
     }
     if (message.updatedAt !== undefined) {
       Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(106).fork()).join();
+    }
+    if (message.promoCreditFunded !== "") {
+      writer.uint32(114).string(message.promoCreditFunded);
     }
     return writer;
   },
@@ -1584,6 +1589,14 @@ export const EscrowResponse: MessageFns<EscrowResponse> = {
           message.updatedAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
           continue;
         }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.promoCreditFunded = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1648,6 +1661,11 @@ export const EscrowResponse: MessageFns<EscrowResponse> = {
         : isSet(object.updated_at)
         ? fromJsonTimestamp(object.updated_at)
         : undefined,
+      promoCreditFunded: isSet(object.promoCreditFunded)
+        ? globalThis.String(object.promoCreditFunded)
+        : isSet(object.promo_credit_funded)
+        ? globalThis.String(object.promo_credit_funded)
+        : "",
     };
   },
 
@@ -1692,6 +1710,9 @@ export const EscrowResponse: MessageFns<EscrowResponse> = {
     if (message.updatedAt !== undefined) {
       obj.updatedAt = message.updatedAt.toISOString();
     }
+    if (message.promoCreditFunded !== "") {
+      obj.promoCreditFunded = message.promoCreditFunded;
+    }
     return obj;
   },
 
@@ -1713,6 +1734,7 @@ export const EscrowResponse: MessageFns<EscrowResponse> = {
     message.refundedAt = object.refundedAt ?? undefined;
     message.createdAt = object.createdAt ?? undefined;
     message.updatedAt = object.updatedAt ?? undefined;
+    message.promoCreditFunded = object.promoCreditFunded ?? "";
     return message;
   },
 };
