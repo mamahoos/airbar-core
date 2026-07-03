@@ -37,6 +37,15 @@ describe('ResolveDisputeUseCase', () => {
     };
   }
 
+  function financeMock(overrides: Record<string, unknown> = {}) {
+    return {
+      tryReleaseEscrow: jest.fn(async () => ({ ok: true, value: undefined })),
+      tryRefundEscrow: jest.fn(async () => ({ ok: true, value: undefined })),
+      tryPartialRefundEscrow: jest.fn(async () => ({ ok: true, value: undefined })),
+      ...overrides,
+    };
+  }
+
   it('releases escrow and resolves the shipment only after finance succeeds', async () => {
     const finance = {
       tryReleaseEscrow: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
@@ -97,18 +106,97 @@ describe('ResolveDisputeUseCase', () => {
     expect(prisma.shipment.update).not.toHaveBeenCalled();
     expect(notifications.notifyDisputeResolvedToParties).not.toHaveBeenCalled();
   });
+
+  it('partial refund resolves to PARTIALLY_REFUNDED after finance succeeds', async () => {
+    const finance = financeMock();
+    const prisma = prismaMock();
+    const notifications = notificationsMock();
+    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never, notifications as never);
+
+    await expect(
+      useCase.execute('ship-1', 'PARTIAL_REFUND', 'damaged item', 500_000),
+    ).resolves.toMatchObject({
+      shipmentId: 'ship-1',
+      resolution: 'PARTIAL_REFUND',
+      queued: false,
+    });
+
+    expect(finance.tryPartialRefundEscrow).toHaveBeenCalledWith({
+      shipmentId: 'ship-1',
+      refundAmountRials: 500_000,
+      disputeResolution: 'PARTIAL_REFUND (500000 rials): damaged item',
+      disputeTargetStatus: 'PARTIALLY_REFUNDED',
+    });
+    expect(prisma.shipment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: 'PARTIALLY_REFUNDED' }),
+      }),
+    );
+  });
+
+  it('split settlement partial-refunds then releases remainder', async () => {
+    const finance = financeMock();
+    const prisma = prismaMock();
+    const notifications = notificationsMock();
+    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never, notifications as never);
+
+    await expect(useCase.execute('ship-1', 'SPLIT', undefined, 300_000)).resolves.toMatchObject({
+      resolution: 'SPLIT',
+      queued: false,
+    });
+
+    expect(finance.tryPartialRefundEscrow).toHaveBeenCalled();
+    expect(finance.tryReleaseEscrow).toHaveBeenCalled();
+    expect(prisma.shipment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: 'CONFIRMED' }),
+      }),
+    );
+  });
+
+  it('allows release on partially refunded shipment', async () => {
+    const finance = financeMock();
+    const prisma = prismaMock('PARTIALLY_REFUNDED');
+    const notifications = notificationsMock();
+    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never, notifications as never);
+
+    await expect(useCase.execute('ship-1', 'RELEASE')).resolves.toMatchObject({
+      resolution: 'RELEASE',
+      queued: false,
+    });
+    expect(finance.tryReleaseEscrow).toHaveBeenCalled();
+  });
+
+  it('rejects partial settlement without refundAmount', async () => {
+    const useCase = new ResolveDisputeUseCase(
+      financeMock() as never,
+      prismaMock() as never,
+      notificationsMock() as never,
+    );
+    await expect(useCase.execute('ship-1', 'PARTIAL_REFUND')).rejects.toThrow(
+      'refundAmount is required',
+    );
+  });
 });
 
 describe('ProcessAdminWithdrawalUseCase', () => {
+  function notificationsMock() {
+    return { notifyWithdrawalStatus: jest.fn(async () => undefined) };
+  }
+
   function financeMock(): jest.Mocked<Pick<FinanceOrchestratorPort, 'tryProcessWithdrawal'>> {
     return {
-      tryProcessWithdrawal: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
+      tryProcessWithdrawal: jest.fn().mockResolvedValue({ ok: true, value: { userId: 'user-1' } }),
     };
   }
 
   it('requires provider receipt fields before processing a withdrawal', async () => {
     const finance = financeMock();
-    const useCase = new ProcessAdminWithdrawalUseCase(finance as unknown as FinanceOrchestratorPort);
+    const notifications = notificationsMock();
+    const useCase = new ProcessAdminWithdrawalUseCase(
+      finance as unknown as FinanceOrchestratorPort,
+      notifications as never,
+    );
 
     await expect(
       useCase.execute('wd_1', {
@@ -122,7 +210,11 @@ describe('ProcessAdminWithdrawalUseCase', () => {
 
   it('trims and forwards provider receipt fields to finance', async () => {
     const finance = financeMock();
-    const useCase = new ProcessAdminWithdrawalUseCase(finance as unknown as FinanceOrchestratorPort);
+    const notifications = notificationsMock();
+    const useCase = new ProcessAdminWithdrawalUseCase(
+      finance as unknown as FinanceOrchestratorPort,
+      notifications as never,
+    );
 
     await expect(
       useCase.execute('wd_1', {
@@ -143,28 +235,32 @@ describe('ProcessAdminWithdrawalUseCase', () => {
       payoutChannel: 'PAYA',
       receiptUrl: 'https://pay.example/receipt/1',
     });
+    expect(notifications.notifyWithdrawalStatus).toHaveBeenCalledWith('user-1', 'wd_1', 'PROCESSED');
   });
 });
 
 describe('Withdrawal lifecycle admin use cases', () => {
+  const notifications = { notifyWithdrawalStatus: jest.fn(async () => undefined) };
+
   it('approves a pending withdrawal', async () => {
     const finance = {
-      tryApproveWithdrawal: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
+      tryApproveWithdrawal: jest.fn().mockResolvedValue({ ok: true, value: { userId: 'user-1' } }),
     };
-    const useCase = new ApproveAdminWithdrawalUseCase(finance as never);
+    const useCase = new ApproveAdminWithdrawalUseCase(finance as never, notifications as never);
 
     await expect(useCase.execute('wd_1')).resolves.toEqual({
       withdrawalId: 'wd_1',
       approved: true,
     });
     expect(finance.tryApproveWithdrawal).toHaveBeenCalledWith({ withdrawalId: 'wd_1' });
+    expect(notifications.notifyWithdrawalStatus).toHaveBeenCalledWith('user-1', 'wd_1', 'APPROVED');
   });
 
   it('trims and forwards sent-to-bank receipt fields', async () => {
     const finance = {
-      tryMarkWithdrawalSent: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
+      tryMarkWithdrawalSent: jest.fn().mockResolvedValue({ ok: true, value: { userId: 'user-1' } }),
     };
-    const useCase = new MarkAdminWithdrawalSentUseCase(finance as never);
+    const useCase = new MarkAdminWithdrawalSentUseCase(finance as never, notifications as never);
 
     await expect(
       useCase.execute('wd_1', {
@@ -189,7 +285,7 @@ describe('Withdrawal lifecycle admin use cases', () => {
 
   it('requires sent-to-bank receipt fields', async () => {
     const finance = { tryMarkWithdrawalSent: jest.fn() };
-    const useCase = new MarkAdminWithdrawalSentUseCase(finance as never);
+    const useCase = new MarkAdminWithdrawalSentUseCase(finance as never, notifications as never);
 
     await expect(
       useCase.execute('wd_1', {
@@ -203,9 +299,9 @@ describe('Withdrawal lifecycle admin use cases', () => {
 
   it('settles a sent withdrawal', async () => {
     const finance = {
-      trySettleWithdrawal: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
+      trySettleWithdrawal: jest.fn().mockResolvedValue({ ok: true, value: { userId: 'user-1' } }),
     };
-    const useCase = new SettleAdminWithdrawalUseCase(finance as never);
+    const useCase = new SettleAdminWithdrawalUseCase(finance as never, notifications as never);
 
     await expect(useCase.execute('wd_1')).resolves.toEqual({
       withdrawalId: 'wd_1',
@@ -216,9 +312,9 @@ describe('Withdrawal lifecycle admin use cases', () => {
 
   it('trims and forwards fail reason', async () => {
     const finance = {
-      tryFailWithdrawal: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
+      tryFailWithdrawal: jest.fn().mockResolvedValue({ ok: true, value: { userId: 'user-1' } }),
     };
-    const useCase = new FailAdminWithdrawalUseCase(finance as never);
+    const useCase = new FailAdminWithdrawalUseCase(finance as never, notifications as never);
 
     await expect(useCase.execute('wd_1', ' bank rejected ')).resolves.toEqual({
       withdrawalId: 'wd_1',
@@ -232,7 +328,7 @@ describe('Withdrawal lifecycle admin use cases', () => {
 
   it('requires fail reason', async () => {
     const finance = { tryFailWithdrawal: jest.fn() };
-    const useCase = new FailAdminWithdrawalUseCase(finance as never);
+    const useCase = new FailAdminWithdrawalUseCase(finance as never, notifications as never);
 
     await expect(useCase.execute('wd_1', ' ')).rejects.toThrow('Fail reason is required');
     expect(finance.tryFailWithdrawal).not.toHaveBeenCalled();

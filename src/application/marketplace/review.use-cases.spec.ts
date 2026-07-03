@@ -46,11 +46,16 @@ function makeShipmentRepo(shipment: unknown) {
   return { findById: jest.fn(async () => shipment) };
 }
 
+function notificationsMock() {
+  return { notifyReviewReceived: jest.fn(async () => undefined) };
+}
+
 describe('SubmitReviewUseCase', () => {
   it('creates a review for the counterpart and returns aggregate rating', async () => {
     const reviews = makeReviewRepo();
     const shipments = makeShipmentRepo(confirmedShipment);
-    const useCase = new SubmitReviewUseCase(reviews, shipments as never);
+    const notifications = notificationsMock();
+    const useCase = new SubmitReviewUseCase(reviews, shipments as never, notifications as never);
 
     const result = await useCase.execute('sender-1', 'ship-1', { rating: 5, comment: 'great' });
 
@@ -64,11 +69,16 @@ describe('SubmitReviewUseCase', () => {
         comment: 'great',
       }),
     );
+    expect(notifications.notifyReviewReceived).toHaveBeenCalledWith('carrier-1', 'ship-1', 5);
   });
 
   it('lets the carrier review the sender', async () => {
     const reviews = makeReviewRepo();
-    const useCase = new SubmitReviewUseCase(reviews, makeShipmentRepo(confirmedShipment) as never);
+    const useCase = new SubmitReviewUseCase(
+      reviews,
+      makeShipmentRepo(confirmedShipment) as never,
+      notificationsMock() as never,
+    );
 
     await useCase.execute('carrier-1', 'ship-1', { rating: 4 });
 
@@ -81,6 +91,7 @@ describe('SubmitReviewUseCase', () => {
     const useCase = new SubmitReviewUseCase(
       makeReviewRepo(),
       makeShipmentRepo({ ...confirmedShipment, status: ShipmentStatus.DELIVERED }) as never,
+      notificationsMock() as never,
     );
     await expect(useCase.execute('sender-1', 'ship-1', { rating: 5 })).rejects.toBeInstanceOf(
       ValidationError,
@@ -91,6 +102,7 @@ describe('SubmitReviewUseCase', () => {
     const useCase = new SubmitReviewUseCase(
       makeReviewRepo(),
       makeShipmentRepo(confirmedShipment) as never,
+      notificationsMock() as never,
     );
     await expect(useCase.execute('stranger', 'ship-1', { rating: 5 })).rejects.toBeInstanceOf(
       ForbiddenError,
@@ -101,7 +113,11 @@ describe('SubmitReviewUseCase', () => {
     const reviews = makeReviewRepo({
       findByShipmentAndAuthor: jest.fn(async () => ({ id: 'existing' })),
     });
-    const useCase = new SubmitReviewUseCase(reviews, makeShipmentRepo(confirmedShipment) as never);
+    const useCase = new SubmitReviewUseCase(
+      reviews,
+      makeShipmentRepo(confirmedShipment) as never,
+      notificationsMock() as never,
+    );
     await expect(useCase.execute('sender-1', 'ship-1', { rating: 5 })).rejects.toBeInstanceOf(
       ConflictError,
     );
@@ -112,6 +128,7 @@ describe('SubmitReviewUseCase', () => {
     const useCase = new SubmitReviewUseCase(
       makeReviewRepo(),
       makeShipmentRepo({ ...confirmedShipment, carrierId: null }) as never,
+      notificationsMock() as never,
     );
     await expect(useCase.execute('sender-1', 'ship-1', { rating: 5 })).rejects.toBeInstanceOf(
       ValidationError,

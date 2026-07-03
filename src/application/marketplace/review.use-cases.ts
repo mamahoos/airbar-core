@@ -12,6 +12,7 @@ import {
 } from '../../domain/marketplace/shipment.repository.port.js';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../shared/errors/index.js';
 import { buildPaginationMeta, normalizePagination } from '../../shared/pagination/pagination.js';
+import { NotificationService } from '../notifications/notification.use-cases.js';
 
 export interface SubmitReviewInput {
   readonly rating: number;
@@ -27,6 +28,7 @@ export class SubmitReviewUseCase {
   constructor(
     @Inject(REVIEW_REPOSITORY) private readonly reviews: ReviewRepositoryPort,
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
+    private readonly notifications: NotificationService,
   ) {}
 
   async execute(userId: string, shipmentId: string, input: SubmitReviewInput) {
@@ -66,6 +68,7 @@ export class SubmitReviewUseCase {
     };
 
     const { review, aggregate } = await this.reviews.createAndRecomputeRating(payload);
+    await this.notifications.notifyReviewReceived(targetId, shipmentId, input.rating);
     return {
       review,
       targetRating: aggregate,

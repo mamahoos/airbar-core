@@ -254,6 +254,7 @@ export class UpdateShipmentStatusUseCase {
   constructor(
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
+    private readonly notifications: NotificationService,
   ) {}
 
   async execute(
@@ -303,7 +304,13 @@ export class UpdateShipmentStatusUseCase {
       await this.finance.tryMarkDelivered({ shipmentId });
     }
     if (status === ShipmentStatus.CONFIRMED) {
-      await this.finance.tryReleaseEscrow({ shipmentId });
+      const releaseResult = await this.finance.tryReleaseEscrow({ shipmentId });
+      if (releaseResult.ok) {
+        await this.notifications.notifyEscrowReleased(
+          { senderId: shipment.senderId, carrierId: shipment.carrierId },
+          shipmentId,
+        );
+      }
     }
 
     return updated;

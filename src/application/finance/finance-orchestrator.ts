@@ -257,12 +257,12 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     );
   }
 
-  async tryApproveWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<void>> {
+  async tryApproveWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<{ userId: string }>> {
     const idempotencyKey = approveWithdrawalKey(input.withdrawalId);
     const payload = { withdrawalId: input.withdrawalId };
     return this.trySync(
       () => this.finance.approveWithdrawal({ ...payload, idempotencyKey }, { idempotencyKey }),
-      () => Promise.resolve(undefined),
+      (response) => Promise.resolve({ userId: response.userId ?? '' }),
       'ApproveWithdrawal',
       AGGREGATE_WITHDRAWAL,
       input.withdrawalId,
@@ -271,7 +271,7 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     );
   }
 
-  async tryMarkWithdrawalSent(input: MarkWithdrawalSentInput): Promise<FinanceSyncResult<void>> {
+  async tryMarkWithdrawalSent(input: MarkWithdrawalSentInput): Promise<FinanceSyncResult<{ userId: string }>> {
     const idempotencyKey = markWithdrawalSentKey(input.withdrawalId);
     const payload = {
       withdrawalId: input.withdrawalId,
@@ -281,7 +281,7 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     };
     return this.trySync(
       () => this.finance.markWithdrawalSent({ ...payload, idempotencyKey }, { idempotencyKey }),
-      () => Promise.resolve(undefined),
+      (response) => Promise.resolve({ userId: response.userId ?? '' }),
       'MarkWithdrawalSent',
       AGGREGATE_WITHDRAWAL,
       input.withdrawalId,
@@ -290,12 +290,12 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     );
   }
 
-  async trySettleWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<void>> {
+  async trySettleWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<{ userId: string }>> {
     const idempotencyKey = settleWithdrawalKey(input.withdrawalId);
     const payload = { withdrawalId: input.withdrawalId };
     return this.trySync(
       () => this.finance.settleWithdrawal({ ...payload, idempotencyKey }, { idempotencyKey }),
-      () => Promise.resolve(undefined),
+      (response) => Promise.resolve({ userId: response.userId ?? '' }),
       'SettleWithdrawal',
       AGGREGATE_WITHDRAWAL,
       input.withdrawalId,
@@ -304,12 +304,12 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     );
   }
 
-  async tryFailWithdrawal(input: FailWithdrawalInput): Promise<FinanceSyncResult<void>> {
+  async tryFailWithdrawal(input: FailWithdrawalInput): Promise<FinanceSyncResult<{ userId: string }>> {
     const idempotencyKey = failWithdrawalKey(input.withdrawalId);
     const payload = { withdrawalId: input.withdrawalId, reason: input.reason };
     return this.trySync(
       () => this.finance.failWithdrawal({ ...payload, idempotencyKey }, { idempotencyKey }),
-      () => Promise.resolve(undefined),
+      (response) => Promise.resolve({ userId: response.userId ?? '' }),
       'FailWithdrawal',
       AGGREGATE_WITHDRAWAL,
       input.withdrawalId,
@@ -318,7 +318,7 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     );
   }
 
-  async tryProcessWithdrawal(input: ProcessWithdrawalInput): Promise<FinanceSyncResult<void>> {
+  async tryProcessWithdrawal(input: ProcessWithdrawalInput): Promise<FinanceSyncResult<{ userId: string }>> {
     const idempotencyKey = processWithdrawalKey(input.withdrawalId);
     const payload = {
       withdrawalId: input.withdrawalId,
@@ -334,7 +334,7 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
             idempotencyKey,
           },
         ),
-      () => Promise.resolve(undefined),
+      (response) => Promise.resolve({ userId: response.userId ?? '' }),
       'ProcessWithdrawal',
       AGGREGATE_WITHDRAWAL,
       input.withdrawalId,
@@ -343,7 +343,7 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     );
   }
 
-  async tryRejectWithdrawal(input: RejectWithdrawalInput): Promise<FinanceSyncResult<void>> {
+  async tryRejectWithdrawal(input: RejectWithdrawalInput): Promise<FinanceSyncResult<{ userId: string }>> {
     const idempotencyKey = rejectWithdrawalKey(input.withdrawalId);
     const payload = { withdrawalId: input.withdrawalId, reason: input.reason };
     return this.trySync(
@@ -352,7 +352,7 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
           { withdrawalId: input.withdrawalId, reason: input.reason, idempotencyKey },
           { idempotencyKey },
         ),
-      () => Promise.resolve(undefined),
+      (response) => Promise.resolve({ userId: response.userId ?? '' }),
       'RejectWithdrawal',
       AGGREGATE_WITHDRAWAL,
       input.withdrawalId,
@@ -447,6 +447,7 @@ function isRetryableFinanceError(error: unknown): boolean {
 
 type FinanceSyncResponse = {
   id?: string;
+  userId?: string;
   redirectUrl?: string;
   fundingSource?: string;
   promoCreditFunded?: string;

@@ -90,12 +90,12 @@ export interface FinanceOrchestratorPort {
   tryCreateWithdrawal(
     input: CreateWithdrawalInput,
   ): Promise<FinanceSyncResult<{ withdrawalId: string }>>;
-  tryApproveWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<void>>;
-  tryMarkWithdrawalSent(input: MarkWithdrawalSentInput): Promise<FinanceSyncResult<void>>;
-  trySettleWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<void>>;
-  tryFailWithdrawal(input: FailWithdrawalInput): Promise<FinanceSyncResult<void>>;
-  tryProcessWithdrawal(input: ProcessWithdrawalInput): Promise<FinanceSyncResult<void>>;
-  tryRejectWithdrawal(input: RejectWithdrawalInput): Promise<FinanceSyncResult<void>>;
+  tryApproveWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<{ userId: string }>>;
+  tryMarkWithdrawalSent(input: MarkWithdrawalSentInput): Promise<FinanceSyncResult<{ userId: string }>>;
+  trySettleWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<{ userId: string }>>;
+  tryFailWithdrawal(input: FailWithdrawalInput): Promise<FinanceSyncResult<{ userId: string }>>;
+  tryProcessWithdrawal(input: ProcessWithdrawalInput): Promise<FinanceSyncResult<{ userId: string }>>;
+  tryRejectWithdrawal(input: RejectWithdrawalInput): Promise<FinanceSyncResult<{ userId: string }>>;
 
   enqueueOutbox(
     command: OutboxCommand,

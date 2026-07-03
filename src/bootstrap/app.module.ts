@@ -22,12 +22,14 @@ import { StatsModule } from '../adapters/web/stats/stats.module.js';
 import { UsersModule } from '../adapters/web/users/users.module.js';
 
 import { ConfigModule, APP_CONFIG } from './config/index.js';
+import { LoggingModule } from './logging/index.js';
 
 import type { AppConfig } from './config/index.js';
 
 @Module({
   imports: [
     ConfigModule,
+    LoggingModule,
     ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
       inject: [APP_CONFIG],
@@ -59,3 +61,6 @@ import type { AppConfig } from './config/index.js';
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
+
+export { createApp } from './create-app.js';
+export type { CreateAppOptions } from './create-app.js';

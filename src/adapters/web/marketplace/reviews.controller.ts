@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import {
   ListShipmentReviewsUseCase,
@@ -23,6 +24,7 @@ export class ReviewsController {
   ) {}
 
   @Post('shipments/:id/reviews')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Submit a review for the counterpart after completion' })
   async submit(

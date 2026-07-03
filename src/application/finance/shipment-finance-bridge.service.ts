@@ -100,7 +100,11 @@ export class ShipmentFinanceBridgeService {
   }
 
   private parseDisputeTargetStatus(value: unknown): ShipmentStatus | null {
-    if (value === ShipmentStatus.CONFIRMED || value === ShipmentStatus.REFUNDED) {
+    if (
+      value === ShipmentStatus.CONFIRMED ||
+      value === ShipmentStatus.REFUNDED ||
+      value === ShipmentStatus.PARTIALLY_REFUNDED
+    ) {
       return value;
     }
     return null;
@@ -109,7 +113,7 @@ export class ShipmentFinanceBridgeService {
   async markShipmentPaid(shipmentId: string): Promise<boolean> {
     const shipment = await this.prisma.shipment.findUnique({
       where: { id: shipmentId },
-      select: { status: true },
+      select: { status: true, senderId: true, carrierId: true },
     });
     if (!shipment || shipment.status !== 'ACCEPTED') return false;
 
@@ -126,6 +130,10 @@ export class ShipmentFinanceBridgeService {
         },
       },
     });
+    await this.notifications.notifyPaymentSecured(
+      { senderId: shipment.senderId, carrierId: shipment.carrierId },
+      shipmentId,
+    );
     return true;
   }
 }

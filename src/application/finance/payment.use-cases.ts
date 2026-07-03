@@ -339,37 +339,176 @@ export class ResolveDisputeUseCase {
     private readonly notifications: NotificationService,
   ) {}
 
-  async execute(shipmentId: string, resolution: 'RELEASE' | 'REFUND', note?: string) {
+  async execute(
+    shipmentId: string,
+    resolution: 'RELEASE' | 'REFUND' | 'PARTIAL_REFUND' | 'SPLIT',
+    note?: string,
+    refundAmountRials?: number,
+  ) {
     const shipment = await this.prisma.shipment.findUnique({ where: { id: shipmentId } });
-    if (!shipment || shipment.status !== 'DISPUTED') {
+    if (!shipment) {
+      throw new ValidationError('Shipment not found');
+    }
+
+    if (resolution === 'RELEASE') {
+      if (shipment.status !== 'DISPUTED' && shipment.status !== 'PARTIALLY_REFUNDED') {
+        throw new ValidationError('Release requires a disputed or partially refunded shipment');
+      }
+    } else if (shipment.status !== 'DISPUTED') {
       throw new ValidationError('Only disputed shipments can be resolved');
     }
 
-    const disputeResolution = this.formatDisputeResolution(resolution, note);
-    const disputeTargetStatus = resolution === 'RELEASE' ? 'CONFIRMED' : 'REFUNDED';
-    const financeInput = { shipmentId, disputeResolution, disputeTargetStatus };
-    const result =
-      resolution === 'RELEASE'
-        ? await this.finance.tryReleaseEscrow(financeInput)
-        : await this.finance.tryRefundEscrow(financeInput);
+    if (
+      (resolution === 'PARTIAL_REFUND' || resolution === 'SPLIT') &&
+      (!refundAmountRials || refundAmountRials <= 0)
+    ) {
+      throw new ValidationError('refundAmount is required for partial settlement');
+    }
 
+    const disputeResolution = this.formatDisputeResolution(resolution, note, refundAmountRials);
+
+    if (resolution === 'RELEASE') {
+      return this.runRelease(shipment, disputeResolution, note);
+    }
+    if (resolution === 'REFUND') {
+      return this.runRefund(shipment, disputeResolution, note);
+    }
+    if (resolution === 'PARTIAL_REFUND') {
+      return this.runPartialRefund(shipment, disputeResolution, refundAmountRials!, note);
+    }
+    return this.runSplit(shipment, disputeResolution, refundAmountRials!, note);
+  }
+
+  private async runRelease(
+    shipment: { readonly id: string; readonly senderId: string; readonly carrierId: string | null },
+    disputeResolution: string,
+    note?: string,
+  ) {
+    const result = await this.finance.tryReleaseEscrow({
+      shipmentId: shipment.id,
+      disputeResolution,
+      disputeTargetStatus: 'CONFIRMED',
+    });
     if (!result.ok) {
       return {
-        shipmentId,
-        resolution,
+        shipmentId: shipment.id,
+        resolution: 'RELEASE' as const,
+        note: note ?? null,
+        queued: true,
+      };
+    }
+    await this.resolveShipmentDispute(shipment, 'CONFIRMED', disputeResolution);
+    return {
+      shipmentId: shipment.id,
+      resolution: 'RELEASE' as const,
+      note: note ?? null,
+      queued: false,
+    };
+  }
+
+  private async runRefund(
+    shipment: { readonly id: string; readonly senderId: string; readonly carrierId: string | null },
+    disputeResolution: string,
+    note?: string,
+  ) {
+    const result = await this.finance.tryRefundEscrow({
+      shipmentId: shipment.id,
+      disputeResolution,
+      disputeTargetStatus: 'REFUNDED',
+    });
+    if (!result.ok) {
+      return {
+        shipmentId: shipment.id,
+        resolution: 'REFUND' as const,
+        note: note ?? null,
+        queued: true,
+      };
+    }
+    await this.resolveShipmentDispute(shipment, 'REFUNDED', disputeResolution);
+    return {
+      shipmentId: shipment.id,
+      resolution: 'REFUND' as const,
+      note: note ?? null,
+      queued: false,
+    };
+  }
+
+  private async runPartialRefund(
+    shipment: { readonly id: string; readonly senderId: string; readonly carrierId: string | null },
+    disputeResolution: string,
+    refundAmountRials: number,
+    note?: string,
+  ) {
+    const result = await this.finance.tryPartialRefundEscrow({
+      shipmentId: shipment.id,
+      refundAmountRials,
+      disputeResolution,
+      disputeTargetStatus: 'PARTIALLY_REFUNDED',
+    });
+    if (!result.ok) {
+      return {
+        shipmentId: shipment.id,
+        resolution: 'PARTIAL_REFUND' as const,
+        note: note ?? null,
+        queued: true,
+      };
+    }
+    await this.resolveShipmentDispute(shipment, 'PARTIALLY_REFUNDED', disputeResolution);
+    return {
+      shipmentId: shipment.id,
+      resolution: 'PARTIAL_REFUND' as const,
+      note: note ?? null,
+      queued: false,
+    };
+  }
+
+  private async runSplit(
+    shipment: { readonly id: string; readonly senderId: string; readonly carrierId: string | null },
+    disputeResolution: string,
+    refundAmountRials: number,
+    note?: string,
+  ) {
+    const partialResult = await this.finance.tryPartialRefundEscrow({
+      shipmentId: shipment.id,
+      refundAmountRials,
+      disputeResolution,
+      disputeTargetStatus: 'CONFIRMED',
+    });
+    if (!partialResult.ok) {
+      return {
+        shipmentId: shipment.id,
+        resolution: 'SPLIT' as const,
         note: note ?? null,
         queued: true,
       };
     }
 
-    await this.resolveShipmentDispute(shipment, disputeTargetStatus, disputeResolution);
+    const releaseResult = await this.finance.tryReleaseEscrow({
+      shipmentId: shipment.id,
+      disputeResolution,
+      disputeTargetStatus: 'CONFIRMED',
+    });
+    if (!releaseResult.ok) {
+      return {
+        shipmentId: shipment.id,
+        resolution: 'SPLIT' as const,
+        note: note ?? null,
+        queued: true,
+      };
+    }
 
-    return { shipmentId, resolution, note: note ?? null, queued: false };
+    await this.resolveShipmentDispute(shipment, 'CONFIRMED', disputeResolution);
+    return {
+      shipmentId: shipment.id,
+      resolution: 'SPLIT' as const,
+      note: note ?? null,
+      queued: false,
+    };
   }
 
   private async resolveShipmentDispute(
     shipment: { readonly id: string; readonly senderId: string; readonly carrierId: string | null },
-    status: 'CONFIRMED' | 'REFUNDED',
+    status: 'CONFIRMED' | 'REFUNDED' | 'PARTIALLY_REFUNDED',
     resolution: string,
   ) {
     await this.prisma.shipment.update({
@@ -393,17 +532,32 @@ export class ResolveDisputeUseCase {
       resolution,
       status,
     );
+    if (status === 'REFUNDED') {
+      await this.notifications.notifyEscrowRefunded(shipment.senderId, shipment.id);
+    }
   }
 
-  private formatDisputeResolution(resolution: 'RELEASE' | 'REFUND', note?: string): string {
+  private formatDisputeResolution(
+    resolution: 'RELEASE' | 'REFUND' | 'PARTIAL_REFUND' | 'SPLIT',
+    note?: string,
+    refundAmountRials?: number,
+  ): string {
     const trimmedNote = note?.trim();
-    return trimmedNote ? `${resolution}: ${trimmedNote}` : resolution;
+    const amountSuffix =
+      refundAmountRials && (resolution === 'PARTIAL_REFUND' || resolution === 'SPLIT')
+        ? ` (${refundAmountRials} rials)`
+        : '';
+    const base = `${resolution}${amountSuffix}`;
+    return trimmedNote ? `${base}: ${trimmedNote}` : base;
   }
 }
 
 @Injectable()
 export class ProcessAdminWithdrawalUseCase {
-  constructor(@Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort) {}
+  constructor(
+    @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
+    private readonly notifications: NotificationService,
+  ) {}
 
   async execute(
     withdrawalId: string,
@@ -423,24 +577,36 @@ export class ProcessAdminWithdrawalUseCase {
       receiptUrl,
     });
     if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal queued');
+    if (result.value.userId) {
+      await this.notifications.notifyWithdrawalStatus(result.value.userId, withdrawalId, 'PROCESSED');
+    }
     return { withdrawalId, providerRef, payoutChannel, receiptUrl, processed: true };
   }
 }
 
 @Injectable()
 export class ApproveAdminWithdrawalUseCase {
-  constructor(@Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort) {}
+  constructor(
+    @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
+    private readonly notifications: NotificationService,
+  ) {}
 
   async execute(withdrawalId: string) {
     const result = await this.finance.tryApproveWithdrawal({ withdrawalId });
     if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal approve queued');
+    if (result.value.userId) {
+      await this.notifications.notifyWithdrawalStatus(result.value.userId, withdrawalId, 'APPROVED');
+    }
     return { withdrawalId, approved: true };
   }
 }
 
 @Injectable()
 export class MarkAdminWithdrawalSentUseCase {
-  constructor(@Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort) {}
+  constructor(
+    @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
+    private readonly notifications: NotificationService,
+  ) {}
 
   async execute(
     withdrawalId: string,
@@ -460,24 +626,36 @@ export class MarkAdminWithdrawalSentUseCase {
       receiptUrl,
     });
     if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal sent queued');
+    if (result.value.userId) {
+      await this.notifications.notifyWithdrawalStatus(result.value.userId, withdrawalId, 'SENT');
+    }
     return { withdrawalId, providerRef, payoutChannel, receiptUrl, sent: true };
   }
 }
 
 @Injectable()
 export class SettleAdminWithdrawalUseCase {
-  constructor(@Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort) {}
+  constructor(
+    @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
+    private readonly notifications: NotificationService,
+  ) {}
 
   async execute(withdrawalId: string) {
     const result = await this.finance.trySettleWithdrawal({ withdrawalId });
     if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal settle queued');
+    if (result.value.userId) {
+      await this.notifications.notifyWithdrawalStatus(result.value.userId, withdrawalId, 'SETTLED');
+    }
     return { withdrawalId, settled: true };
   }
 }
 
 @Injectable()
 export class FailAdminWithdrawalUseCase {
-  constructor(@Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort) {}
+  constructor(
+    @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
+    private readonly notifications: NotificationService,
+  ) {}
 
   async execute(withdrawalId: string, reason: string) {
     const cleanReason = reason.trim();
@@ -485,17 +663,26 @@ export class FailAdminWithdrawalUseCase {
 
     const result = await this.finance.tryFailWithdrawal({ withdrawalId, reason: cleanReason });
     if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal fail queued');
+    if (result.value.userId) {
+      await this.notifications.notifyWithdrawalStatus(result.value.userId, withdrawalId, 'FAILED');
+    }
     return { withdrawalId, failed: true };
   }
 }
 
 @Injectable()
 export class RejectAdminWithdrawalUseCase {
-  constructor(@Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort) {}
+  constructor(
+    @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
+    private readonly notifications: NotificationService,
+  ) {}
 
   async execute(withdrawalId: string, reason: string) {
     const result = await this.finance.tryRejectWithdrawal({ withdrawalId, reason });
     if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Reject queued');
+    if (result.value.userId) {
+      await this.notifications.notifyWithdrawalStatus(result.value.userId, withdrawalId, 'REJECTED');
+    }
     return { withdrawalId, rejected: true };
   }
 }

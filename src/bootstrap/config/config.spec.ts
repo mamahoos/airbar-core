@@ -1,6 +1,12 @@
 import { describe, it, expect } from '@jest/globals';
 
-import { loadConfig, ConfigError } from './config.js';
+import { loadConfig, ConfigError, ProductionSecretError } from './config.js';
+
+const PRODUCTION_SECRETS: Record<string, string> = {
+  JWT_SECRET: 'prod-jwt-secret-with-enough-length',
+  JWT_REFRESH_SECRET: 'prod-jwt-refresh-secret-with-enough-length',
+  PII_ENCRYPTION_KEY: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+};
 
 const VALID_ENV: Record<string, string> = {
   NODE_ENV: 'production',
@@ -11,6 +17,7 @@ const VALID_ENV: Record<string, string> = {
   FINANCE_GRPC_URL: 'finance-grpc.internal:50051',
   FINANCE_GRPC_TLS: 'true',
   LOG_LEVEL: 'debug',
+  ...PRODUCTION_SECRETS,
 };
 
 describe('loadConfig', () => {
@@ -104,5 +111,25 @@ describe('loadConfig', () => {
     const { DATABASE_URL: _omitted, ...rest } = VALID_ENV;
     void _omitted;
     expect(() => loadConfig(rest)).toThrow(ConfigError);
+  });
+
+  it('blocks production boot when default dev secrets are still configured', () => {
+    expect(() =>
+      loadConfig({
+        NODE_ENV: 'production',
+        DATABASE_URL: 'postgresql://u:p@localhost:5432/airbar_api',
+      }),
+    ).toThrow(ProductionSecretError);
+  });
+
+  it('allows production boot when secrets are overridden', () => {
+    const cfg = loadConfig({
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://u:p@localhost:5432/airbar_api',
+      ...PRODUCTION_SECRETS,
+    });
+
+    expect(cfg.nodeEnv).toBe('production');
+    expect(cfg.jwtSecret).toBe(PRODUCTION_SECRETS.JWT_SECRET);
   });
 });

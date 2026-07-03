@@ -8,6 +8,7 @@ import {
 } from '../../domain/storage/object-storage.port.js';
 import { NotFoundError, ValidationError } from '../../shared/errors/index.js';
 import { isIranianPhone } from '../../shared/phone/index.js';
+import { NotificationService } from '../notifications/notification.use-cases.js';
 
 const VALID_DOCUMENT_TYPES = [
   'national_id',
@@ -157,7 +158,10 @@ export class UploadKycDocumentUseCase {
 
 @Injectable()
 export class ReviewKycDocumentUseCase {
-  constructor(@Inject(KYC_REPOSITORY) private readonly kyc: KycRepositoryPort) {}
+  constructor(
+    @Inject(KYC_REPOSITORY) private readonly kyc: KycRepositoryPort,
+    private readonly notifications: NotificationService,
+  ) {}
 
   async execute(
     adminId: string,
@@ -189,7 +193,10 @@ export class ReviewKycDocumentUseCase {
     );
     if (!result) throw new NotFoundError('KYC document', documentId);
     if (status === 'APPROVED') {
-      await this.kyc.upgradeKycLevelIfNeeded(result.userId);
+      const newLevel = await this.kyc.upgradeKycLevelIfNeeded(result.userId);
+      if (newLevel) {
+        await this.notifications.notifyKycUpgraded(result.userId, newLevel);
+      }
     }
     return { success: true };
   }

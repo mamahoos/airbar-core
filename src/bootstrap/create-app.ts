@@ -1,0 +1,83 @@
+import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { ThrottlerGuard } from '@nestjs/throttler';
+
+import { FinanceGrpcClient } from '../adapters/grpc-client/finance-grpc.client.js';
+import { HttpExceptionFilter } from '../adapters/web/common/http-exception.filter.js';
+import { LoggingInterceptor } from '../adapters/web/common/logging.interceptor.js';
+import { TransformInterceptor } from '../adapters/web/common/transform.interceptor.js';
+
+import { AppModule } from './app.module.js';
+import { loadConfig, type AppConfig } from './config/index.js';
+import { APP_LOGGER, LoggingModule } from './logging/index.js';
+import { createBootstrapLogger, type NestWinstonLogger } from './logging/nest-winston.logger.js';
+
+import type { INestApplication, Type } from '@nestjs/common';
+
+export interface CreateAppOptions {
+  readonly env?: Record<string, string | undefined>;
+  readonly financeStub?: FinanceGrpcClient;
+  readonly overrides?: ReadonlyArray<{ provide: Type<unknown> | symbol | string; useValue: unknown }>;
+}
+
+function testEnv(overrides: Record<string, string | undefined> = {}): Record<string, string> {
+  const databaseUrl =
+    overrides.DATABASE_URL ??
+    process.env.DATABASE_URL ??
+    'postgresql://airbar:airbar@localhost:5433/airbar_core';
+
+  return {
+    NODE_ENV: 'test',
+    DATABASE_URL: databaseUrl,
+    REDIS_HOST: process.env.REDIS_HOST ?? 'localhost',
+    REDIS_PORT: process.env.REDIS_PORT ?? '6379',
+    API_IR_DEV_MOCK: 'true',
+    SMS_PROVIDER: 'dev',
+    FINANCE_GRPC_URL: 'localhost:50051',
+    ...overrides,
+  };
+}
+
+/**
+ * Boot the full Nest application for integration/E2E tests with optional provider overrides.
+ */
+export async function createApp(options: CreateAppOptions = {}): Promise<INestApplication> {
+  const env = testEnv(options.env);
+  const config: AppConfig = loadConfig(env);
+  const logger = createBootstrapLogger(config);
+
+  let builder = Test.createTestingModule({
+    imports: [AppModule],
+  })
+    .overrideProvider(ThrottlerGuard)
+    .useValue({ canActivate: () => true });
+
+  if (options.financeStub) {
+    builder = builder.overrideProvider(FinanceGrpcClient).useValue(options.financeStub);
+  }
+
+  for (const override of options.overrides ?? []) {
+    builder = builder.overrideProvider(override.provide).useValue(override.useValue);
+  }
+
+  const moduleRef: TestingModule = await builder.compile();
+  const app = moduleRef.createNestApplication({ logger, bufferLogs: true });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
+  app.useGlobalFilters(new HttpExceptionFilter());
+  const appLogger = moduleRef.get<NestWinstonLogger>(APP_LOGGER);
+  app.useGlobalInterceptors(new LoggingInterceptor(appLogger), new TransformInterceptor());
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1', prefix: 'api/v' });
+
+  await app.init();
+  return app;
+}
+
+export { LoggingModule };

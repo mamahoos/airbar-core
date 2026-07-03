@@ -15,12 +15,13 @@ import { ApiIrModule } from '../../integrations/api-ir/api-ir.module.js';
 import { KycPersistenceModule } from '../../persistence/kyc/kyc-persistence.module.js';
 import { StorageModule } from '../../storage/storage.module.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { NotificationsModule } from '../notifications/notifications.module.js';
 
 import { KycLevelGuard } from './guards/kyc-level.guard.js';
 import { KycController } from './kyc.controller.js';
 
 @Module({
-  imports: [KycPersistenceModule, ApiIrModule, StorageModule, AuthModule],
+  imports: [KycPersistenceModule, ApiIrModule, StorageModule, AuthModule, NotificationsModule],
   controllers: [KycController],
   providers: [
     KycAccessService,

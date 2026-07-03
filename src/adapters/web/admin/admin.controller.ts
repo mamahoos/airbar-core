@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CampaignType, CargoType, ShipmentStatus, UserRole } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
@@ -241,12 +242,17 @@ class PricingRuleDto {
 }
 
 class ResolveDisputeDto {
-  @IsEnum(['RELEASE', 'REFUND'] as const)
-  resolution!: 'RELEASE' | 'REFUND';
+  @IsEnum(['RELEASE', 'REFUND', 'PARTIAL_REFUND', 'SPLIT'] as const)
+  resolution!: 'RELEASE' | 'REFUND' | 'PARTIAL_REFUND' | 'SPLIT';
 
   @IsOptional()
   @IsString()
   note?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  refundAmount?: number;
 }
 
 class RejectWithdrawalDto {
@@ -438,6 +444,7 @@ class ProviderEventsQueryDto extends PaginationQueryDto {
 
 @ApiTags('admin')
 @Controller('admin')
+@Throttle({ default: { limit: 30, ttl: 60_000 } })
 @UseGuards(RolesGuard)
 @Roles(DomainUserRole.ADMIN, DomainUserRole.SUPER_ADMIN)
 @ApiBearerAuth()
@@ -607,7 +614,12 @@ export class AdminController {
   @Post('disputes/:shipmentId/resolve')
   @ApiOperation({ summary: 'Resolve disputed shipment via finance gRPC' })
   resolveDisputeRoute(@Param('shipmentId') shipmentId: string, @Body() dto: ResolveDisputeDto) {
-    return this.resolveDispute.execute(shipmentId, dto.resolution, dto.note);
+    return this.resolveDispute.execute(
+      shipmentId,
+      dto.resolution,
+      dto.note,
+      dto.refundAmount,
+    );
   }
 
   @Get('integration-outbox')

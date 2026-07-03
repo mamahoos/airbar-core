@@ -74,7 +74,7 @@ export interface KycRepositoryPort {
   encryptNationalId(nationalId: string): { hash: string; ciphertext: string };
   encryptCard(cardNumber: string): { hash: string; ciphertext: string };
   encryptIban(iban: string): { hash: string; ciphertext: string };
-  upgradeKycLevelIfNeeded(userId: string): Promise<void>;
+  upgradeKycLevelIfNeeded(userId: string): Promise<string | null>;
 }
 
 export const KYC_REPOSITORY = Symbol('KYC_REPOSITORY');

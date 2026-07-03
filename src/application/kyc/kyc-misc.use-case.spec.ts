@@ -78,15 +78,19 @@ describe('ReviewKycDocumentUseCase', () => {
     const reviewDocument = jest
       .fn<() => Promise<{ userId: string } | null>>()
       .mockResolvedValue({ userId: 'user-1' });
-    const upgradeKycLevelIfNeeded = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const upgradeKycLevelIfNeeded = jest
+      .fn<() => Promise<string | null>>()
+      .mockResolvedValue('DOCUMENT_VERIFIED');
+    const notifyKycUpgraded = jest.fn(async () => undefined);
     const kyc = {
       reviewDocument,
       upgradeKycLevelIfNeeded,
     } as unknown as KycRepositoryPort;
     return {
-      useCase: new ReviewKycDocumentUseCase(kyc),
+      useCase: new ReviewKycDocumentUseCase(kyc, { notifyKycUpgraded } as never),
       reviewDocument,
       upgradeKycLevelIfNeeded,
+      notifyKycUpgraded,
     };
   }
 
@@ -127,7 +131,7 @@ describe('ReviewKycDocumentUseCase', () => {
   });
 
   it('uses CLEAR reason code for approved documents and upgrades KYC level', async () => {
-    const { useCase, reviewDocument, upgradeKycLevelIfNeeded } = setupReview();
+    const { useCase, reviewDocument, upgradeKycLevelIfNeeded, notifyKycUpgraded } = setupReview();
 
     await expect(useCase.execute('admin-1', 'doc-1', 'APPROVED')).resolves.toEqual({
       success: true,
@@ -141,6 +145,7 @@ describe('ReviewKycDocumentUseCase', () => {
       undefined,
     );
     expect(upgradeKycLevelIfNeeded).toHaveBeenCalledWith('user-1');
+    expect(notifyKycUpgraded).toHaveBeenCalledWith('user-1', 'DOCUMENT_VERIFIED');
   });
 });
 

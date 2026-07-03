@@ -440,7 +440,7 @@ export class PrismaKycRepository implements KycRepositoryPort {
     return { userId: document.userId };
   }
 
-  async upgradeKycLevelIfNeeded(userId: string): Promise<void> {
+  async upgradeKycLevelIfNeeded(userId: string): Promise<KycLevel | null> {
     const documents = await this.prisma.kycDocument.findMany({
       where: { userId, status: KycStatus.APPROVED },
     });
@@ -452,7 +452,7 @@ export class PrismaKycRepository implements KycRepositoryPort {
         identityProfile: { select: { nationalIdHash: true } },
       },
     });
-    if (!user) return;
+    if (!user) return null;
 
     const hasNationalId = documents.some((d) => d.type === 'national_id');
     const hasPassport = documents.some((d) => d.type === 'passport');
@@ -489,7 +489,9 @@ export class PrismaKycRepository implements KycRepositoryPort {
         where: { id: userId },
         data: { kycLevel: newLevel },
       });
+      return newLevel;
     }
+    return null;
   }
 
   encryptNationalId(nationalId: string): { hash: string; ciphertext: string } {

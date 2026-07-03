@@ -9,6 +9,7 @@ export enum ShipmentStatus {
   DELIVERED = 'DELIVERED',
   CONFIRMED = 'CONFIRMED',
   DISPUTED = 'DISPUTED',
+  PARTIALLY_REFUNDED = 'PARTIALLY_REFUNDED',
   CANCELLED = 'CANCELLED',
   REFUNDED = 'REFUNDED',
 }
@@ -28,6 +29,7 @@ const STATUS_TRANSITIONS: Readonly<
   [ShipmentStatus.DELIVERED]: [{ to: ShipmentStatus.CONFIRMED, actor: 'sender' }],
   [ShipmentStatus.CONFIRMED]: [],
   [ShipmentStatus.DISPUTED]: [],
+  [ShipmentStatus.PARTIALLY_REFUNDED]: [],
   [ShipmentStatus.CANCELLED]: [],
   [ShipmentStatus.REFUNDED]: [],
 };

@@ -116,4 +116,27 @@ describe('ShipmentFinanceBridgeService', () => {
     expect(update).not.toHaveBeenCalled();
     expect(notifications.notifyDisputeResolvedToParties).not.toHaveBeenCalled();
   });
+
+  it('markShipmentPaid notifies parties when payment is confirmed', async () => {
+    const findUnique = jest.fn(async () => ({
+      status: 'ACCEPTED',
+      senderId: 'sender-1',
+      carrierId: 'carrier-1',
+    }));
+    const update = jest.fn(async () => ({}));
+    const notifications = {
+      notifyDisputeResolvedToParties: jest.fn(async () => undefined),
+      notifyPaymentSecured: jest.fn(async () => undefined),
+    };
+    const bridge = new ShipmentFinanceBridgeService(
+      { shipment: { findUnique, update } } as never,
+      notifications as never,
+    );
+
+    await expect(bridge.markShipmentPaid('ship-paid')).resolves.toBe(true);
+    expect(notifications.notifyPaymentSecured).toHaveBeenCalledWith(
+      { senderId: 'sender-1', carrierId: 'carrier-1' },
+      'ship-paid',
+    );
+  });
 });

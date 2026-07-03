@@ -1,4 +1,4 @@
-import { VersioningType, ValidationPipe, Logger } from '@nestjs/common';
+import { VersioningType, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
@@ -10,16 +10,15 @@ import { TransformInterceptor } from '../adapters/web/common/transform.intercept
 
 import { AppModule } from './app.module.js';
 import { loadConfig } from './config/index.js';
+import { createBootstrapLogger } from './logging/nest-winston.logger.js';
 
 async function bootstrap(): Promise<void> {
   const config = loadConfig();
-  const logger = new Logger('Bootstrap');
+  const logger = createBootstrapLogger(config);
 
   const app = await NestFactory.create(AppModule, {
-    logger:
-      config.nodeEnv === 'production'
-        ? ['error', 'warn', 'log']
-        : ['error', 'warn', 'log', 'debug', 'verbose'],
+    logger,
+    bufferLogs: true,
   });
 
   app.use(helmet());
@@ -58,7 +57,7 @@ async function bootstrap(): Promise<void> {
   );
 
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
+  app.useGlobalInterceptors(new LoggingInterceptor(logger), new TransformInterceptor());
 
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1', prefix: 'api/v' });
 
@@ -77,17 +76,17 @@ async function bootstrap(): Promise<void> {
   await app.listen(config.port);
 
   const shutdown = (signal: string) => {
-    logger.warn(`Received ${signal}, shutting down…`);
+    logger.warn(`Received ${signal}, shutting down…`, 'Bootstrap');
     void app.close().finally(() => process.exit(0));
   };
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
 
-  logger.log(`🚀 airbar-core on port ${config.port}`);
-  logger.log(`📚 Swagger docs at http://localhost:${config.port}/docs`);
-  logger.log(`🏥 Health at http://localhost:${config.port}/api/v1/health`);
-  logger.log(`📈 Metrics at http://localhost:${config.port}/api/v1/metrics`);
-  logger.log(`🌍 Environment: ${config.nodeEnv}`);
+  logger.log(`airbar-core on port ${config.port}`, 'Bootstrap');
+  logger.log(`Swagger docs at http://localhost:${config.port}/docs`, 'Bootstrap');
+  logger.log(`Health at http://localhost:${config.port}/api/v1/health`, 'Bootstrap');
+  logger.log(`Metrics at http://localhost:${config.port}/api/v1/metrics`, 'Bootstrap');
+  logger.log(`Environment: ${config.nodeEnv}`, 'Bootstrap');
 }
 
 bootstrap().catch((err) => {

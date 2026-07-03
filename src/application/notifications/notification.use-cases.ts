@@ -84,6 +84,106 @@ export class NotificationService {
       await this.notifyDisputeResolved(parties.carrierId, shipmentId, resolution, status);
     }
   }
+
+  async notifyPaymentSecured(
+    parties: { readonly senderId: string; readonly carrierId: string | null },
+    shipmentId: string,
+  ): Promise<void> {
+    await this.create({
+      userId: parties.senderId,
+      type: 'PUSH',
+      title: 'پرداخت تأیید شد',
+      body: 'پرداخت مرسوله با موفقیت انجام شد',
+      data: { shipmentId, type: 'PAYMENT_SECURED' },
+    });
+    if (parties.carrierId) {
+      await this.create({
+        userId: parties.carrierId,
+        type: 'PUSH',
+        title: 'پرداخت تأیید شد',
+        body: 'فرستنده مرسوله را پرداخت کرد',
+        data: { shipmentId, type: 'PAYMENT_SECURED' },
+      });
+    }
+  }
+
+  async notifyKycUpgraded(userId: string, kycLevel: string) {
+    return this.create({
+      userId,
+      type: 'PUSH',
+      title: 'ارتقای سطح احراز هویت',
+      body: `سطح احراز هویت شما به ${kycLevel} ارتقا یافت`,
+      data: { type: 'KYC_UPGRADED', kycLevel },
+    });
+  }
+
+  async notifyWithdrawalStatus(userId: string, withdrawalId: string, status: string) {
+    const titles: Record<string, string> = {
+      APPROVED: 'برداشت تأیید شد',
+      SENT: 'برداشت ارسال شد',
+      SETTLED: 'برداشت تکمیل شد',
+      FAILED: 'برداشت ناموفق',
+      REJECTED: 'برداشت رد شد',
+      PROCESSED: 'برداشت در حال پردازش',
+    };
+    const bodies: Record<string, string> = {
+      APPROVED: 'درخواست برداشت شما توسط پشتیبانی تأیید شد',
+      SENT: 'مبلغ برداشت به بانک ارسال شد',
+      SETTLED: 'برداشت با موفقیت به حساب شما واریز شد',
+      FAILED: 'برداشت انجام نشد؛ موجودی به کیف پول بازگشت',
+      REJECTED: 'درخواست برداشت شما رد شد',
+      PROCESSED: 'برداشت شما در حال پردازش است',
+    };
+    return this.create({
+      userId,
+      type: 'PUSH',
+      title: titles[status] ?? 'وضعیت برداشت',
+      body: bodies[status] ?? status,
+      data: { withdrawalId, type: 'WITHDRAWAL_STATUS', status },
+    });
+  }
+
+  async notifyEscrowReleased(
+    parties: { readonly senderId: string; readonly carrierId: string | null },
+    shipmentId: string,
+  ): Promise<void> {
+    if (parties.carrierId) {
+      await this.create({
+        userId: parties.carrierId,
+        type: 'PUSH',
+        title: 'وجه آزاد شد',
+        body: 'درآمد مرسوله به کیف پول شما واریز شد',
+        data: { shipmentId, type: 'ESCROW_RELEASED' },
+      });
+    }
+    await this.create({
+      userId: parties.senderId,
+      type: 'PUSH',
+      title: 'مرسوله تکمیل شد',
+      body: 'وجه امانی مرسوله آزاد شد',
+      data: { shipmentId, type: 'ESCROW_RELEASED' },
+    });
+  }
+
+  async notifyEscrowRefunded(userId: string, shipmentId: string) {
+    return this.create({
+      userId,
+      type: 'PUSH',
+      title: 'بازپرداخت انجام شد',
+      body: 'مبلغ مرسوله به کیف پول شما بازگشت',
+      data: { shipmentId, type: 'ESCROW_REFUNDED' },
+    });
+  }
+
+  async notifyReviewReceived(userId: string, shipmentId: string, rating: number) {
+    return this.create({
+      userId,
+      type: 'PUSH',
+      title: 'نظر جدید',
+      body: `یک نظر ${rating} ستاره برای شما ثبت شد`,
+      data: { shipmentId, type: 'REVIEW_RECEIVED', rating: String(rating) },
+    });
+  }
 }
 
 @Injectable()

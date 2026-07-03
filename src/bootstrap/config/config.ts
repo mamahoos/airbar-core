@@ -28,6 +28,11 @@ function camelizeEnv(env: Record<string, string | undefined>): Record<string, st
   return out;
 }
 
+const DEV_JWT_SECRET = 'dev-only-jwt-secret-change-in-production';
+const DEV_JWT_REFRESH_SECRET = 'dev-only-jwt-refresh-secret-change-in-production';
+const DEV_PII_ENCRYPTION_KEY =
+  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
 /**
  * Application configuration. Every runtime setting MUST come from the
  * environment — no hardcoded production defaults. Optional keys are declared
@@ -75,8 +80,8 @@ export const AppConfigSchema = z.object({
   intakeTestMode: envBoolean(true),
   intakeTestTelegramChatId: z.string().optional(),
 
-  jwtSecret: z.string().min(16).default('dev-only-jwt-secret-change-in-production'),
-  jwtRefreshSecret: z.string().min(16).default('dev-only-jwt-refresh-secret-change-in-production'),
+  jwtSecret: z.string().min(16).default(DEV_JWT_SECRET),
+  jwtRefreshSecret: z.string().min(16).default(DEV_JWT_REFRESH_SECRET),
   jwtExpiresIn: z.string().default('7d'),
   jwtRefreshExpiresIn: z.string().default('30d'),
 
@@ -98,7 +103,7 @@ export const AppConfigSchema = z.object({
   piiEncryptionKey: z
     .string()
     .regex(/^[0-9a-fA-F]{64}$/, 'PII_ENCRYPTION_KEY must be 64 hex characters')
-    .default('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+    .default(DEV_PII_ENCRYPTION_KEY),
 
   minioEndpoint: z.string().default('localhost'),
   minioPort: z.coerce.number().int().positive().default(9000),
@@ -111,6 +116,26 @@ export const AppConfigSchema = z.object({
 });
 
 export type AppConfig = z.infer<typeof AppConfigSchema>;
+
+export class ProductionSecretError extends Error {
+  constructor(public readonly keys: string[]) {
+    super(`Production boot blocked: set real secrets for ${keys.join(', ')}`);
+    this.name = 'ProductionSecretError';
+  }
+}
+
+function assertProductionSecrets(config: AppConfig): void {
+  if (config.nodeEnv !== 'production') return;
+
+  const unsafe: string[] = [];
+  if (config.jwtSecret === DEV_JWT_SECRET) unsafe.push('JWT_SECRET');
+  if (config.jwtRefreshSecret === DEV_JWT_REFRESH_SECRET) unsafe.push('JWT_REFRESH_SECRET');
+  if (config.piiEncryptionKey === DEV_PII_ENCRYPTION_KEY) unsafe.push('PII_ENCRYPTION_KEY');
+
+  if (unsafe.length > 0) {
+    throw new ProductionSecretError(unsafe);
+  }
+}
 
 export class ConfigError extends Error {
   constructor(public readonly issues: z.ZodIssue[]) {
@@ -128,5 +153,6 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
   if (!result.success) {
     throw new ConfigError(result.error.issues);
   }
+  assertProductionSecrets(result.data);
   return result.data;
 }
