@@ -540,6 +540,7 @@ enum DraftType {
 
 enum DraftStatus {
   NEW
+  PROCESSING
   CLAIMED
   EXPIRED
 }

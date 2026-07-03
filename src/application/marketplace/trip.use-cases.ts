@@ -10,13 +10,21 @@ import {
 } from '../../domain/marketplace/trip.repository.port.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../shared/errors/index.js';
 import { buildPaginationMeta, normalizePagination } from '../../shared/pagination/pagination.js';
+import { KycAccessService } from '../kyc/kyc-access.service.js';
 import { MarketStatsService } from '../stats/market-stats.service.js';
+
+import { marketplaceKycRequirement } from './marketplace-kyc-gates.js';
 
 @Injectable()
 export class CreateTripUseCase {
-  constructor(@Inject(TRIP_REPOSITORY) private readonly trips: TripRepositoryPort) {}
+  constructor(
+    @Inject(TRIP_REPOSITORY) private readonly trips: TripRepositoryPort,
+    private readonly kyc: KycAccessService,
+  ) {}
 
   async execute(userId: string, input: CreateTripInput) {
+    await this.kyc.assertRequirement(userId, marketplaceKycRequirement('CREATE_TRIP'));
+
     if (input.departureDate < new Date()) {
       throw new ValidationError('Departure date must be in the future');
     }

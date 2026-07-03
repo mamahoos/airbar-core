@@ -89,6 +89,11 @@ export class CreateDraftDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsObject()
+  receiverContact?: Record<string, unknown>;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   description?: string;
 

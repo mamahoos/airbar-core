@@ -80,5 +80,6 @@ import { TripsController } from './trips.controller.js';
     ListCitiesUseCase,
     ListAirportsUseCase,
   ],
+  exports: [CreateTripUseCase, CreateShipmentUseCase],
 })
 export class MarketplaceModule {}
