@@ -3,9 +3,15 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { ShipmentFinanceBridgeService } from './shipment-finance-bridge.service.js';
 
 describe('ShipmentFinanceBridgeService', () => {
+  function makeBridge(prisma: { shipment: Record<string, unknown> }) {
+    return new ShipmentFinanceBridgeService(prisma as never, {
+      notifyDisputeResolvedToParties: jest.fn(async () => undefined),
+    } as never);
+  }
+
   it('maps PayFromWallet funding source to shipment paymentMethod', async () => {
     const update = jest.fn(async () => ({}));
-    const bridge = new ShipmentFinanceBridgeService({ shipment: { update } } as never);
+    const bridge = makeBridge({ shipment: { update } });
 
     await bridge.apply(
       'PayFromWallet',
@@ -21,7 +27,7 @@ describe('ShipmentFinanceBridgeService', () => {
 
   it('defaults PayFromWallet paymentMethod to WALLET when funding source missing', async () => {
     const update = jest.fn(async () => ({}));
-    const bridge = new ShipmentFinanceBridgeService({ shipment: { update } } as never);
+    const bridge = makeBridge({ shipment: { update } });
 
     await bridge.apply('PayFromWallet', { shipmentId: 'ship-2' }, { escrowId: 'esc-2' });
 
@@ -33,7 +39,7 @@ describe('ShipmentFinanceBridgeService', () => {
 
   it('maps PROMO_CREDIT funding source', async () => {
     const update = jest.fn(async () => ({}));
-    const bridge = new ShipmentFinanceBridgeService({ shipment: { update } } as never);
+    const bridge = makeBridge({ shipment: { update } });
 
     await bridge.apply(
       'PayFromWallet',
@@ -48,8 +54,18 @@ describe('ShipmentFinanceBridgeService', () => {
   });
 
   it('applies dispute resolution metadata after a replayed refund succeeds', async () => {
+    const findUnique = jest.fn(async () => ({
+      senderId: 'sender-1',
+      carrierId: 'carrier-1',
+    }));
     const update = jest.fn(async () => ({}));
-    const bridge = new ShipmentFinanceBridgeService({ shipment: { update } } as never);
+    const notifications = {
+      notifyDisputeResolvedToParties: jest.fn(async () => undefined),
+    };
+    const bridge = new ShipmentFinanceBridgeService(
+      { shipment: { findUnique, update } } as never,
+      notifications as never,
+    );
 
     await bridge.apply(
       'RefundEscrow',
@@ -73,14 +89,31 @@ describe('ShipmentFinanceBridgeService', () => {
         }),
       }),
     );
+    expect(notifications.notifyDisputeResolvedToParties).toHaveBeenCalledWith(
+      { senderId: 'sender-1', carrierId: 'carrier-1' },
+      'ship-4',
+      'package damaged',
+      'REFUNDED',
+    );
   });
 
   it('ignores release/refund commands that are not dispute resolutions', async () => {
+    const findUnique = jest.fn(async () => ({
+      senderId: 'sender-1',
+      carrierId: 'carrier-1',
+    }));
     const update = jest.fn(async () => ({}));
-    const bridge = new ShipmentFinanceBridgeService({ shipment: { update } } as never);
+    const notifications = {
+      notifyDisputeResolvedToParties: jest.fn(async () => undefined),
+    };
+    const bridge = new ShipmentFinanceBridgeService(
+      { shipment: { findUnique, update } } as never,
+      notifications as never,
+    );
 
     await bridge.apply('ReleaseEscrow', { shipmentId: 'ship-5' }, {});
 
     expect(update).not.toHaveBeenCalled();
+    expect(notifications.notifyDisputeResolvedToParties).not.toHaveBeenCalled();
   });
 });

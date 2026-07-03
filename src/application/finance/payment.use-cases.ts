@@ -25,6 +25,7 @@ import {
 } from '../../shared/errors/index.js';
 import { buildPaginationMeta, normalizePagination } from '../../shared/pagination/pagination.js';
 import { KycAccessService } from '../kyc/kyc-access.service.js';
+import { NotificationService } from '../notifications/notification.use-cases.js';
 
 import { financeKycRequirement } from './finance-kyc-gates.js';
 import { FinanceLimitsService } from './finance-limits.service.js';
@@ -335,6 +336,7 @@ export class ResolveDisputeUseCase {
   constructor(
     @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
     private readonly prisma: PrismaService,
+    private readonly notifications: NotificationService,
   ) {}
 
   async execute(shipmentId: string, resolution: 'RELEASE' | 'REFUND', note?: string) {
@@ -360,18 +362,18 @@ export class ResolveDisputeUseCase {
       };
     }
 
-    await this.resolveShipmentDispute(shipmentId, disputeTargetStatus, disputeResolution);
+    await this.resolveShipmentDispute(shipment, disputeTargetStatus, disputeResolution);
 
     return { shipmentId, resolution, note: note ?? null, queued: false };
   }
 
   private async resolveShipmentDispute(
-    shipmentId: string,
+    shipment: { readonly id: string; readonly senderId: string; readonly carrierId: string | null },
     status: 'CONFIRMED' | 'REFUNDED',
     resolution: string,
   ) {
     await this.prisma.shipment.update({
-      where: { id: shipmentId },
+      where: { id: shipment.id },
       data: {
         status,
         disputeResolvedAt: new Date(),
@@ -385,6 +387,12 @@ export class ResolveDisputeUseCase {
         },
       },
     });
+    await this.notifications.notifyDisputeResolvedToParties(
+      { senderId: shipment.senderId, carrierId: shipment.carrierId },
+      shipment.id,
+      resolution,
+      status,
+    );
   }
 
   private formatDisputeResolution(resolution: 'RELEASE' | 'REFUND', note?: string): string {

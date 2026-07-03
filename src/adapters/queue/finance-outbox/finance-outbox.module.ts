@@ -7,12 +7,17 @@ import { IntegrationOutboxService } from '../../../application/finance/integrati
 import { OutboxCommandHandler } from '../../../application/finance/outbox-command.handler.js';
 import { ShipmentFinanceBridgeService } from '../../../application/finance/shipment-finance-bridge.service.js';
 import { FinancePersistenceModule } from '../../persistence/finance/finance-persistence.module.js';
+import { NotificationsModule } from '../../web/notifications/notifications.module.js';
 
 import { FINANCE_OUTBOX_QUEUE } from './finance-outbox.constants.js';
 import { FinanceOutboxProcessor } from './finance-outbox.processor.js';
 
 @Module({
-  imports: [FinancePersistenceModule, BullModule.registerQueue({ name: FINANCE_OUTBOX_QUEUE })],
+  imports: [
+    FinancePersistenceModule,
+    NotificationsModule,
+    BullModule.registerQueue({ name: FINANCE_OUTBOX_QUEUE }),
+  ],
   providers: [
     OutboxCommandHandler,
     ShipmentFinanceBridgeService,

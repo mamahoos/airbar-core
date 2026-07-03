@@ -41,6 +41,7 @@ import { KycPersistenceModule } from '../../persistence/kyc/kyc-persistence.modu
 import { MarketplacePersistenceModule } from '../../persistence/marketplace/marketplace-persistence.module.js';
 import { FinanceOutboxModule } from '../../queue/finance-outbox/finance-outbox.module.js';
 import { KycModule } from '../kyc/kyc.module.js';
+import { NotificationsModule } from '../notifications/notifications.module.js';
 
 import { PaymentsController } from './payments.controller.js';
 
@@ -51,6 +52,7 @@ import { PaymentsController } from './payments.controller.js';
     MarketplacePersistenceModule,
     KycPersistenceModule,
     KycModule,
+    NotificationsModule,
   ],
   controllers: [PaymentsController],
   providers: [

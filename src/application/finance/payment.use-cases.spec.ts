@@ -20,9 +20,20 @@ describe('ResolveDisputeUseCase', () => {
   function prismaMock(status = 'DISPUTED') {
     return {
       shipment: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'ship-1', status }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'ship-1',
+          status,
+          senderId: 'sender-1',
+          carrierId: 'carrier-1',
+        }),
         update: jest.fn().mockResolvedValue({}),
       },
+    };
+  }
+
+  function notificationsMock() {
+    return {
+      notifyDisputeResolvedToParties: jest.fn(async () => undefined),
     };
   }
 
@@ -32,7 +43,8 @@ describe('ResolveDisputeUseCase', () => {
       tryRefundEscrow: jest.fn(),
     };
     const prisma = prismaMock();
-    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never);
+    const notifications = notificationsMock();
+    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never, notifications as never);
 
     await expect(useCase.execute('ship-1', 'RELEASE', 'carrier delivered')).resolves.toEqual({
       shipmentId: 'ship-1',
@@ -54,6 +66,12 @@ describe('ResolveDisputeUseCase', () => {
         }),
       }),
     );
+    expect(notifications.notifyDisputeResolvedToParties).toHaveBeenCalledWith(
+      { senderId: 'sender-1', carrierId: 'carrier-1' },
+      'ship-1',
+      'RELEASE: carrier delivered',
+      'CONFIRMED',
+    );
   });
 
   it('keeps the shipment disputed when finance command is queued', async () => {
@@ -62,7 +80,8 @@ describe('ResolveDisputeUseCase', () => {
       tryRefundEscrow: jest.fn().mockResolvedValue({ ok: false }),
     };
     const prisma = prismaMock();
-    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never);
+    const notifications = notificationsMock();
+    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never, notifications as never);
 
     await expect(useCase.execute('ship-1', 'REFUND')).resolves.toEqual({
       shipmentId: 'ship-1',
@@ -76,6 +95,7 @@ describe('ResolveDisputeUseCase', () => {
       disputeTargetStatus: 'REFUNDED',
     });
     expect(prisma.shipment.update).not.toHaveBeenCalled();
+    expect(notifications.notifyDisputeResolvedToParties).not.toHaveBeenCalled();
   });
 });
 

@@ -322,6 +322,7 @@ export class DisputeShipmentUseCase {
   constructor(
     @Inject(SHIPMENT_REPOSITORY) private readonly shipments: ShipmentRepositoryPort,
     @Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort,
+    private readonly notifications: NotificationService,
   ) {}
 
   async execute(userId: string, shipmentId: string, reason: string) {
@@ -338,6 +339,12 @@ export class DisputeShipmentUseCase {
 
     const disputed = await this.shipments.openDispute(shipmentId, userId, reason);
     await this.finance.tryFreezeEscrow({ shipmentId });
+
+    const counterpartId = isSender ? shipment.carrierId : shipment.senderId;
+    if (counterpartId) {
+      await this.notifications.notifyDisputeOpened(counterpartId, shipmentId);
+    }
+
     return disputed;
   }
 }

@@ -2,13 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { ShipmentStatus } from '@prisma/client';
 
 import { PrismaService } from '../../adapters/persistence/prisma.service.js';
+import { NotificationService } from '../notifications/notification.use-cases.js';
 
 import type { OutboxCommandResult } from './outbox-command.handler.js';
 import type { OutboxCommand } from '../../domain/finance/outbox.command.js';
 
 @Injectable()
 export class ShipmentFinanceBridgeService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationService,
+  ) {}
 
   async apply(
     command: OutboxCommand,
@@ -64,8 +68,15 @@ export class ShipmentFinanceBridgeService {
     const targetStatus = this.parseDisputeTargetStatus(payload.disputeTargetStatus);
     if (!resolution || !targetStatus) return;
 
+    const shipmentId = String(payload.shipmentId);
+    const parties = await this.prisma.shipment.findUnique({
+      where: { id: shipmentId },
+      select: { senderId: true, carrierId: true },
+    });
+    if (!parties) return;
+
     await this.prisma.shipment.update({
-      where: { id: String(payload.shipmentId) },
+      where: { id: shipmentId },
       data: {
         status: targetStatus,
         disputeResolvedAt: new Date(),
@@ -79,6 +90,13 @@ export class ShipmentFinanceBridgeService {
         },
       },
     });
+
+    await this.notifications.notifyDisputeResolvedToParties(
+      parties,
+      shipmentId,
+      resolution,
+      targetStatus,
+    );
   }
 
   private parseDisputeTargetStatus(value: unknown): ShipmentStatus | null {

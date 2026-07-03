@@ -47,6 +47,43 @@ export class NotificationService {
       data: { shipmentId, type: 'SHIPMENT_ACCEPTED' },
     });
   }
+
+  async notifyDisputeOpened(counterpartId: string, shipmentId: string) {
+    return this.create({
+      userId: counterpartId,
+      type: 'PUSH',
+      title: 'اختلاف جدید',
+      body: 'طرف مقابل برای این مرسوله اختلاف ثبت کرد',
+      data: { shipmentId, type: 'DISPUTE_OPENED' },
+    });
+  }
+
+  async notifyDisputeResolved(
+    userId: string,
+    shipmentId: string,
+    resolution: string,
+    status: string,
+  ) {
+    return this.create({
+      userId,
+      type: 'PUSH',
+      title: 'اختلاف حل شد',
+      body: `نتیجه اختلاف: ${resolution}`,
+      data: { shipmentId, type: 'DISPUTE_RESOLVED', status, resolution },
+    });
+  }
+
+  async notifyDisputeResolvedToParties(
+    parties: { readonly senderId: string; readonly carrierId: string | null },
+    shipmentId: string,
+    resolution: string,
+    status: string,
+  ): Promise<void> {
+    await this.notifyDisputeResolved(parties.senderId, shipmentId, resolution, status);
+    if (parties.carrierId) {
+      await this.notifyDisputeResolved(parties.carrierId, shipmentId, resolution, status);
+    }
+  }
 }
 
 @Injectable()
