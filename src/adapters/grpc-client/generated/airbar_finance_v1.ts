@@ -191,6 +191,30 @@ export interface ListWithdrawalsRequest {
   status: string;
 }
 
+export interface ApproveWithdrawalRequest {
+  context?: RequestContext | undefined;
+  withdrawalId: string;
+}
+
+export interface MarkWithdrawalSentRequest {
+  context?: RequestContext | undefined;
+  withdrawalId: string;
+  providerRef: string;
+  payoutChannel: string;
+  receiptUrl: string;
+}
+
+export interface SettleWithdrawalRequest {
+  context?: RequestContext | undefined;
+  withdrawalId: string;
+}
+
+export interface FailWithdrawalRequest {
+  context?: RequestContext | undefined;
+  withdrawalId: string;
+  reason: string;
+}
+
 export interface ProcessWithdrawalRequest {
   context?: RequestContext | undefined;
   withdrawalId: string;
@@ -3199,6 +3223,410 @@ export const ListWithdrawalsRequest: MessageFns<ListWithdrawalsRequest> = {
   },
 };
 
+function createBaseApproveWithdrawalRequest(): ApproveWithdrawalRequest {
+  return { context: undefined, withdrawalId: "" };
+}
+
+export const ApproveWithdrawalRequest: MessageFns<ApproveWithdrawalRequest> = {
+  encode(message: ApproveWithdrawalRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.context !== undefined) {
+      RequestContext.encode(message.context, writer.uint32(10).fork()).join();
+    }
+    if (message.withdrawalId !== "") {
+      writer.uint32(18).string(message.withdrawalId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ApproveWithdrawalRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseApproveWithdrawalRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.context = RequestContext.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.withdrawalId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ApproveWithdrawalRequest {
+    return {
+      context: isSet(object.context) ? RequestContext.fromJSON(object.context) : undefined,
+      withdrawalId: isSet(object.withdrawalId)
+        ? globalThis.String(object.withdrawalId)
+        : isSet(object.withdrawal_id)
+        ? globalThis.String(object.withdrawal_id)
+        : "",
+    };
+  },
+
+  toJSON(message: ApproveWithdrawalRequest): unknown {
+    const obj: any = {};
+    if (message.context !== undefined) {
+      obj.context = RequestContext.toJSON(message.context);
+    }
+    if (message.withdrawalId !== "") {
+      obj.withdrawalId = message.withdrawalId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ApproveWithdrawalRequest>, I>>(base?: I): ApproveWithdrawalRequest {
+    return ApproveWithdrawalRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ApproveWithdrawalRequest>, I>>(object: I): ApproveWithdrawalRequest {
+    const message = createBaseApproveWithdrawalRequest();
+    message.context = (object.context !== undefined && object.context !== null)
+      ? RequestContext.fromPartial(object.context)
+      : undefined;
+    message.withdrawalId = object.withdrawalId ?? "";
+    return message;
+  },
+};
+
+function createBaseMarkWithdrawalSentRequest(): MarkWithdrawalSentRequest {
+  return { context: undefined, withdrawalId: "", providerRef: "", payoutChannel: "", receiptUrl: "" };
+}
+
+export const MarkWithdrawalSentRequest: MessageFns<MarkWithdrawalSentRequest> = {
+  encode(message: MarkWithdrawalSentRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.context !== undefined) {
+      RequestContext.encode(message.context, writer.uint32(10).fork()).join();
+    }
+    if (message.withdrawalId !== "") {
+      writer.uint32(18).string(message.withdrawalId);
+    }
+    if (message.providerRef !== "") {
+      writer.uint32(26).string(message.providerRef);
+    }
+    if (message.payoutChannel !== "") {
+      writer.uint32(34).string(message.payoutChannel);
+    }
+    if (message.receiptUrl !== "") {
+      writer.uint32(42).string(message.receiptUrl);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MarkWithdrawalSentRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMarkWithdrawalSentRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.context = RequestContext.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.withdrawalId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.providerRef = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.payoutChannel = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.receiptUrl = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MarkWithdrawalSentRequest {
+    return {
+      context: isSet(object.context) ? RequestContext.fromJSON(object.context) : undefined,
+      withdrawalId: isSet(object.withdrawalId)
+        ? globalThis.String(object.withdrawalId)
+        : isSet(object.withdrawal_id)
+        ? globalThis.String(object.withdrawal_id)
+        : "",
+      providerRef: isSet(object.providerRef)
+        ? globalThis.String(object.providerRef)
+        : isSet(object.provider_ref)
+        ? globalThis.String(object.provider_ref)
+        : "",
+      payoutChannel: isSet(object.payoutChannel)
+        ? globalThis.String(object.payoutChannel)
+        : isSet(object.payout_channel)
+        ? globalThis.String(object.payout_channel)
+        : "",
+      receiptUrl: isSet(object.receiptUrl)
+        ? globalThis.String(object.receiptUrl)
+        : isSet(object.receipt_url)
+        ? globalThis.String(object.receipt_url)
+        : "",
+    };
+  },
+
+  toJSON(message: MarkWithdrawalSentRequest): unknown {
+    const obj: any = {};
+    if (message.context !== undefined) {
+      obj.context = RequestContext.toJSON(message.context);
+    }
+    if (message.withdrawalId !== "") {
+      obj.withdrawalId = message.withdrawalId;
+    }
+    if (message.providerRef !== "") {
+      obj.providerRef = message.providerRef;
+    }
+    if (message.payoutChannel !== "") {
+      obj.payoutChannel = message.payoutChannel;
+    }
+    if (message.receiptUrl !== "") {
+      obj.receiptUrl = message.receiptUrl;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MarkWithdrawalSentRequest>, I>>(base?: I): MarkWithdrawalSentRequest {
+    return MarkWithdrawalSentRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<MarkWithdrawalSentRequest>, I>>(object: I): MarkWithdrawalSentRequest {
+    const message = createBaseMarkWithdrawalSentRequest();
+    message.context = (object.context !== undefined && object.context !== null)
+      ? RequestContext.fromPartial(object.context)
+      : undefined;
+    message.withdrawalId = object.withdrawalId ?? "";
+    message.providerRef = object.providerRef ?? "";
+    message.payoutChannel = object.payoutChannel ?? "";
+    message.receiptUrl = object.receiptUrl ?? "";
+    return message;
+  },
+};
+
+function createBaseSettleWithdrawalRequest(): SettleWithdrawalRequest {
+  return { context: undefined, withdrawalId: "" };
+}
+
+export const SettleWithdrawalRequest: MessageFns<SettleWithdrawalRequest> = {
+  encode(message: SettleWithdrawalRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.context !== undefined) {
+      RequestContext.encode(message.context, writer.uint32(10).fork()).join();
+    }
+    if (message.withdrawalId !== "") {
+      writer.uint32(18).string(message.withdrawalId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SettleWithdrawalRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSettleWithdrawalRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.context = RequestContext.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.withdrawalId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SettleWithdrawalRequest {
+    return {
+      context: isSet(object.context) ? RequestContext.fromJSON(object.context) : undefined,
+      withdrawalId: isSet(object.withdrawalId)
+        ? globalThis.String(object.withdrawalId)
+        : isSet(object.withdrawal_id)
+        ? globalThis.String(object.withdrawal_id)
+        : "",
+    };
+  },
+
+  toJSON(message: SettleWithdrawalRequest): unknown {
+    const obj: any = {};
+    if (message.context !== undefined) {
+      obj.context = RequestContext.toJSON(message.context);
+    }
+    if (message.withdrawalId !== "") {
+      obj.withdrawalId = message.withdrawalId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SettleWithdrawalRequest>, I>>(base?: I): SettleWithdrawalRequest {
+    return SettleWithdrawalRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SettleWithdrawalRequest>, I>>(object: I): SettleWithdrawalRequest {
+    const message = createBaseSettleWithdrawalRequest();
+    message.context = (object.context !== undefined && object.context !== null)
+      ? RequestContext.fromPartial(object.context)
+      : undefined;
+    message.withdrawalId = object.withdrawalId ?? "";
+    return message;
+  },
+};
+
+function createBaseFailWithdrawalRequest(): FailWithdrawalRequest {
+  return { context: undefined, withdrawalId: "", reason: "" };
+}
+
+export const FailWithdrawalRequest: MessageFns<FailWithdrawalRequest> = {
+  encode(message: FailWithdrawalRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.context !== undefined) {
+      RequestContext.encode(message.context, writer.uint32(10).fork()).join();
+    }
+    if (message.withdrawalId !== "") {
+      writer.uint32(18).string(message.withdrawalId);
+    }
+    if (message.reason !== "") {
+      writer.uint32(26).string(message.reason);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FailWithdrawalRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFailWithdrawalRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.context = RequestContext.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.withdrawalId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.reason = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FailWithdrawalRequest {
+    return {
+      context: isSet(object.context) ? RequestContext.fromJSON(object.context) : undefined,
+      withdrawalId: isSet(object.withdrawalId)
+        ? globalThis.String(object.withdrawalId)
+        : isSet(object.withdrawal_id)
+        ? globalThis.String(object.withdrawal_id)
+        : "",
+      reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
+    };
+  },
+
+  toJSON(message: FailWithdrawalRequest): unknown {
+    const obj: any = {};
+    if (message.context !== undefined) {
+      obj.context = RequestContext.toJSON(message.context);
+    }
+    if (message.withdrawalId !== "") {
+      obj.withdrawalId = message.withdrawalId;
+    }
+    if (message.reason !== "") {
+      obj.reason = message.reason;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FailWithdrawalRequest>, I>>(base?: I): FailWithdrawalRequest {
+    return FailWithdrawalRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FailWithdrawalRequest>, I>>(object: I): FailWithdrawalRequest {
+    const message = createBaseFailWithdrawalRequest();
+    message.context = (object.context !== undefined && object.context !== null)
+      ? RequestContext.fromPartial(object.context)
+      : undefined;
+    message.withdrawalId = object.withdrawalId ?? "";
+    message.reason = object.reason ?? "";
+    return message;
+  },
+};
+
 function createBaseProcessWithdrawalRequest(): ProcessWithdrawalRequest {
   return { context: undefined, withdrawalId: "", providerRef: "", payoutChannel: "", receiptUrl: "" };
 }
@@ -5148,6 +5576,46 @@ export const WithdrawalServiceService = {
     responseSerialize: (value: WithdrawalsResponse): Buffer => Buffer.from(WithdrawalsResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): WithdrawalsResponse => WithdrawalsResponse.decode(value),
   },
+  approveWithdrawal: {
+    path: "/airbar.finance.v1.WithdrawalService/ApproveWithdrawal" as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: ApproveWithdrawalRequest): Buffer =>
+      Buffer.from(ApproveWithdrawalRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): ApproveWithdrawalRequest => ApproveWithdrawalRequest.decode(value),
+    responseSerialize: (value: WithdrawalResponse): Buffer => Buffer.from(WithdrawalResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): WithdrawalResponse => WithdrawalResponse.decode(value),
+  },
+  markWithdrawalSent: {
+    path: "/airbar.finance.v1.WithdrawalService/MarkWithdrawalSent" as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: MarkWithdrawalSentRequest): Buffer =>
+      Buffer.from(MarkWithdrawalSentRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): MarkWithdrawalSentRequest => MarkWithdrawalSentRequest.decode(value),
+    responseSerialize: (value: WithdrawalResponse): Buffer => Buffer.from(WithdrawalResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): WithdrawalResponse => WithdrawalResponse.decode(value),
+  },
+  settleWithdrawal: {
+    path: "/airbar.finance.v1.WithdrawalService/SettleWithdrawal" as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: SettleWithdrawalRequest): Buffer =>
+      Buffer.from(SettleWithdrawalRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): SettleWithdrawalRequest => SettleWithdrawalRequest.decode(value),
+    responseSerialize: (value: WithdrawalResponse): Buffer => Buffer.from(WithdrawalResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): WithdrawalResponse => WithdrawalResponse.decode(value),
+  },
+  failWithdrawal: {
+    path: "/airbar.finance.v1.WithdrawalService/FailWithdrawal" as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: FailWithdrawalRequest): Buffer =>
+      Buffer.from(FailWithdrawalRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer): FailWithdrawalRequest => FailWithdrawalRequest.decode(value),
+    responseSerialize: (value: WithdrawalResponse): Buffer => Buffer.from(WithdrawalResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): WithdrawalResponse => WithdrawalResponse.decode(value),
+  },
   processWithdrawal: {
     path: "/airbar.finance.v1.WithdrawalService/ProcessWithdrawal" as const,
     requestStream: false as const,
@@ -5173,6 +5641,10 @@ export const WithdrawalServiceService = {
 export interface WithdrawalServiceServer extends UntypedServiceImplementation {
   createWithdrawal: handleUnaryCall<CreateWithdrawalRequest, WithdrawalResponse>;
   listWithdrawals: handleUnaryCall<ListWithdrawalsRequest, WithdrawalsResponse>;
+  approveWithdrawal: handleUnaryCall<ApproveWithdrawalRequest, WithdrawalResponse>;
+  markWithdrawalSent: handleUnaryCall<MarkWithdrawalSentRequest, WithdrawalResponse>;
+  settleWithdrawal: handleUnaryCall<SettleWithdrawalRequest, WithdrawalResponse>;
+  failWithdrawal: handleUnaryCall<FailWithdrawalRequest, WithdrawalResponse>;
   processWithdrawal: handleUnaryCall<ProcessWithdrawalRequest, WithdrawalResponse>;
   rejectWithdrawal: handleUnaryCall<RejectWithdrawalRequest, WithdrawalResponse>;
 }
@@ -5207,6 +5679,66 @@ export interface WithdrawalServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: WithdrawalsResponse) => void,
+  ): ClientUnaryCall;
+  approveWithdrawal(
+    request: ApproveWithdrawalRequest,
+    callback: (error: ServiceError | null, response: WithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  approveWithdrawal(
+    request: ApproveWithdrawalRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: WithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  approveWithdrawal(
+    request: ApproveWithdrawalRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: WithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  markWithdrawalSent(
+    request: MarkWithdrawalSentRequest,
+    callback: (error: ServiceError | null, response: WithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  markWithdrawalSent(
+    request: MarkWithdrawalSentRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: WithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  markWithdrawalSent(
+    request: MarkWithdrawalSentRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: WithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  settleWithdrawal(
+    request: SettleWithdrawalRequest,
+    callback: (error: ServiceError | null, response: WithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  settleWithdrawal(
+    request: SettleWithdrawalRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: WithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  settleWithdrawal(
+    request: SettleWithdrawalRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: WithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  failWithdrawal(
+    request: FailWithdrawalRequest,
+    callback: (error: ServiceError | null, response: WithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  failWithdrawal(
+    request: FailWithdrawalRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: WithdrawalResponse) => void,
+  ): ClientUnaryCall;
+  failWithdrawal(
+    request: FailWithdrawalRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: WithdrawalResponse) => void,
   ): ClientUnaryCall;
   processWithdrawal(
     request: ProcessWithdrawalRequest,

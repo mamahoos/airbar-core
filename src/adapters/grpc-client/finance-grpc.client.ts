@@ -6,11 +6,13 @@ import { DomainError, ErrorCode } from '../../shared/errors/index.js';
 
 import { buildProtoContext } from './finance-request.js';
 import {
+  ApproveWithdrawalRequest,
   CreateEscrowRequest,
   CreatePaymentOrderRequest,
   CreateWalletTopupRequest,
   CreateWithdrawalRequest,
   EscrowServiceClient,
+  FailWithdrawalRequest,
   FinanceHealthServiceClient,
   FreezeEscrowRequest,
   FundEscrowRequest,
@@ -23,6 +25,7 @@ import {
   ListWalletTransactionsRequest,
   ListReconciliationRunsRequest,
   ListWithdrawalsRequest,
+  MarkWithdrawalSentRequest,
   MarkDeliveredRequest,
   PartialRefundEscrowRequest,
   PayFromWalletRequest,
@@ -34,6 +37,7 @@ import {
   RejectWithdrawalRequest,
   ReleaseEscrowRequest,
   RunReconciliationRequest,
+  SettleWithdrawalRequest,
   TreasuryServiceClient,
   VerifyPaymentOrderRequest,
   WalletServiceClient,
@@ -415,6 +419,88 @@ export class FinanceGrpcClient implements OnModuleDestroy {
       this.withdrawalClient.listWithdrawals(
         request,
         buildGrpcMetadata(),
+        { deadline: this.deadline() },
+        cb,
+      ),
+    );
+  }
+
+  approveWithdrawal(
+    input: { withdrawalId: string; idempotencyKey: string },
+    metadata?: GrpcCallMetadata,
+  ): Promise<WithdrawalResponse> {
+    const request = ApproveWithdrawalRequest.create({
+      context: buildProtoContext(input.idempotencyKey),
+      withdrawalId: input.withdrawalId,
+    });
+    return this.unary((cb) =>
+      this.withdrawalClient.approveWithdrawal(
+        request,
+        buildGrpcMetadata({ ...metadata, idempotencyKey: input.idempotencyKey }),
+        { deadline: this.deadline() },
+        cb,
+      ),
+    );
+  }
+
+  markWithdrawalSent(
+    input: {
+      withdrawalId: string;
+      providerRef: string;
+      payoutChannel: string;
+      receiptUrl: string;
+      idempotencyKey: string;
+    },
+    metadata?: GrpcCallMetadata,
+  ): Promise<WithdrawalResponse> {
+    const request = MarkWithdrawalSentRequest.create({
+      context: buildProtoContext(input.idempotencyKey),
+      withdrawalId: input.withdrawalId,
+      providerRef: input.providerRef,
+      payoutChannel: input.payoutChannel,
+      receiptUrl: input.receiptUrl,
+    });
+    return this.unary((cb) =>
+      this.withdrawalClient.markWithdrawalSent(
+        request,
+        buildGrpcMetadata({ ...metadata, idempotencyKey: input.idempotencyKey }),
+        { deadline: this.deadline() },
+        cb,
+      ),
+    );
+  }
+
+  settleWithdrawal(
+    input: { withdrawalId: string; idempotencyKey: string },
+    metadata?: GrpcCallMetadata,
+  ): Promise<WithdrawalResponse> {
+    const request = SettleWithdrawalRequest.create({
+      context: buildProtoContext(input.idempotencyKey),
+      withdrawalId: input.withdrawalId,
+    });
+    return this.unary((cb) =>
+      this.withdrawalClient.settleWithdrawal(
+        request,
+        buildGrpcMetadata({ ...metadata, idempotencyKey: input.idempotencyKey }),
+        { deadline: this.deadline() },
+        cb,
+      ),
+    );
+  }
+
+  failWithdrawal(
+    input: { withdrawalId: string; reason: string; idempotencyKey: string },
+    metadata?: GrpcCallMetadata,
+  ): Promise<WithdrawalResponse> {
+    const request = FailWithdrawalRequest.create({
+      context: buildProtoContext(input.idempotencyKey),
+      withdrawalId: input.withdrawalId,
+      reason: input.reason,
+    });
+    return this.unary((cb) =>
+      this.withdrawalClient.failWithdrawal(
+        request,
+        buildGrpcMetadata({ ...metadata, idempotencyKey: input.idempotencyKey }),
         { deadline: this.deadline() },
         cb,
       ),

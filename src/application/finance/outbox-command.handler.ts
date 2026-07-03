@@ -2,9 +2,12 @@ import { Injectable } from '@nestjs/common';
 
 import { FinanceGrpcClient } from '../../adapters/grpc-client/finance-grpc.client.js';
 import {
+  approveWithdrawalKey,
   escrowCreateKey,
+  failWithdrawalKey,
   freezeEscrowKey,
   markDeliveredKey,
+  markWithdrawalSentKey,
   partialRefundEscrowKey,
   payFromWalletKey,
   paymentOrderKey,
@@ -12,6 +15,7 @@ import {
   refundEscrowKey,
   rejectWithdrawalKey,
   releaseEscrowKey,
+  settleWithdrawalKey,
   withdrawalKey,
 } from '../../shared/idempotency/keys.js';
 
@@ -124,6 +128,40 @@ export class OutboxCommandHandler {
         );
         return { withdrawalId: response.id };
       }
+      case 'ApproveWithdrawal':
+        await this.finance.approveWithdrawal(
+          { withdrawalId: String(payload.withdrawalId), idempotencyKey },
+          { idempotencyKey },
+        );
+        return {};
+      case 'MarkWithdrawalSent':
+        await this.finance.markWithdrawalSent(
+          {
+            withdrawalId: String(payload.withdrawalId),
+            providerRef: String(payload.providerRef),
+            payoutChannel: String(payload.payoutChannel),
+            receiptUrl: String(payload.receiptUrl),
+            idempotencyKey,
+          },
+          { idempotencyKey },
+        );
+        return {};
+      case 'SettleWithdrawal':
+        await this.finance.settleWithdrawal(
+          { withdrawalId: String(payload.withdrawalId), idempotencyKey },
+          { idempotencyKey },
+        );
+        return {};
+      case 'FailWithdrawal':
+        await this.finance.failWithdrawal(
+          {
+            withdrawalId: String(payload.withdrawalId),
+            reason: typeof payload.reason === 'string' ? payload.reason : '',
+            idempotencyKey,
+          },
+          { idempotencyKey },
+        );
+        return {};
       case 'ProcessWithdrawal':
         await this.finance.processWithdrawal(
           {
@@ -171,6 +209,14 @@ export class OutboxCommandHandler {
         return partialRefundEscrowKey(String(payload.shipmentId), String(payload.refundAmount));
       case 'CreateWithdrawal':
         return withdrawalKey(String(payload.userId), String(payload.nonce));
+      case 'ApproveWithdrawal':
+        return approveWithdrawalKey(String(payload.withdrawalId));
+      case 'MarkWithdrawalSent':
+        return markWithdrawalSentKey(String(payload.withdrawalId));
+      case 'SettleWithdrawal':
+        return settleWithdrawalKey(String(payload.withdrawalId));
+      case 'FailWithdrawal':
+        return failWithdrawalKey(String(payload.withdrawalId));
       case 'ProcessWithdrawal':
         return processWithdrawalKey(String(payload.withdrawalId));
       case 'RejectWithdrawal':

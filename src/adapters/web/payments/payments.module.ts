@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 
 import { EscrowJobsService } from '../../../application/finance/escrow-jobs.service.js';
 import {
+  ApproveAdminWithdrawalUseCase,
   CreateShipmentPaymentUseCase,
+  FailAdminWithdrawalUseCase,
   GetAdminReconciliationRunUseCase,
   GetAdminOutboxUseCase,
   GetAdminTreasurySummaryUseCase,
@@ -12,12 +14,14 @@ import {
   ListAdminProviderEventsUseCase,
   ListWalletTransactionsUseCase,
   ListWithdrawalsUseCase,
+  MarkAdminWithdrawalSentUseCase,
   ProcessAdminWithdrawalUseCase,
   RejectAdminWithdrawalUseCase,
   ReplayOutboxUseCase,
   RequestWithdrawalUseCase,
   ResolveDisputeUseCase,
   RunAdminReconciliationUseCase,
+  SettleAdminWithdrawalUseCase,
 } from '../../../application/finance/payment.use-cases.js';
 import { AuthPersistenceModule } from '../../persistence/auth/auth-persistence.module.js';
 import { MarketplacePersistenceModule } from '../../persistence/marketplace/marketplace-persistence.module.js';
@@ -44,6 +48,10 @@ import { PaymentsController } from './payments.controller.js';
     ListAdminProviderEventsUseCase,
     ReplayOutboxUseCase,
     ResolveDisputeUseCase,
+    ApproveAdminWithdrawalUseCase,
+    MarkAdminWithdrawalSentUseCase,
+    SettleAdminWithdrawalUseCase,
+    FailAdminWithdrawalUseCase,
     ProcessAdminWithdrawalUseCase,
     RejectAdminWithdrawalUseCase,
     EscrowJobsService,
@@ -61,6 +69,10 @@ import { PaymentsController } from './payments.controller.js';
     ListAdminProviderEventsUseCase,
     ReplayOutboxUseCase,
     ResolveDisputeUseCase,
+    ApproveAdminWithdrawalUseCase,
+    MarkAdminWithdrawalSentUseCase,
+    SettleAdminWithdrawalUseCase,
+    FailAdminWithdrawalUseCase,
     ProcessAdminWithdrawalUseCase,
     RejectAdminWithdrawalUseCase,
     EscrowJobsService,

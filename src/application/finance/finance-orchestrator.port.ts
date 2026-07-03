@@ -50,8 +50,22 @@ export interface ProcessWithdrawalInput {
   readonly receiptUrl: string;
 }
 
+export interface WithdrawalCommandInput {
+  readonly withdrawalId: string;
+}
+
+export interface MarkWithdrawalSentInput extends WithdrawalCommandInput {
+  readonly providerRef: string;
+  readonly payoutChannel: string;
+  readonly receiptUrl: string;
+}
+
 export interface RejectWithdrawalInput {
   readonly withdrawalId: string;
+  readonly reason: string;
+}
+
+export interface FailWithdrawalInput extends WithdrawalCommandInput {
   readonly reason: string;
 }
 
@@ -74,6 +88,10 @@ export interface FinanceOrchestratorPort {
   tryCreateWithdrawal(
     input: CreateWithdrawalInput,
   ): Promise<FinanceSyncResult<{ withdrawalId: string }>>;
+  tryApproveWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<void>>;
+  tryMarkWithdrawalSent(input: MarkWithdrawalSentInput): Promise<FinanceSyncResult<void>>;
+  trySettleWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<void>>;
+  tryFailWithdrawal(input: FailWithdrawalInput): Promise<FinanceSyncResult<void>>;
   tryProcessWithdrawal(input: ProcessWithdrawalInput): Promise<FinanceSyncResult<void>>;
   tryRejectWithdrawal(input: RejectWithdrawalInput): Promise<FinanceSyncResult<void>>;
 

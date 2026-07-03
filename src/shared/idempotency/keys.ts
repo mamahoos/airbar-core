@@ -52,6 +52,22 @@ export function processWithdrawalKey(withdrawalId: string): string {
   return `wd-process:${withdrawalId}`;
 }
 
+export function approveWithdrawalKey(withdrawalId: string): string {
+  return `wd-approve:${withdrawalId}`;
+}
+
+export function markWithdrawalSentKey(withdrawalId: string): string {
+  return `wd-sent:${withdrawalId}`;
+}
+
+export function settleWithdrawalKey(withdrawalId: string): string {
+  return `wd-settle:${withdrawalId}`;
+}
+
+export function failWithdrawalKey(withdrawalId: string): string {
+  return `wd-fail:${withdrawalId}`;
+}
+
 export function rejectWithdrawalKey(withdrawalId: string): string {
   return `wd-reject:${withdrawalId}`;
 }

@@ -9,6 +9,10 @@ export const OUTBOX_COMMANDS = [
   'RefundEscrow',
   'PartialRefundEscrow',
   'CreateWithdrawal',
+  'ApproveWithdrawal',
+  'MarkWithdrawalSent',
+  'SettleWithdrawal',
+  'FailWithdrawal',
   'ProcessWithdrawal',
   'RejectWithdrawal',
 ] as const;

@@ -10,5 +10,9 @@ export {
   partialRefundEscrowKey,
   withdrawalKey,
   processWithdrawalKey,
+  approveWithdrawalKey,
+  markWithdrawalSentKey,
+  settleWithdrawalKey,
+  failWithdrawalKey,
   rejectWithdrawalKey,
 } from './keys.js';

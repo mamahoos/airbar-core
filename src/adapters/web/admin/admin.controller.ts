@@ -42,17 +42,21 @@ import {
   UpdateAdminUserRoleUseCase,
 } from '../../../application/admin/admin.use-cases.js';
 import {
+  ApproveAdminWithdrawalUseCase,
+  FailAdminWithdrawalUseCase,
   GetAdminReconciliationRunUseCase,
   GetAdminTreasurySummaryUseCase,
   GetAdminOutboxUseCase,
   ListAdminReconciliationRunsUseCase,
   ListAdminOutboxUseCase,
   ListAdminProviderEventsUseCase,
+  MarkAdminWithdrawalSentUseCase,
   ProcessAdminWithdrawalUseCase,
   RejectAdminWithdrawalUseCase,
   ReplayOutboxUseCase,
   ResolveDisputeUseCase,
   RunAdminReconciliationUseCase,
+  SettleAdminWithdrawalUseCase,
 } from '../../../application/finance/payment.use-cases.js';
 import { UserRole as DomainUserRole } from '../../../domain/auth/user-role.js';
 import {
@@ -212,6 +216,14 @@ class ProcessWithdrawalDto {
   receiptUrl!: string;
 }
 
+class MarkWithdrawalSentDto extends ProcessWithdrawalDto {}
+
+class FailWithdrawalDto {
+  @IsString()
+  @IsNotEmpty()
+  reason!: string;
+}
+
 class AdminOutboxQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
@@ -274,6 +286,10 @@ export class AdminController {
     private readonly updatePricingRule: UpdateAdminPricingRuleUseCase,
     private readonly resolveDispute: ResolveDisputeUseCase,
     private readonly replayOutbox: ReplayOutboxUseCase,
+    private readonly approveWithdrawal: ApproveAdminWithdrawalUseCase,
+    private readonly markWithdrawalSent: MarkAdminWithdrawalSentUseCase,
+    private readonly settleWithdrawal: SettleAdminWithdrawalUseCase,
+    private readonly failWithdrawal: FailAdminWithdrawalUseCase,
     private readonly processWithdrawal: ProcessAdminWithdrawalUseCase,
     private readonly rejectWithdrawal: RejectAdminWithdrawalUseCase,
     private readonly getTreasurySummary: GetAdminTreasurySummaryUseCase,
@@ -453,6 +469,30 @@ export class AdminController {
   @ApiOperation({ summary: 'Process withdrawal via finance gRPC' })
   processWithdrawalRoute(@Param('id') id: string, @Body() dto: ProcessWithdrawalDto) {
     return this.processWithdrawal.execute(id, dto);
+  }
+
+  @Post('withdrawals/:id/approve')
+  @ApiOperation({ summary: 'Approve withdrawal before bank payout' })
+  approveWithdrawalRoute(@Param('id') id: string) {
+    return this.approveWithdrawal.execute(id);
+  }
+
+  @Post('withdrawals/:id/mark-sent')
+  @ApiOperation({ summary: 'Mark withdrawal as sent to bank with provider receipt' })
+  markWithdrawalSentRoute(@Param('id') id: string, @Body() dto: MarkWithdrawalSentDto) {
+    return this.markWithdrawalSent.execute(id, dto);
+  }
+
+  @Post('withdrawals/:id/settle')
+  @ApiOperation({ summary: 'Settle sent withdrawal after bank confirmation' })
+  settleWithdrawalRoute(@Param('id') id: string) {
+    return this.settleWithdrawal.execute(id);
+  }
+
+  @Post('withdrawals/:id/fail')
+  @ApiOperation({ summary: 'Fail sent/approved withdrawal and reverse reserved balance' })
+  failWithdrawalRoute(@Param('id') id: string, @Body() dto: FailWithdrawalDto) {
+    return this.failWithdrawal.execute(id, dto.reason);
   }
 
   @Post('withdrawals/:id/reject')

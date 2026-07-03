@@ -4,9 +4,12 @@ import { FinanceGrpcClient } from '../../adapters/grpc-client/finance-grpc.clien
 import { APP_CONFIG } from '../../bootstrap/config/index.js';
 import { DomainError, ErrorCode } from '../../shared/errors/index.js';
 import {
+  approveWithdrawalKey,
   escrowCreateKey,
+  failWithdrawalKey,
   freezeEscrowKey,
   markDeliveredKey,
+  markWithdrawalSentKey,
   partialRefundEscrowKey,
   payFromWalletKey,
   paymentOrderKey,
@@ -14,6 +17,7 @@ import {
   refundEscrowKey,
   rejectWithdrawalKey,
   releaseEscrowKey,
+  settleWithdrawalKey,
   withdrawalKey,
 } from '../../shared/idempotency/keys.js';
 
@@ -25,11 +29,14 @@ import {
   type FinanceOrchestratorPort,
   type FinanceReadyStatus,
   type FinanceSyncResult,
+  type FailWithdrawalInput,
+  type MarkWithdrawalSentInput,
   type PartialRefundInput,
   type PayFromWalletInput,
   type ProcessWithdrawalInput,
   type RejectWithdrawalInput,
   type ShipmentFinanceCommandInput,
+  type WithdrawalCommandInput,
 } from './finance-orchestrator.port.js';
 import { IntegrationOutboxService } from './integration-outbox.service.js';
 import { ShipmentFinanceBridgeService } from './shipment-finance-bridge.service.js';
@@ -239,6 +246,67 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
       'CreateWithdrawal',
       AGGREGATE_USER,
       input.userId,
+      payload,
+      idempotencyKey,
+    );
+  }
+
+  async tryApproveWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<void>> {
+    const idempotencyKey = approveWithdrawalKey(input.withdrawalId);
+    const payload = { withdrawalId: input.withdrawalId };
+    return this.trySync(
+      () => this.finance.approveWithdrawal({ ...payload, idempotencyKey }, { idempotencyKey }),
+      () => Promise.resolve(undefined),
+      'ApproveWithdrawal',
+      AGGREGATE_WITHDRAWAL,
+      input.withdrawalId,
+      payload,
+      idempotencyKey,
+    );
+  }
+
+  async tryMarkWithdrawalSent(input: MarkWithdrawalSentInput): Promise<FinanceSyncResult<void>> {
+    const idempotencyKey = markWithdrawalSentKey(input.withdrawalId);
+    const payload = {
+      withdrawalId: input.withdrawalId,
+      providerRef: input.providerRef,
+      payoutChannel: input.payoutChannel,
+      receiptUrl: input.receiptUrl,
+    };
+    return this.trySync(
+      () => this.finance.markWithdrawalSent({ ...payload, idempotencyKey }, { idempotencyKey }),
+      () => Promise.resolve(undefined),
+      'MarkWithdrawalSent',
+      AGGREGATE_WITHDRAWAL,
+      input.withdrawalId,
+      payload,
+      idempotencyKey,
+    );
+  }
+
+  async trySettleWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<void>> {
+    const idempotencyKey = settleWithdrawalKey(input.withdrawalId);
+    const payload = { withdrawalId: input.withdrawalId };
+    return this.trySync(
+      () => this.finance.settleWithdrawal({ ...payload, idempotencyKey }, { idempotencyKey }),
+      () => Promise.resolve(undefined),
+      'SettleWithdrawal',
+      AGGREGATE_WITHDRAWAL,
+      input.withdrawalId,
+      payload,
+      idempotencyKey,
+    );
+  }
+
+  async tryFailWithdrawal(input: FailWithdrawalInput): Promise<FinanceSyncResult<void>> {
+    const idempotencyKey = failWithdrawalKey(input.withdrawalId);
+    const payload = { withdrawalId: input.withdrawalId, reason: input.reason };
+    return this.trySync(
+      () => this.finance.failWithdrawal({ ...payload, idempotencyKey }, { idempotencyKey }),
+      () => Promise.resolve(undefined),
+      'FailWithdrawal',
+      AGGREGATE_WITHDRAWAL,
+      input.withdrawalId,
       payload,
       idempotencyKey,
     );

@@ -384,6 +384,68 @@ export class ProcessAdminWithdrawalUseCase {
 }
 
 @Injectable()
+export class ApproveAdminWithdrawalUseCase {
+  constructor(@Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort) {}
+
+  async execute(withdrawalId: string) {
+    const result = await this.finance.tryApproveWithdrawal({ withdrawalId });
+    if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal approve queued');
+    return { withdrawalId, approved: true };
+  }
+}
+
+@Injectable()
+export class MarkAdminWithdrawalSentUseCase {
+  constructor(@Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort) {}
+
+  async execute(
+    withdrawalId: string,
+    input: { providerRef: string; payoutChannel: string; receiptUrl: string },
+  ) {
+    const providerRef = input.providerRef.trim();
+    const payoutChannel = input.payoutChannel.trim();
+    const receiptUrl = input.receiptUrl.trim();
+    if (!providerRef || !payoutChannel || !receiptUrl) {
+      throw new ValidationError('providerRef, payoutChannel and receiptUrl are required');
+    }
+
+    const result = await this.finance.tryMarkWithdrawalSent({
+      withdrawalId,
+      providerRef,
+      payoutChannel,
+      receiptUrl,
+    });
+    if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal sent queued');
+    return { withdrawalId, providerRef, payoutChannel, receiptUrl, sent: true };
+  }
+}
+
+@Injectable()
+export class SettleAdminWithdrawalUseCase {
+  constructor(@Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort) {}
+
+  async execute(withdrawalId: string) {
+    const result = await this.finance.trySettleWithdrawal({ withdrawalId });
+    if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal settle queued');
+    return { withdrawalId, settled: true };
+  }
+}
+
+@Injectable()
+export class FailAdminWithdrawalUseCase {
+  constructor(@Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort) {}
+
+  async execute(withdrawalId: string, reason: string) {
+    const cleanReason = reason.trim();
+    if (!cleanReason) throw new ValidationError('Fail reason is required');
+
+    const result = await this.finance.tryFailWithdrawal({ withdrawalId, reason: cleanReason });
+    if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal fail queued');
+    return { withdrawalId, failed: true };
+  }
+}
+
+@Injectable()
 export class RejectAdminWithdrawalUseCase {
   constructor(@Inject(FINANCE_ORCHESTRATOR) private readonly finance: FinanceOrchestratorPort) {}
 

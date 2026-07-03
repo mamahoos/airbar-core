@@ -1,12 +1,16 @@
 import { IntegrationOutboxService } from './integration-outbox.service.js';
 import {
+  ApproveAdminWithdrawalUseCase,
+  FailAdminWithdrawalUseCase,
   GetAdminOutboxUseCase,
   GetAdminTreasurySummaryUseCase,
   ListAdminOutboxUseCase,
   ListAdminProviderEventsUseCase,
   ListAdminReconciliationRunsUseCase,
+  MarkAdminWithdrawalSentUseCase,
   ProcessAdminWithdrawalUseCase,
   ReplayOutboxUseCase,
+  SettleAdminWithdrawalUseCase,
 } from './payment.use-cases.js';
 
 import type { FinanceOrchestratorPort } from './finance-orchestrator.port.js';
@@ -55,6 +59,99 @@ describe('ProcessAdminWithdrawalUseCase', () => {
       payoutChannel: 'PAYA',
       receiptUrl: 'https://pay.example/receipt/1',
     });
+  });
+});
+
+describe('Withdrawal lifecycle admin use cases', () => {
+  it('approves a pending withdrawal', async () => {
+    const finance = {
+      tryApproveWithdrawal: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
+    };
+    const useCase = new ApproveAdminWithdrawalUseCase(finance as never);
+
+    await expect(useCase.execute('wd_1')).resolves.toEqual({
+      withdrawalId: 'wd_1',
+      approved: true,
+    });
+    expect(finance.tryApproveWithdrawal).toHaveBeenCalledWith({ withdrawalId: 'wd_1' });
+  });
+
+  it('trims and forwards sent-to-bank receipt fields', async () => {
+    const finance = {
+      tryMarkWithdrawalSent: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
+    };
+    const useCase = new MarkAdminWithdrawalSentUseCase(finance as never);
+
+    await expect(
+      useCase.execute('wd_1', {
+        providerRef: ' provider-123 ',
+        payoutChannel: ' PAYA ',
+        receiptUrl: ' https://pay.example/receipt/1 ',
+      }),
+    ).resolves.toEqual({
+      withdrawalId: 'wd_1',
+      providerRef: 'provider-123',
+      payoutChannel: 'PAYA',
+      receiptUrl: 'https://pay.example/receipt/1',
+      sent: true,
+    });
+    expect(finance.tryMarkWithdrawalSent).toHaveBeenCalledWith({
+      withdrawalId: 'wd_1',
+      providerRef: 'provider-123',
+      payoutChannel: 'PAYA',
+      receiptUrl: 'https://pay.example/receipt/1',
+    });
+  });
+
+  it('requires sent-to-bank receipt fields', async () => {
+    const finance = { tryMarkWithdrawalSent: jest.fn() };
+    const useCase = new MarkAdminWithdrawalSentUseCase(finance as never);
+
+    await expect(
+      useCase.execute('wd_1', {
+        providerRef: '',
+        payoutChannel: 'PAYA',
+        receiptUrl: 'https://pay.example/receipt/1',
+      }),
+    ).rejects.toThrow('providerRef, payoutChannel and receiptUrl are required');
+    expect(finance.tryMarkWithdrawalSent).not.toHaveBeenCalled();
+  });
+
+  it('settles a sent withdrawal', async () => {
+    const finance = {
+      trySettleWithdrawal: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
+    };
+    const useCase = new SettleAdminWithdrawalUseCase(finance as never);
+
+    await expect(useCase.execute('wd_1')).resolves.toEqual({
+      withdrawalId: 'wd_1',
+      settled: true,
+    });
+    expect(finance.trySettleWithdrawal).toHaveBeenCalledWith({ withdrawalId: 'wd_1' });
+  });
+
+  it('trims and forwards fail reason', async () => {
+    const finance = {
+      tryFailWithdrawal: jest.fn().mockResolvedValue({ ok: true, value: undefined }),
+    };
+    const useCase = new FailAdminWithdrawalUseCase(finance as never);
+
+    await expect(useCase.execute('wd_1', ' bank rejected ')).resolves.toEqual({
+      withdrawalId: 'wd_1',
+      failed: true,
+    });
+    expect(finance.tryFailWithdrawal).toHaveBeenCalledWith({
+      withdrawalId: 'wd_1',
+      reason: 'bank rejected',
+    });
+  });
+
+  it('requires fail reason', async () => {
+    const finance = { tryFailWithdrawal: jest.fn() };
+    const useCase = new FailAdminWithdrawalUseCase(finance as never);
+
+    await expect(useCase.execute('wd_1', ' ')).rejects.toThrow('Fail reason is required');
+    expect(finance.tryFailWithdrawal).not.toHaveBeenCalled();
   });
 });
 

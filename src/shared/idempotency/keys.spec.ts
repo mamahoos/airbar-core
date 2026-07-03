@@ -3,10 +3,14 @@ import { describe, it, expect } from '@jest/globals';
 import { shipmentId, userId } from '../ids/index.js';
 
 import {
+  approveWithdrawalKey,
   escrowCreateKey,
+  failWithdrawalKey,
   fundEscrowKey,
+  markWithdrawalSentKey,
   partialRefundEscrowKey,
   paymentOrderKey,
+  settleWithdrawalKey,
   releaseEscrowKey,
   withdrawalKey,
 } from './keys.js';
@@ -34,5 +38,12 @@ describe('idempotency key builders', () => {
 
   it('builds withdrawal key', () => {
     expect(withdrawalKey(uid, 'req-1')).toBe('wd:user-uuid:req-1');
+  });
+
+  it('builds withdrawal lifecycle keys', () => {
+    expect(approveWithdrawalKey('wd-1')).toBe('wd-approve:wd-1');
+    expect(markWithdrawalSentKey('wd-1')).toBe('wd-sent:wd-1');
+    expect(settleWithdrawalKey('wd-1')).toBe('wd-settle:wd-1');
+    expect(failWithdrawalKey('wd-1')).toBe('wd-fail:wd-1');
   });
 });
