@@ -26,7 +26,7 @@ on:
 jobs:
   build-push:
     name: build & push
-    runs-on: [self-hosted, airbar-core]
+    runs-on: self-hosted
     timeout-minutes: 20
     permissions:
       actions: read

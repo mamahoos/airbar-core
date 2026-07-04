@@ -49,7 +49,7 @@ on:
 jobs:
   deploy:
     name: deploy to ${{ inputs.environment }}
-    runs-on: [self-hosted, airbar-core]
+    runs-on: self-hosted
     timeout-minutes: 15
     environment: ${{ inputs.environment }}
     outputs:

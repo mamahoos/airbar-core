@@ -14,7 +14,7 @@ concurrency:
 jobs:
   guard:
     name: check CI result
-    runs-on: [self-hosted, airbar-core]
+    runs-on: self-hosted
     timeout-minutes: 2
     if: github.event.workflow_run.conclusion == 'success'
     steps:
