@@ -28,7 +28,7 @@ Compose uses a **base + overlay** pattern:
 
 Host ports (dev): Postgres **5435**, Redis **6382**, app **4000**.
 
-Staging/production use shared Docker networks with airbar-finance (`airbar-staging`, `airbar-prod`). See `.env.staging.example` / `.env.production.example`.
+Staging/production use the shared **`airbar-net`** network with airbar-infra and airbar-finance. See `.env.staging.example` / `.env.production.example`.
 
 ### Dependencies only (DB + Redis)
 

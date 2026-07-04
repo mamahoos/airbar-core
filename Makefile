@@ -6,8 +6,8 @@ DB_URL ?= postgresql://airbar:airbar_secret@localhost:5435/airbar_api?schema=pub
 COMPOSE := docker compose -f docker-compose.yml
 COMPOSE_DEV := $(COMPOSE) -f docker-compose.dev.yml
 COMPOSE_RESOURCES := $(COMPOSE) -f docker-compose.resources.yml
-COMPOSE_STAGING := $(COMPOSE) -f docker-compose.staging.yml
-COMPOSE_PROD := $(COMPOSE) -f docker-compose.prod.yml
+COMPOSE_STAGING := docker compose -f docker-compose.staging.yml
+COMPOSE_PROD := docker compose -f docker-compose.prod.yml
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
@@ -21,15 +21,13 @@ up: ## Start postgres + redis (resources only)
 up-dev: ## Start full dev stack (build app image)
 	$(COMPOSE_DEV) up -d --build
 
-up-staging: ## Deploy staging stack (requires IMAGE_TAG)
+up-staging: ## Deploy staging stack on server (requires IMAGE_TAG + airbar-net)
 	@test -n "$(IMAGE_TAG)" || (echo "IMAGE_TAG is required" && exit 1)
-	docker network create airbar-staging 2>/dev/null || true
-	COMPOSE_PROJECT_NAME=airbar-core-staging IMAGE_TAG=$(IMAGE_TAG) $(COMPOSE_STAGING) up -d --remove-orphans
+	IMAGE_TAG=$(IMAGE_TAG) $(COMPOSE_STAGING) up -d --remove-orphans
 
-up-prod: ## Deploy production stack (requires IMAGE_TAG)
+up-prod: ## Deploy production stack on server (requires IMAGE_TAG + airbar-net)
 	@test -n "$(IMAGE_TAG)" || (echo "IMAGE_TAG is required" && exit 1)
-	docker network create airbar-prod 2>/dev/null || true
-	COMPOSE_PROJECT_NAME=airbar-core-prod IMAGE_TAG=$(IMAGE_TAG) $(COMPOSE_PROD) up -d --remove-orphans
+	IMAGE_TAG=$(IMAGE_TAG) $(COMPOSE_PROD) up -d --remove-orphans
 
 down: ## Stop postgres + redis
 	$(COMPOSE_RESOURCES) down
