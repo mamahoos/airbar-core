@@ -80,17 +80,27 @@ make migrate-down      # rollback one step
 | Coverage                        | `npm run test:cov`      |
 | Full verify                     | `make verify`           |
 
-## CI
+## CI/CD
 
-GitHub Actions (`.github/workflows/ci.yml`):
+GitHub Actions — same staging strategy as [airbar-finance](https://github.com/mamahoos/airbar-finance):
 
-- `lint` — ESLint
-- `typecheck` — `tsc --noEmit`
-- `unit` — Jest unit project
-- `build` — `nest build`
-- `integration` — Postgres 16 service + Prisma migrate + integration project
-- `audit` — `npm audit --audit-level=high`
-- `quality-gate` — requires all gates green
+| Workflow | When | What |
+| -------- | ---- | ---- |
+| `ci.yml` | Every PR + push to `main` | lint, typecheck, unit, build, integration, audit → quality gate |
+| `staging.yml` | Auto after CI on `main` | Build & push `ghcr.io/mamahoos/airbar-core:staging` (no SSH) |
+| `deploy-staging.yml` | Manual | SSH deploy to `/srv/airbar.app/airbar-core/` |
+| `deploy-production.yml` | Manual | Production deploy |
+| `release.yml` | Tag `v*.*.*` | Semver image + GitHub Release |
+| `rollback.yml` | Manual | Roll back to a previous image tag |
+
+Server bootstrap and URLs: [docs/server-discovery.md](./server-discovery.md).
+
+Local quality gates:
+
+```bash
+make verify              # lint + typecheck + unit + build
+make test-integration    # requires postgres (make up)
+```
 
 ## Proto codegen (finance gRPC client)
 
