@@ -1,45 +1,50 @@
-# Production deploy — pre-built image from GHCR, no host port exposure.
-# Requires on the server:
-#   - .env.production (copy from .env.production.example; never commit secrets)
-#   - IMAGE_TAG set by CI (e.g. ghcr.io/mamahoos/airbar-core:v0.2.0)
-#   - Reverse proxy on the shared Docker network for public HTTP
-#
-# Prisma migrations run automatically on container start.
+# Production on company VPS — shared airbar-infra on airbar-net.
+# Manual deploy only. Requires .env.production on server.
 
 services:
-  postgres:
-    container_name: airbar-core-postgres-prod
-    env_file: .env.production
-    restart: always
-
-  redis:
-    container_name: airbar-core-redis-prod
-    env_file: .env.production
-    restart: always
-
   app:
     image: ${IMAGE_TAG:?IMAGE_TAG is required for production deploy}
     container_name: airbar-core-app-prod
     env_file: .env.production
     environment:
       NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      REDIS_HOST: ${REDIS_HOST:-airbar-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_URL: ${REDIS_URL:-redis://airbar-redis:6379/0}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-airbar-minio}
+      MINIO_PORT: ${MINIO_PORT:-9000}
       FINANCE_GRPC_URL: ${FINANCE_GRPC_URL:-airbar-finance-app-prod:50051}
     command: >
       sh -c "npx prisma migrate deploy &&
              node dist/bootstrap/main.js"
+    networks:
+      airbar-net:
+        aliases:
+          - airbar-core-app-prod
     restart: always
+    mem_limit: 1280m
+    memswap_limit: 1280m
+    cpus: 0.65
     logging:
       driver: json-file
       options:
         max-size: '50m'
         max-file: '5'
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 1G
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 networks:
-  internal:
-    name: airbar-prod
+  airbar-net:
     external: true
+    name: airbar-net

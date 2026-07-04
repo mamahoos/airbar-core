@@ -1,43 +1,53 @@
-# Staging deploy — pre-built image from GHCR.
-# Requires on the server:
-#   - .env.staging (copy from .env.staging.example; never commit secrets)
-#   - IMAGE_TAG set by CI (e.g. ghcr.io/mamahoos/airbar-core:sha-abc1234)
-#
-# Prisma migrations run automatically on container start.
+# Staging on company VPS — shared airbar-infra on airbar-net.
+# Server path: /srv/airbar.app/airbar-core/
+# Requires: .env.staging on server (copy from .env.staging.example)
+# Prereq: airbar-finance-app-staging on same network for FINANCE_GRPC_URL
+# DB bootstrap (once): CREATE DATABASE airbar_api_staging;
 
 services:
-  postgres:
-    container_name: airbar-core-postgres-staging
-    env_file: .env.staging
-    ports:
-      - '${DB_PORT:-5437}:5432'
-
-  redis:
-    container_name: airbar-core-redis-staging
-    ports:
-      - '${REDIS_PORT:-6384}:6379'
-
   app:
     image: ${IMAGE_TAG:?IMAGE_TAG is required for staging deploy}
     container_name: airbar-core-app-staging
     env_file: .env.staging
     environment:
       NODE_ENV: production
-    ports:
-      - '${APP_PORT:-4002}:4000'
-    environment:
+      PORT: 4000
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      REDIS_HOST: ${REDIS_HOST:-airbar-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_URL: ${REDIS_URL:-redis://airbar-redis:6379/0}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-airbar-minio}
+      MINIO_PORT: ${MINIO_PORT:-9000}
       FINANCE_GRPC_URL: ${FINANCE_GRPC_URL:-airbar-finance-app-staging:50051}
     command: >
       sh -c "npx prisma migrate deploy &&
              node dist/bootstrap/main.js"
+    networks:
+      airbar-net:
+        aliases:
+          - airbar-core-app-staging
     restart: unless-stopped
+    mem_limit: 768m
+    memswap_limit: 768m
+    cpus: 0.5
     logging:
       driver: json-file
       options:
         max-size: '10m'
         max-file: '3'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 networks:
-  internal:
-    name: airbar-staging
+  airbar-net:
     external: true
+    name: airbar-net

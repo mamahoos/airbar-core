@@ -1,0 +1,30 @@
+name: Deploy — Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: "Image tag to deploy (e.g. v0.2.0 or sha-abc1234)"
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy to production
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      environment: production
+      image-tag: ghcr.io/${{ github.repository }}:${{ inputs.image-tag }}
+      deploy-path: /srv/airbar.app/airbar-core
+      compose-file: docker-compose.prod.yml
+      container-name: airbar-core-app-prod
+      health-url: http://127.0.0.1:4000/api/v1/health
+    secrets:
+      SSH_HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
+      SSH_USER: ${{ secrets.PRODUCTION_SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+      SSH_PORT: ${{ secrets.PRODUCTION_SSH_PORT }}
