@@ -16,7 +16,7 @@ env:
 jobs:
   changes:
     name: detect changes
-    runs-on: [self-hosted, airbar-core]
+    runs-on: self-hosted
     permissions:
       contents: read
       pull-requests: read
@@ -50,7 +50,7 @@ jobs:
     name: lint
     needs: changes
     if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
-    runs-on: [self-hosted, airbar-core]
+    runs-on: self-hosted
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
@@ -66,7 +66,7 @@ jobs:
     name: typecheck
     needs: changes
     if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
-    runs-on: [self-hosted, airbar-core]
+    runs-on: self-hosted
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
@@ -83,7 +83,7 @@ jobs:
     name: unit tests
     needs: changes
     if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
-    runs-on: [self-hosted, airbar-core]
+    runs-on: self-hosted
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -106,7 +106,7 @@ jobs:
     name: build
     needs: changes
     if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
-    runs-on: [self-hosted, airbar-core]
+    runs-on: self-hosted
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -123,7 +123,7 @@ jobs:
     name: integration tests
     needs: changes
     if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
-    runs-on: [self-hosted, airbar-core]
+    runs-on: self-hosted
     timeout-minutes: 15
     env:
       DATABASE_URL: postgresql://ci_user:ci_ephemeral_db_password@localhost:5433/airbar_api_test?schema=public
@@ -168,7 +168,7 @@ jobs:
     name: npm audit
     needs: changes
     if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
-    runs-on: [self-hosted, airbar-core]
+    runs-on: self-hosted
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
@@ -185,7 +185,7 @@ jobs:
     name: quality gate
     needs: [lint, typecheck, unit-test, build, integration, audit]
     if: always()
-    runs-on: [self-hosted, airbar-core]
+    runs-on: self-hosted
     timeout-minutes: 2
     steps:
       - name: Require all checks

@@ -17,6 +17,19 @@ make verify          # lint + typecheck + unit + build
 
 ## Docker workflows
 
+Compose uses a **base + overlay** pattern:
+
+| Overlay | Purpose | Command |
+| ------- | ------- | ------- |
+| `docker-compose.resources.yml` | DB + Redis only (host dev) | `make up` |
+| `docker-compose.dev.yml` | Full local stack (build app) | `make up-dev` |
+| `docker-compose.staging.yml` | Staging deploy (GHCR image) | `make up-staging IMAGE_TAG=ghcr.io/...` |
+| `docker-compose.prod.yml` | Production deploy (GHCR image) | `make up-prod IMAGE_TAG=ghcr.io/...` |
+
+Host ports (dev): Postgres **5435**, Redis **6382**, app **4000**.
+
+Staging/production use the shared **`airbar-net`** network with airbar-infra and airbar-finance. See `.env.staging.example` / `.env.production.example`.
+
 ### Dependencies only (DB + Redis)
 
 ```bash
@@ -29,8 +42,7 @@ npm run dev          # uses .env (localhost URLs)
 
 ```bash
 cp .env.example .env
-docker build -t airbar-core:local .
-docker compose up -d
+make up-dev
 ```
 
 ### Health checks
@@ -43,8 +55,11 @@ curl -sf http://localhost:4000/api/v1/health
 
 | File           | Commit? | Purpose                             |
 | -------------- | ------- | ----------------------------------- |
-| `.env.example` | Yes     | Template for all required variables |
+| `.env.example` | Yes     | Template for local dev              |
+| `.env.staging.example` | Yes | Template for staging deploy server |
+| `.env.production.example` | Yes | Template for production deploy server |
 | `.env`         | **No**  | Local overrides (gitignored)        |
+| `.env.staging` / `.env.production` | **No** | Server secrets (gitignored) |
 
 Production deployments must inject env via the orchestrator — not via `.env` on disk.
 
