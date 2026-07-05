@@ -3,10 +3,7 @@ import { KycLevel } from '../../domain/auth/kyc-level.js';
 import type { KycRequirementOptions } from '../../domain/kyc/kyc-requirement.js';
 
 export type MarketplaceKycAction =
-  | 'CREATE_TRIP'
-  | 'CREATE_SHIPMENT'
-  | 'ASSIGN_SHIPMENT'
-  | 'ACCEPT_SHIPMENT_SENDER';
+  'CREATE_TRIP' | 'CREATE_SHIPMENT' | 'ASSIGN_SHIPMENT' | 'ACCEPT_SHIPMENT_SENDER';
 
 const ACTION_REQUIREMENTS: Record<MarketplaceKycAction, KycRequirementOptions> = {
   CREATE_TRIP: {

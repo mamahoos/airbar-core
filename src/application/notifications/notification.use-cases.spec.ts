@@ -47,7 +47,11 @@ describe('NotificationService operational notifications', () => {
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 'user-1',
-        data: expect.objectContaining({ type: 'WITHDRAWAL_STATUS', withdrawalId: 'wd-1', status: 'SETTLED' }),
+        data: expect.objectContaining({
+          type: 'WITHDRAWAL_STATUS',
+          withdrawalId: 'wd-1',
+          status: 'SETTLED',
+        }),
       }),
     );
   });

@@ -39,7 +39,8 @@ export function assertKycMinLevel(
     });
   }
 
-  const mustHaveNationalId = options?.requireNationalId || (isIranianUser && options?.requireIranianNationalId);
+  const mustHaveNationalId =
+    options?.requireNationalId || (isIranianUser && options?.requireIranianNationalId);
   if (mustHaveNationalId && (!options.nationalIdPresent || !options.identityPersonInfoVerified)) {
     throw new ForbiddenError('ابتدا تأیید هویت را تکمیل کنید', {
       code: 'IDENTITY_VERIFICATION_REQUIRED',
@@ -48,7 +49,11 @@ export function assertKycMinLevel(
     });
   }
 
-  if (isIranianUser && options?.requireIranianNationalIdDocument && !options.approvedNationalIdDocumentPresent) {
+  if (
+    isIranianUser &&
+    options?.requireIranianNationalIdDocument &&
+    !options.approvedNationalIdDocumentPresent
+  ) {
     throw new ForbiddenError('ابتدا تصویر کارت ملی را بارگذاری و تأیید کنید', {
       code: 'NATIONAL_ID_DOCUMENT_REQUIRED',
       requiredLevel: KycLevel.DOCUMENT_VERIFIED,

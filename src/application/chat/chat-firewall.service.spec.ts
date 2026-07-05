@@ -32,7 +32,9 @@ describe('ChatFirewallService', () => {
     });
 
     expect(decision.action).toBe('BLOCK');
-    expect(decision.reasons).toEqual(expect.arrayContaining(['SOCIAL_HANDLE', 'OFF_PLATFORM_CONTACT']));
+    expect(decision.reasons).toEqual(
+      expect.arrayContaining(['SOCIAL_HANDLE', 'OFF_PLATFORM_CONTACT']),
+    );
   });
 
   it('masks contact details after offer acceptance', () => {

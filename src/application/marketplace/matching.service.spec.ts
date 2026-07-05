@@ -15,7 +15,10 @@ import type {
   ShipmentRecord,
   ShipmentRepositoryPort,
 } from '../../domain/marketplace/shipment.repository.port.js';
-import type { TripRecord, TripRepositoryPort } from '../../domain/marketplace/trip.repository.port.js';
+import type {
+  TripRecord,
+  TripRepositoryPort,
+} from '../../domain/marketplace/trip.repository.port.js';
 
 describe('MatchingService event processing', () => {
   it('stores scored suggestions when a shipment-created event is processed', async () => {

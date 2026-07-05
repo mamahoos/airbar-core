@@ -15,10 +15,7 @@ import { HealthController } from './health.controller.js';
     {
       provide: HEALTH_INDICATORS,
       inject: [PrismaHealthIndicator, RedisHealthIndicator],
-      useFactory: (
-        prisma: PrismaHealthIndicator,
-        redis: RedisHealthIndicator,
-      ) => [prisma, redis],
+      useFactory: (prisma: PrismaHealthIndicator, redis: RedisHealthIndicator) => [prisma, redis],
     },
     HealthService,
   ],

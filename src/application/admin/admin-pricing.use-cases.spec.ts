@@ -77,16 +77,13 @@ describe('admin trust event use cases', () => {
     reviewTrustEvent.mockResolvedValue({ id: 'event-1', reviewStatus: 'RESOLVED' });
     const useCase = new ReviewAdminTrustEventUseCase(admin);
 
-    await expect(useCase.execute('event-1', 'admin-1', ' resolved ', ' handled ')).resolves.toEqual({
-      id: 'event-1',
-      reviewStatus: 'RESOLVED',
-    });
-    expect(reviewTrustEvent).toHaveBeenCalledWith(
-      'event-1',
-      'admin-1',
-      'RESOLVED',
-      'handled',
+    await expect(useCase.execute('event-1', 'admin-1', ' resolved ', ' handled ')).resolves.toEqual(
+      {
+        id: 'event-1',
+        reviewStatus: 'RESOLVED',
+      },
     );
+    expect(reviewTrustEvent).toHaveBeenCalledWith('event-1', 'admin-1', 'RESOLVED', 'handled');
   });
 });
 

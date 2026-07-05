@@ -8,14 +8,14 @@ on:
   workflow_dispatch:
     inputs:
       image-tag:
-        description: "Image tag to deploy (default staging = latest CI-built image)"
+        description: 'Image tag to deploy (default staging = latest CI-built image)'
         required: false
         default: staging
         type: string
 
 concurrency:
   group: deploy-staging
-  cancel-in-progress: false  # never abort an in-progress SSH deploy
+  cancel-in-progress: false # never abort an in-progress SSH deploy
 
 jobs:
   deploy:

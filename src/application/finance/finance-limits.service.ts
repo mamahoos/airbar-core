@@ -68,7 +68,11 @@ export class FinanceLimitsService {
     }
   }
 
-  private limitsFor(action: FinanceLimitAction): { identity: number; document: number; full: number } {
+  private limitsFor(action: FinanceLimitAction): {
+    identity: number;
+    document: number;
+    full: number;
+  } {
     if (action === 'REQUEST_PAYOUT') {
       return {
         identity: this.config.financePayoutIdentityLimitRials,

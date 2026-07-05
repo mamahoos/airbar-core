@@ -1,31 +1,31 @@
-name: "[reusable] Docker Build & Push"
+name: '[reusable] Docker Build & Push'
 
 on:
   workflow_call:
     inputs:
       image:
-        description: "Full image name, e.g. ghcr.io/org/repo"
+        description: 'Full image name, e.g. ghcr.io/org/repo'
         type: string
         required: true
       tags:
-        description: "Newline-separated list of tags to apply"
+        description: 'Newline-separated list of tags to apply'
         type: string
         required: true
       push:
-        description: "Whether to push the image to the registry"
+        description: 'Whether to push the image to the registry'
         type: boolean
         default: true
       ref:
-        description: "Git ref to checkout (commit SHA or branch); defaults to github.sha"
+        description: 'Git ref to checkout (commit SHA or branch); defaults to github.sha'
         type: string
         required: false
-        default: ""
+        default: ''
     outputs:
       image-digest:
-        description: "SHA256 digest of the pushed image"
+        description: 'SHA256 digest of the pushed image'
         value: ${{ jobs.build-push.outputs.digest }}
       image-metadata:
-        description: "Docker image metadata JSON"
+        description: 'Docker image metadata JSON'
         value: ${{ jobs.build-push.outputs.metadata }}
 
 jobs:
@@ -79,12 +79,12 @@ jobs:
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
-          exit-code: "0"
+          exit-code: '0'
 
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@v4
         if: always()
-        continue-on-error: true  # repo has no GitHub code scanning; scan still runs above
+        continue-on-error: true # repo has no GitHub code scanning; scan still runs above
         env:
           CODEQL_TELEMETRY: false
         with:

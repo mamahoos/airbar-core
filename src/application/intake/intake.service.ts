@@ -97,7 +97,8 @@ export class IntakeService {
     if (!draft) throw new NotFoundError('Draft', token);
 
     if (draft.status === 'CLAIMED') return this.claimedResponse(draft);
-    if (draft.status === 'PROCESSING') throw new ValidationError('This draft is already being claimed');
+    if (draft.status === 'PROCESSING')
+      throw new ValidationError('This draft is already being claimed');
     if (draft.status === 'EXPIRED' || (draft.expiresAt && draft.expiresAt < new Date())) {
       if (draft.status !== 'EXPIRED') {
         await this.prisma.draftRequest.update({
@@ -341,7 +342,9 @@ export class IntakeService {
 
   private stringArray(value: unknown): string[] {
     if (!Array.isArray(value)) return [];
-    return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+    return value.filter(
+      (item): item is string => typeof item === 'string' && item.trim().length > 0,
+    );
   }
 
   private receiverContact(value: unknown): Record<string, unknown> {

@@ -83,8 +83,8 @@ describe('VerifyIdentityUseCase', () => {
       birthDate: '1370/01/01',
     });
 
-    await expect(
-      useCase.execute('u1', '09120000000', '1234567890', '1370/01/01'),
-    ).rejects.toThrow(ValidationError);
+    await expect(useCase.execute('u1', '09120000000', '1234567890', '1370/01/01')).rejects.toThrow(
+      ValidationError,
+    );
   });
 });
