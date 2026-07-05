@@ -578,7 +578,11 @@ export class ProcessAdminWithdrawalUseCase {
     });
     if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal queued');
     if (result.value.userId) {
-      await this.notifications.notifyWithdrawalStatus(result.value.userId, withdrawalId, 'PROCESSED');
+      await this.notifications.notifyWithdrawalStatus(
+        result.value.userId,
+        withdrawalId,
+        'PROCESSED',
+      );
     }
     return { withdrawalId, providerRef, payoutChannel, receiptUrl, processed: true };
   }
@@ -593,9 +597,14 @@ export class ApproveAdminWithdrawalUseCase {
 
   async execute(withdrawalId: string) {
     const result = await this.finance.tryApproveWithdrawal({ withdrawalId });
-    if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal approve queued');
+    if (!result.ok)
+      throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal approve queued');
     if (result.value.userId) {
-      await this.notifications.notifyWithdrawalStatus(result.value.userId, withdrawalId, 'APPROVED');
+      await this.notifications.notifyWithdrawalStatus(
+        result.value.userId,
+        withdrawalId,
+        'APPROVED',
+      );
     }
     return { withdrawalId, approved: true };
   }
@@ -642,7 +651,8 @@ export class SettleAdminWithdrawalUseCase {
 
   async execute(withdrawalId: string) {
     const result = await this.finance.trySettleWithdrawal({ withdrawalId });
-    if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal settle queued');
+    if (!result.ok)
+      throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Withdrawal settle queued');
     if (result.value.userId) {
       await this.notifications.notifyWithdrawalStatus(result.value.userId, withdrawalId, 'SETTLED');
     }
@@ -681,7 +691,11 @@ export class RejectAdminWithdrawalUseCase {
     const result = await this.finance.tryRejectWithdrawal({ withdrawalId, reason });
     if (!result.ok) throw new DomainError(ErrorCode.SERVICE_UNAVAILABLE, 'Reject queued');
     if (result.value.userId) {
-      await this.notifications.notifyWithdrawalStatus(result.value.userId, withdrawalId, 'REJECTED');
+      await this.notifications.notifyWithdrawalStatus(
+        result.value.userId,
+        withdrawalId,
+        'REJECTED',
+      );
     }
     return { withdrawalId, rejected: true };
   }

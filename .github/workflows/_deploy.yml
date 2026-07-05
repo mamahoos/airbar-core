@@ -1,32 +1,32 @@
-name: "[reusable] Deploy"
+name: '[reusable] Deploy'
 
 on:
   workflow_call:
     inputs:
       environment:
-        description: "Target environment (staging | production)"
+        description: 'Target environment (staging | production)'
         type: string
         required: true
       image-tag:
-        description: "Full image tag to deploy"
+        description: 'Full image tag to deploy'
         type: string
         required: true
       deploy-path:
-        description: "Absolute path on the server"
+        description: 'Absolute path on the server'
         type: string
         required: true
       compose-file:
-        description: "Compose file name in deploy-path"
+        description: 'Compose file name in deploy-path'
         type: string
-        default: "docker-compose.staging.yml"
+        default: 'docker-compose.staging.yml'
       container-name:
-        description: "Container name for health checks"
+        description: 'Container name for health checks'
         type: string
         required: true
       health-url:
-        description: "HTTP readiness URL inside the container"
+        description: 'HTTP readiness URL inside the container'
         type: string
-        default: "http://127.0.0.1:4000/api/v1/health"
+        default: 'http://127.0.0.1:4000/api/v1/health'
       health-retries:
         type: number
         default: 10

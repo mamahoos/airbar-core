@@ -463,7 +463,9 @@ export class PrismaKycRepository implements KycRepositoryPort {
     if (user.identityProfile?.nationalIdHash) {
       newLevel = KycLevel.IDENTITY_VERIFIED;
     }
-    const identityDocumentAccepted = isIranianPhone(user.phone) ? hasNationalId : hasNationalId || hasPassport;
+    const identityDocumentAccepted = isIranianPhone(user.phone)
+      ? hasNationalId
+      : hasNationalId || hasPassport;
     if (identityDocumentAccepted && newLevel === KycLevel.IDENTITY_VERIFIED) {
       newLevel = KycLevel.DOCUMENT_VERIFIED;
     }

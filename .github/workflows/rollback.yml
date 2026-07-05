@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Environment to roll back"
+        description: 'Environment to roll back'
         required: true
         type: choice
         options:
           - staging
           - production
       image-tag:
-        description: "Image tag to roll back to"
+        description: 'Image tag to roll back to'
         required: true
         type: string
 

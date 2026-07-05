@@ -19,12 +19,12 @@ make verify          # lint + typecheck + unit + build
 
 Compose uses a **base + overlay** pattern:
 
-| Overlay | Purpose | Command |
-| ------- | ------- | ------- |
-| `docker-compose.resources.yml` | DB + Redis only (host dev) | `make up` |
-| `docker-compose.dev.yml` | Full local stack (build app) | `make up-dev` |
-| `docker-compose.staging.yml` | Staging deploy (GHCR image) | `make up-staging IMAGE_TAG=ghcr.io/...` |
-| `docker-compose.prod.yml` | Production deploy (GHCR image) | `make up-prod IMAGE_TAG=ghcr.io/...` |
+| Overlay                        | Purpose                        | Command                                 |
+| ------------------------------ | ------------------------------ | --------------------------------------- |
+| `docker-compose.resources.yml` | DB + Redis only (host dev)     | `make up`                               |
+| `docker-compose.dev.yml`       | Full local stack (build app)   | `make up-dev`                           |
+| `docker-compose.staging.yml`   | Staging deploy (GHCR image)    | `make up-staging IMAGE_TAG=ghcr.io/...` |
+| `docker-compose.prod.yml`      | Production deploy (GHCR image) | `make up-prod IMAGE_TAG=ghcr.io/...`    |
 
 Host ports (dev): Postgres **5435**, Redis **6382**, app **4000**.
 
@@ -53,13 +53,13 @@ curl -sf http://localhost:4000/api/v1/health
 
 ## Environment files
 
-| File           | Commit? | Purpose                             |
-| -------------- | ------- | ----------------------------------- |
-| `.env.example` | Yes     | Template for local dev              |
-| `.env.staging.example` | Yes | Template for staging deploy server |
-| `.env.production.example` | Yes | Template for production deploy server |
-| `.env`         | **No**  | Local overrides (gitignored)        |
-| `.env.staging` / `.env.production` | **No** | Server secrets (gitignored) |
+| File                               | Commit? | Purpose                               |
+| ---------------------------------- | ------- | ------------------------------------- |
+| `.env.example`                     | Yes     | Template for local dev                |
+| `.env.staging.example`             | Yes     | Template for staging deploy server    |
+| `.env.production.example`          | Yes     | Template for production deploy server |
+| `.env`                             | **No**  | Local overrides (gitignored)          |
+| `.env.staging` / `.env.production` | **No**  | Server secrets (gitignored)           |
 
 Production deployments must inject env via the orchestrator — not via `.env` on disk.
 
@@ -84,14 +84,14 @@ make migrate-down      # rollback one step
 
 GitHub Actions — same staging strategy as [airbar-finance](https://github.com/mamahoos/airbar-finance):
 
-| Workflow | When | What |
-| -------- | ---- | ---- |
-| `ci.yml` | Every PR + push to `main` | lint, typecheck, unit, build, integration, audit → quality gate |
-| `staging.yml` | Auto after CI on `main` | Build & push `ghcr.io/mamahoos/airbar-core:staging` (no SSH) |
-| `deploy-staging.yml` | Manual | SSH deploy to `/srv/airbar.app/airbar-core/` |
-| `deploy-production.yml` | Manual | Production deploy |
-| `release.yml` | Tag `v*.*.*` | Semver image + GitHub Release |
-| `rollback.yml` | Manual | Roll back to a previous image tag |
+| Workflow                | When                      | What                                                            |
+| ----------------------- | ------------------------- | --------------------------------------------------------------- |
+| `ci.yml`                | Every PR + push to `main` | lint, typecheck, unit, build, integration, audit → quality gate |
+| `staging.yml`           | Auto after CI on `main`   | Build & push `ghcr.io/mamahoos/airbar-core:staging` (no SSH)    |
+| `deploy-staging.yml`    | Manual                    | SSH deploy to `/srv/airbar.app/airbar-core/`                    |
+| `deploy-production.yml` | Manual                    | Production deploy                                               |
+| `release.yml`           | Tag `v*.*.*`              | Semver image + GitHub Release                                   |
+| `rollback.yml`          | Manual                    | Roll back to a previous image tag                               |
 
 Server bootstrap and URLs: [docs/server-discovery.md](./server-discovery.md).
 

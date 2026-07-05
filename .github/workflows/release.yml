@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 concurrency:
   group: release-${{ github.ref }}
@@ -70,7 +70,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
-          name: "Release ${{ github.ref_name }}"
+          name: 'Release ${{ github.ref_name }}'
           body: ${{ steps.notes.outputs.notes }}
           draft: false
           prerelease: false

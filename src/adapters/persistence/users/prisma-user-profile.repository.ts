@@ -92,7 +92,9 @@ export class PrismaUserProfileRepository implements UserProfileRepositoryPort {
       !!user.identityProfile?.shahkarVerifiedAt && !user.identityProfile.identityPendingPersonInfo;
     return {
       id: user.id,
-      firstName: identityLocked ? (user.identityProfile?.firstNameOfficial ?? null) : user.firstName,
+      firstName: identityLocked
+        ? (user.identityProfile?.firstNameOfficial ?? null)
+        : user.firstName,
       lastName: identityLocked ? (user.identityProfile?.lastNameOfficial ?? null) : user.lastName,
       avatarUrl: user.avatarUrl,
       rating: user.rating,

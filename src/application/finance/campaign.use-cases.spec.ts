@@ -104,10 +104,13 @@ describe('GrantCampaignCreditUseCase', () => {
         findUnique: jest.fn(async () => ({ ...baseCampaign, active: false })),
       },
     };
-    const useCase = new GrantCampaignCreditUseCase(prisma as never, { grantCredit: jest.fn() } as never);
-    await expect(
-      useCase.execute('admin-1', 'camp-1', { userId: 'user-1' }),
-    ).rejects.toBeInstanceOf(ConflictError);
+    const useCase = new GrantCampaignCreditUseCase(
+      prisma as never,
+      { grantCredit: jest.fn() } as never,
+    );
+    await expect(useCase.execute('admin-1', 'camp-1', { userId: 'user-1' })).rejects.toBeInstanceOf(
+      ConflictError,
+    );
   });
 
   it('rejects expired campaign', async () => {
@@ -119,15 +122,21 @@ describe('GrantCampaignCreditUseCase', () => {
         })),
       },
     };
-    const useCase = new GrantCampaignCreditUseCase(prisma as never, { grantCredit: jest.fn() } as never);
-    await expect(
-      useCase.execute('admin-1', 'camp-1', { userId: 'user-1' }),
-    ).rejects.toBeInstanceOf(ConflictError);
+    const useCase = new GrantCampaignCreditUseCase(
+      prisma as never,
+      { grantCredit: jest.fn() } as never,
+    );
+    await expect(useCase.execute('admin-1', 'camp-1', { userId: 'user-1' })).rejects.toBeInstanceOf(
+      ConflictError,
+    );
   });
 
   it('rejects missing campaign', async () => {
     const prisma = { campaign: { findUnique: jest.fn(async () => null) } };
-    const useCase = new GrantCampaignCreditUseCase(prisma as never, { grantCredit: jest.fn() } as never);
+    const useCase = new GrantCampaignCreditUseCase(
+      prisma as never,
+      { grantCredit: jest.fn() } as never,
+    );
     await expect(
       useCase.execute('admin-1', 'missing', { userId: 'user-1' }),
     ).rejects.toBeInstanceOf(NotFoundError);

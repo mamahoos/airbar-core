@@ -53,7 +53,11 @@ describe('ResolveDisputeUseCase', () => {
     };
     const prisma = prismaMock();
     const notifications = notificationsMock();
-    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never, notifications as never);
+    const useCase = new ResolveDisputeUseCase(
+      finance as never,
+      prisma as never,
+      notifications as never,
+    );
 
     await expect(useCase.execute('ship-1', 'RELEASE', 'carrier delivered')).resolves.toEqual({
       shipmentId: 'ship-1',
@@ -90,7 +94,11 @@ describe('ResolveDisputeUseCase', () => {
     };
     const prisma = prismaMock();
     const notifications = notificationsMock();
-    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never, notifications as never);
+    const useCase = new ResolveDisputeUseCase(
+      finance as never,
+      prisma as never,
+      notifications as never,
+    );
 
     await expect(useCase.execute('ship-1', 'REFUND')).resolves.toEqual({
       shipmentId: 'ship-1',
@@ -111,7 +119,11 @@ describe('ResolveDisputeUseCase', () => {
     const finance = financeMock();
     const prisma = prismaMock();
     const notifications = notificationsMock();
-    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never, notifications as never);
+    const useCase = new ResolveDisputeUseCase(
+      finance as never,
+      prisma as never,
+      notifications as never,
+    );
 
     await expect(
       useCase.execute('ship-1', 'PARTIAL_REFUND', 'damaged item', 500_000),
@@ -138,7 +150,11 @@ describe('ResolveDisputeUseCase', () => {
     const finance = financeMock();
     const prisma = prismaMock();
     const notifications = notificationsMock();
-    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never, notifications as never);
+    const useCase = new ResolveDisputeUseCase(
+      finance as never,
+      prisma as never,
+      notifications as never,
+    );
 
     await expect(useCase.execute('ship-1', 'SPLIT', undefined, 300_000)).resolves.toMatchObject({
       resolution: 'SPLIT',
@@ -158,7 +174,11 @@ describe('ResolveDisputeUseCase', () => {
     const finance = financeMock();
     const prisma = prismaMock('PARTIALLY_REFUNDED');
     const notifications = notificationsMock();
-    const useCase = new ResolveDisputeUseCase(finance as never, prisma as never, notifications as never);
+    const useCase = new ResolveDisputeUseCase(
+      finance as never,
+      prisma as never,
+      notifications as never,
+    );
 
     await expect(useCase.execute('ship-1', 'RELEASE')).resolves.toMatchObject({
       resolution: 'RELEASE',
@@ -235,7 +255,11 @@ describe('ProcessAdminWithdrawalUseCase', () => {
       payoutChannel: 'PAYA',
       receiptUrl: 'https://pay.example/receipt/1',
     });
-    expect(notifications.notifyWithdrawalStatus).toHaveBeenCalledWith('user-1', 'wd_1', 'PROCESSED');
+    expect(notifications.notifyWithdrawalStatus).toHaveBeenCalledWith(
+      'user-1',
+      'wd_1',
+      'PROCESSED',
+    );
   });
 });
 
@@ -450,9 +474,7 @@ describe('Admin outbox ops use cases', () => {
       {} as never,
     );
 
-    await expect(
-      service.listForAdmin({ page: 1, limit: 10 }),
-    ).resolves.toMatchObject({
+    await expect(service.listForAdmin({ page: 1, limit: 10 })).resolves.toMatchObject({
       data: [
         {
           id: 'outbox-1',
@@ -564,8 +586,8 @@ describe('Admin outbox ops use cases', () => {
       }),
     );
 
-    await expect(
-      useCase.execute('admin-1', 'outbox-1', { reason: ' ' }),
-    ).rejects.toThrow('Replay reason is required');
+    await expect(useCase.execute('admin-1', 'outbox-1', { reason: ' ' })).rejects.toThrow(
+      'Replay reason is required',
+    );
   });
 });

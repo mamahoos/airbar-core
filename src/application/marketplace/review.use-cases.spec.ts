@@ -36,7 +36,11 @@ function makeReviewRepo(overrides: Record<string, unknown> = {}) {
       },
       aggregate: { average: 4.5, count: 2 },
     })),
-    listByTarget: jest.fn(async () => ({ data: [], total: 0, aggregate: { average: 0, count: 0 } })),
+    listByTarget: jest.fn(async () => ({
+      data: [],
+      total: 0,
+      aggregate: { average: 0, count: 0 },
+    })),
     listByShipment: jest.fn(async () => []),
     ...overrides,
   };

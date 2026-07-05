@@ -77,10 +77,9 @@ describe('RevealChatContactUseCase', () => {
 });
 
 function buildUseCase(chats: jest.Mocked<ChatRepositoryPort>, chat: ChatRecord) {
-  return new RevealChatContactUseCase(
-    chats,
-    { assertParticipant: jest.fn<() => Promise<ChatRecord>>().mockResolvedValue(chat) } as unknown as ChatAccessService,
-  );
+  return new RevealChatContactUseCase(chats, {
+    assertParticipant: jest.fn<() => Promise<ChatRecord>>().mockResolvedValue(chat),
+  } as unknown as ChatAccessService);
 }
 
 function chatRepository(): jest.Mocked<ChatRepositoryPort> {

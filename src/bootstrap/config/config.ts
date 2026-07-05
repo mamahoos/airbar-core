@@ -30,8 +30,7 @@ function camelizeEnv(env: Record<string, string | undefined>): Record<string, st
 
 const DEV_JWT_SECRET = 'dev-only-jwt-secret-change-in-production';
 const DEV_JWT_REFRESH_SECRET = 'dev-only-jwt-refresh-secret-change-in-production';
-const DEV_PII_ENCRYPTION_KEY =
-  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+const DEV_PII_ENCRYPTION_KEY = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
 /**
  * Application configuration. Every runtime setting MUST come from the

@@ -614,12 +614,7 @@ export class AdminController {
   @Post('disputes/:shipmentId/resolve')
   @ApiOperation({ summary: 'Resolve disputed shipment via finance gRPC' })
   resolveDisputeRoute(@Param('shipmentId') shipmentId: string, @Body() dto: ResolveDisputeDto) {
-    return this.resolveDispute.execute(
-      shipmentId,
-      dto.resolution,
-      dto.note,
-      dto.refundAmount,
-    );
+    return this.resolveDispute.execute(shipmentId, dto.resolution, dto.note, dto.refundAmount);
   }
 
   @Get('integration-outbox')

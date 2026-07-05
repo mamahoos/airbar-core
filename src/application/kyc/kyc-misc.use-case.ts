@@ -147,7 +147,9 @@ export class UploadKycDocumentUseCase {
     const phone = await this.kyc.getUserPhone(userId);
     if (!phone) throw new NotFoundError('User', userId);
     if (isIranianPhone(phone) && IDENTITY_DOCUMENT_TYPES.has(type) && type !== 'national_id') {
-      throw new ValidationError('برای کاربران ایرانی فقط تصویر کارت ملی به عنوان مدرک هویتی پذیرفته می‌شود');
+      throw new ValidationError(
+        'برای کاربران ایرانی فقط تصویر کارت ملی به عنوان مدرک هویتی پذیرفته می‌شود',
+      );
     }
 
     const objectName = await this.storage.upload(file, fileName, `kyc/${userId}`, false);

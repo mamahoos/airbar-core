@@ -4,9 +4,12 @@ import { ShipmentFinanceBridgeService } from './shipment-finance-bridge.service.
 
 describe('ShipmentFinanceBridgeService', () => {
   function makeBridge(prisma: { shipment: Record<string, unknown> }) {
-    return new ShipmentFinanceBridgeService(prisma as never, {
-      notifyDisputeResolvedToParties: jest.fn(async () => undefined),
-    } as never);
+    return new ShipmentFinanceBridgeService(
+      prisma as never,
+      {
+        notifyDisputeResolvedToParties: jest.fn(async () => undefined),
+      } as never,
+    );
   }
 
   it('maps PayFromWallet funding source to shipment paymentMethod', async () => {

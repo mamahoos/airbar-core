@@ -189,7 +189,9 @@ describe('Marketplace lifecycle E2E (flow.e2e)', () => {
       .set(authHeader(admin.accessToken))
       .expect(201);
 
-    expect(await countNotifications(prisma, user.userId, 'WITHDRAWAL_STATUS')).toBeGreaterThanOrEqual(3);
+    expect(
+      await countNotifications(prisma, user.userId, 'WITHDRAWAL_STATUS'),
+    ).toBeGreaterThanOrEqual(3);
   });
 
   it('admin credit grant can fund wallet payment', async () => {

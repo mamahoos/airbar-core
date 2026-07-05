@@ -162,35 +162,19 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
   }
 
   async tryMarkDelivered(input: ShipmentFinanceCommandInput): Promise<FinanceSyncResult<void>> {
-    return this.shipmentCommand(
-      'MarkDelivered',
-      input,
-      markDeliveredKey(input.shipmentId),
-    );
+    return this.shipmentCommand('MarkDelivered', input, markDeliveredKey(input.shipmentId));
   }
 
   async tryFreezeEscrow(input: ShipmentFinanceCommandInput): Promise<FinanceSyncResult<void>> {
-    return this.shipmentCommand(
-      'FreezeEscrow',
-      input,
-      freezeEscrowKey(input.shipmentId),
-    );
+    return this.shipmentCommand('FreezeEscrow', input, freezeEscrowKey(input.shipmentId));
   }
 
   async tryReleaseEscrow(input: ShipmentFinanceCommandInput): Promise<FinanceSyncResult<void>> {
-    return this.shipmentCommand(
-      'ReleaseEscrow',
-      input,
-      releaseEscrowKey(input.shipmentId),
-    );
+    return this.shipmentCommand('ReleaseEscrow', input, releaseEscrowKey(input.shipmentId));
   }
 
   async tryRefundEscrow(input: ShipmentFinanceCommandInput): Promise<FinanceSyncResult<void>> {
-    return this.shipmentCommand(
-      'RefundEscrow',
-      input,
-      refundEscrowKey(input.shipmentId),
-    );
+    return this.shipmentCommand('RefundEscrow', input, refundEscrowKey(input.shipmentId));
   }
 
   async tryPartialRefundEscrow(input: PartialRefundInput): Promise<FinanceSyncResult<void>> {
@@ -257,7 +241,9 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     );
   }
 
-  async tryApproveWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<{ userId: string }>> {
+  async tryApproveWithdrawal(
+    input: WithdrawalCommandInput,
+  ): Promise<FinanceSyncResult<{ userId: string }>> {
     const idempotencyKey = approveWithdrawalKey(input.withdrawalId);
     const payload = { withdrawalId: input.withdrawalId };
     return this.trySync(
@@ -271,7 +257,9 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     );
   }
 
-  async tryMarkWithdrawalSent(input: MarkWithdrawalSentInput): Promise<FinanceSyncResult<{ userId: string }>> {
+  async tryMarkWithdrawalSent(
+    input: MarkWithdrawalSentInput,
+  ): Promise<FinanceSyncResult<{ userId: string }>> {
     const idempotencyKey = markWithdrawalSentKey(input.withdrawalId);
     const payload = {
       withdrawalId: input.withdrawalId,
@@ -290,7 +278,9 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     );
   }
 
-  async trySettleWithdrawal(input: WithdrawalCommandInput): Promise<FinanceSyncResult<{ userId: string }>> {
+  async trySettleWithdrawal(
+    input: WithdrawalCommandInput,
+  ): Promise<FinanceSyncResult<{ userId: string }>> {
     const idempotencyKey = settleWithdrawalKey(input.withdrawalId);
     const payload = { withdrawalId: input.withdrawalId };
     return this.trySync(
@@ -304,7 +294,9 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     );
   }
 
-  async tryFailWithdrawal(input: FailWithdrawalInput): Promise<FinanceSyncResult<{ userId: string }>> {
+  async tryFailWithdrawal(
+    input: FailWithdrawalInput,
+  ): Promise<FinanceSyncResult<{ userId: string }>> {
     const idempotencyKey = failWithdrawalKey(input.withdrawalId);
     const payload = { withdrawalId: input.withdrawalId, reason: input.reason };
     return this.trySync(
@@ -318,7 +310,9 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     );
   }
 
-  async tryProcessWithdrawal(input: ProcessWithdrawalInput): Promise<FinanceSyncResult<{ userId: string }>> {
+  async tryProcessWithdrawal(
+    input: ProcessWithdrawalInput,
+  ): Promise<FinanceSyncResult<{ userId: string }>> {
     const idempotencyKey = processWithdrawalKey(input.withdrawalId);
     const payload = {
       withdrawalId: input.withdrawalId,
@@ -343,7 +337,9 @@ export class FinanceOrchestrator implements FinanceOrchestratorPort {
     );
   }
 
-  async tryRejectWithdrawal(input: RejectWithdrawalInput): Promise<FinanceSyncResult<{ userId: string }>> {
+  async tryRejectWithdrawal(
+    input: RejectWithdrawalInput,
+  ): Promise<FinanceSyncResult<{ userId: string }>> {
     const idempotencyKey = rejectWithdrawalKey(input.withdrawalId);
     const payload = { withdrawalId: input.withdrawalId, reason: input.reason };
     return this.trySync(

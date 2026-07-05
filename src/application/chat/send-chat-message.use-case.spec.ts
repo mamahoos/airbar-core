@@ -64,7 +64,9 @@ describe('SendChatMessageUseCase', () => {
 function buildUseCase(chats: jest.Mocked<ChatRepositoryPort>, chat: ChatRecord) {
   return new SendChatMessageUseCase(
     chats,
-    { assertParticipant: jest.fn<() => Promise<ChatRecord>>().mockResolvedValue(chat) } as unknown as ChatAccessService,
+    {
+      assertParticipant: jest.fn<() => Promise<ChatRecord>>().mockResolvedValue(chat),
+    } as unknown as ChatAccessService,
     { publish: jest.fn<() => Promise<number>>().mockResolvedValue(1) } as unknown as RedisService,
     new ChatFirewallService(),
   );

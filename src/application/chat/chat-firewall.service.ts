@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 export type ChatFirewallAction = 'ALLOW' | 'MASK' | 'BLOCK';
 export type ChatViolationReason =
-  | 'PHONE'
-  | 'URL'
-  | 'SOCIAL_HANDLE'
-  | 'OFF_PLATFORM_PAYMENT'
-  | 'OFF_PLATFORM_CONTACT';
+  'PHONE' | 'URL' | 'SOCIAL_HANDLE' | 'OFF_PLATFORM_PAYMENT' | 'OFF_PLATFORM_CONTACT';
 
 export interface ChatFirewallInput {
   readonly content: string;
@@ -21,7 +17,8 @@ export interface ChatFirewallDecision {
 
 const PHONE_PATTERN = /(?:\+?98|0)?9(?:[\s\-_.()]?\d){9}\b|\+\d(?:[\s\-_.()]?\d){6,14}\b/g;
 const URL_PATTERN = /\b(?:https?:\/\/|www\.)\S+|\b[\w.-]+\.(?:com|ir|net|org|io|app|me|co)\b/gi;
-const SOCIAL_HANDLE_PATTERN = /(?:^|[\s(])@[a-zA-Z0-9_]{4,32}\b|(?:t\.me|telegram\.me|wa\.me|instagram\.com)\/\S+/gi;
+const SOCIAL_HANDLE_PATTERN =
+  /(?:^|[\s(])@[a-zA-Z0-9_]{4,32}\b|(?:t\.me|telegram\.me|wa\.me|instagram\.com)\/\S+/gi;
 const PAYMENT_PATTERN =
   /(?:کارت\s*به\s*کارت|کارت\s*بزن|شماره\s*کارت|واریز\s*کن|پرداخت\s*بیرون|بیرون\s*حساب|خارج\s*از\s*برنامه|خارج\s*از\s*پلتفرم|cash|bank\s*transfer|card\s*to\s*card)/i;
 const CONTACT_PATTERN =

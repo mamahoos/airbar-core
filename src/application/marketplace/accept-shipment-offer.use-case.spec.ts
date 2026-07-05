@@ -57,10 +57,16 @@ function buildUseCase(options: {
 }) {
   return new AcceptShipmentOfferUseCase(
     options.shipments,
-    { assertRequirement: jest.fn<() => Promise<void>>().mockResolvedValue(undefined) } as unknown as KycAccessService,
-    { notifyShipmentAccepted: jest.fn<() => Promise<void>>().mockResolvedValue(undefined) } as unknown as NotificationService,
     {
-      calculateFloor: jest.fn<(input: unknown) => Promise<number>>().mockResolvedValue(options.priceFloor),
+      assertRequirement: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
+    } as unknown as KycAccessService,
+    {
+      notifyShipmentAccepted: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
+    } as unknown as NotificationService,
+    {
+      calculateFloor: jest
+        .fn<(input: unknown) => Promise<number>>()
+        .mockResolvedValue(options.priceFloor),
     } as unknown as PricingQuoteService,
     options.finance ?? financeOrchestrator(),
   );

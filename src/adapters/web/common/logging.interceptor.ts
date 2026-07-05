@@ -1,4 +1,10 @@
-import { Inject, Injectable, type CallHandler, type ExecutionContext, type NestInterceptor } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  type CallHandler,
+  type ExecutionContext,
+  type NestInterceptor,
+} from '@nestjs/common';
 import { type Observable, tap } from 'rxjs';
 
 import { APP_LOGGER } from '../../../bootstrap/logging/logging.module.js';

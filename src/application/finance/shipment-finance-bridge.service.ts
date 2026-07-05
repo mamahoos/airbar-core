@@ -64,7 +64,8 @@ export class ShipmentFinanceBridgeService {
   }
 
   private async applyDisputeResolution(payload: Record<string, unknown>): Promise<void> {
-    const resolution = typeof payload.disputeResolution === 'string' ? payload.disputeResolution : null;
+    const resolution =
+      typeof payload.disputeResolution === 'string' ? payload.disputeResolution : null;
     const targetStatus = this.parseDisputeTargetStatus(payload.disputeTargetStatus);
     if (!resolution || !targetStatus) return;
 

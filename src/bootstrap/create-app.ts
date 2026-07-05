@@ -23,7 +23,10 @@ class NoopThrottlerGuard implements CanActivate {
 export interface CreateAppOptions {
   readonly env?: Record<string, string | undefined>;
   readonly financeStub?: FinanceGrpcClient;
-  readonly overrides?: ReadonlyArray<{ provide: Type<unknown> | symbol | string; useValue: unknown }>;
+  readonly overrides?: ReadonlyArray<{
+    provide: Type<unknown> | symbol | string;
+    useValue: unknown;
+  }>;
 }
 
 function testEnv(overrides: Record<string, string | undefined> = {}): Record<string, string> {
