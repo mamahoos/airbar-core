@@ -42,6 +42,8 @@ on:
         required: true
       SSH_PORT:
         required: false
+      GHCR_READ_TOKEN:
+        required: false
     outputs:
       deploy-duration:
         value: ${{ jobs.deploy.outputs.duration }}
@@ -73,11 +75,17 @@ jobs:
           ssh-keyscan -p "${{ secrets.SSH_PORT || '22' }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Log in to GHCR on server and pull image
+        env:
+          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
         run: |
+          REGISTRY_TOKEN="${GHCR_READ_TOKEN}"
+          if [ -z "$REGISTRY_TOKEN" ]; then
+            REGISTRY_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          fi
           ssh -i ~/.ssh/deploy_key \
             -p "${{ secrets.SSH_PORT || '22' }}" \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.repository_owner }}' --password-stdin && docker pull '${{ inputs.image-tag }}'"
+            "echo \"$REGISTRY_TOKEN\" | docker login ghcr.io -u '${{ github.repository_owner }}' --password-stdin && docker pull '${{ inputs.image-tag }}'"
 
       - name: Sync compose file to server
         run: |
