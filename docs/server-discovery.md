@@ -42,10 +42,18 @@ cp .env.staging.example .env.staging
 
 Concurrency: only the latest commit builds staging (`cancel-in-progress` + HEAD guard).
 
+**Runner note:** Both repos share one VPS self-hosted runner; long CI queues are normal. Cancel stale runs if a branch is stuck `queued` >15 min.
+
 ## Deploy manually (when infra is ready)
 
 1. Actions → **Deploy — Staging** → Run workflow (default tag: `staging`)
 2. Health: `GET /api/v1/health` inside container on port 4000
 3. Public (after nginx): `https://staging.api.airbar.app/api/v1/health`
+
+## GHCR on VPS
+
+Same as airbar-finance: optional `GHCR_READ_TOKEN` secret + [ghcr-vps-login.sh](https://github.com/mamahoos/airbar-finance/blob/main/scripts/ghcr-vps-login.sh) for persistent manual pulls.
+
+See [airbar-finance infra patch doc](https://github.com/mamahoos/airbar-finance/blob/main/docs/infra-patches/cloudflare-staging-proxy-off.md) for Cloudflare gray-cloud staging DNS.
 
 See [staging-nginx-snippet.conf](./staging-nginx-snippet.conf) for CTO nginx/DNS request.
