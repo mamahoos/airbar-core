@@ -61,6 +61,3 @@ import type { AppConfig } from './config/index.js';
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
-
-export { createApp } from './create-app.js';
-export type { CreateAppOptions } from './create-app.js';
