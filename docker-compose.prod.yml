@@ -18,7 +18,7 @@ services:
       FINANCE_GRPC_URL: ${FINANCE_GRPC_URL:-airbar-finance-app-prod:50051}
     command: >
       sh -c "npx prisma migrate deploy &&
-             node dist/bootstrap/main.js"
+             node dist/src/bootstrap/main.js"
     networks:
       airbar-net:
         aliases:
